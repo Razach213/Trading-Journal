@@ -1,8 +1,27 @@
+# === Advanced Netlify Configuration File ===
+
 [build]
   command = "npm run build"
   publish = "dist"
 
+# (Redirects Rules)
+# Yahan aap URL redirect rules define kar sakte hain.
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
+  status = 200
+
+# Example: Netlify subdomain se custom domain par redirect karna
+# [[redirects]]
+#   from = "https://your-project.netlify.app/*"
+#   to = "https://www.yourdomain.com/:splat"
+#   status = 301
+#   force = true
+
+# (Custom Headers Rules)
+# Yahan aap custom HTTP headers set kar sakte hain.
+[[headers]]
+  for = "/*"
+    [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
