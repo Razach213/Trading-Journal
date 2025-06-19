@@ -187,7 +187,7 @@ const About: React.FC = () => {
                 </p>
                 <div className="mt-6 flex items-center space-x-3">
                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">AJ</span>
+                    <span className="text-white font-semibold">AR</span>
                   </div>
                   <div>
                     <div className="font-semibold">Ali Raza</div>
