@@ -1,0 +1,65 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+    
+    function isValidDocumentFile() {
+      return request.resource.contentType in ['application/pdf', 'text/csv', 'application/vnd.ms-excel'] &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                  isOwner(userId) && 
+                  isValidImageFile();
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Trade screenshots and attachments
+    match /users/{userId}/trades/{tradeId}/{fileName} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // User documents (exports, reports, etc.)
+    match /users/{userId}/documents/{fileName} {
+      allow read, write: if isAuthenticated() && 
+                        isOwner(userId) && 
+                        isValidDocumentFile();
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Temporary uploads (auto-deleted after 24 hours)
+    match /temp/{userId}/{fileName} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Public assets (app logos, etc.)
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Only admins can upload public assets
+    }
+    
+    // Admin uploads
+    match /admin/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                  get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

@@ -1,0 +1,171 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for validation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'displayName', 'plan', 'createdAt']) &&
+             data.email is string &&
+             data.displayName is string &&
+             data.plan in ['free', 'pro', 'premium'] &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidTrade(data) {
+      return data.keys().hasAll(['userId', 'symbol', 'type', 'entryPrice', 'quantity', 'entryDate', 'status', 'createdAt']) &&
+             data.userId is string &&
+             data.symbol is string &&
+             data.type in ['long', 'short'] &&
+             data.entryPrice is number &&
+             data.quantity is number &&
+             data.entryDate is timestamp &&
+             data.status in ['open', 'closed'] &&
+             data.createdAt is timestamp &&
+             data.entryPrice > 0 &&
+             data.quantity > 0 &&
+             // Optional fields validation
+             (!data.keys().hasAny(['exitPrice']) || data.exitPrice == null || data.exitPrice is number) &&
+             (!data.keys().hasAny(['exitDate']) || data.exitDate == null || data.exitDate is timestamp) &&
+             (!data.keys().hasAny(['pnl']) || data.pnl == null || data.pnl is number) &&
+             (!data.keys().hasAny(['pnlPercent']) || data.pnlPercent == null || data.pnlPercent is number) &&
+             (!data.keys().hasAny(['notes']) || data.notes == null || data.notes is string) &&
+             (!data.keys().hasAny(['strategy']) || data.strategy == null || data.strategy is string) &&
+             (!data.keys().hasAny(['tags']) || data.tags is list) &&
+             (!data.keys().hasAny(['balanceAfterTrade']) || data.balanceAfterTrade == null || data.balanceAfterTrade is number) &&
+             (!data.keys().hasAny(['updatedAt']) || data.updatedAt is timestamp);
+    }
+    
+    function isValidTradeUpdate(data) {
+      return !data.diff(resource.data).affectedKeys().hasAny(['userId', 'createdAt']);
+    }
+    
+    function isValidAccountBalance(data) {
+      return data.keys().hasAll(['userId', 'startingBalance', 'currentBalance', 'totalPnL', 'totalReturnPercent', 'lastUpdated']) &&
+             data.userId is string &&
+             data.startingBalance is number &&
+             data.currentBalance is number &&
+             data.totalPnL is number &&
+             data.totalReturnPercent is number &&
+             data.lastUpdated is timestamp &&
+             data.startingBalance > 0;
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      
+      allow create: if isAuthenticated() && 
+                   isOwner(userId) && 
+                   isValidUser(request.resource.data);
+      
+      allow update: if isAuthenticated() && 
+                   isOwner(userId) && 
+                   isValidUser(request.resource.data) &&
+                   !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt']);
+      
+      allow delete: if isAuthenticated() && isOwner(userId);
+      
+      // User's trading statistics (read-only for users, writable by functions)
+      match /stats/{statId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow write: if request.auth == null; // Allow Admin SDK operations
+      }
+    }
+    
+    // Account Balances collection
+    match /accountBalances/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      
+      allow create: if isAuthenticated() && 
+                   isOwner(userId) &&
+                   isValidAccountBalance(request.resource.data);
+      
+      allow update: if isAuthenticated() && 
+                   isOwner(userId) &&
+                   isValidAccountBalance(request.resource.data) &&
+                   !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId']);
+      
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Trades collection rules
+    match /trades/{tradeId} {
+      allow read: if isAuthenticated() && 
+                 request.auth.uid == resource.data.userId;
+      
+      allow create: if isAuthenticated() && 
+                   isOwner(request.resource.data.userId) &&
+                   isValidTrade(request.resource.data);
+      
+      allow update: if isAuthenticated() && 
+                   request.auth.uid == resource.data.userId &&
+                   isValidTrade(request.resource.data) &&
+                   isValidTradeUpdate(request.resource.data);
+      
+      allow delete: if isAuthenticated() && 
+                   request.auth.uid == resource.data.userId;
+    }
+    
+    // Subscriptions collection (managed by Stripe webhooks)
+    match /subscriptions/{subscriptionId} {
+      allow read: if isAuthenticated() && 
+                 isOwner(resource.data.userId);
+      allow write: if false; // Only Cloud Functions can manage subscriptions
+    }
+    
+    // Public data (app configuration, pricing, etc.)
+    match /public/{document=**} {
+      allow read: if true;
+      allow write: if false; // Only admins can write public data
+    }
+    
+    // Admin collection (only for admin users)
+    match /admin/{document=**} {
+      allow read, write: if isAuthenticated() && 
+                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Analytics collection (aggregated data)
+    match /analytics/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only Cloud Functions can write analytics
+    }
+    
+    // Feedback and support tickets
+    match /feedback/{feedbackId} {
+      allow read, write: if isAuthenticated() && 
+                        isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && 
+                   isOwner(request.resource.data.userId);
+    }
+    
+    // User preferences and settings
+    match /userPreferences/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Trading strategies (user-defined)
+    match /strategies/{strategyId} {
+      allow read, write: if isAuthenticated() && 
+                        isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && 
+                   isOwner(request.resource.data.userId);
+    }
+    
+    // Trading tags (user-defined)
+    match /tags/{tagId} {
+      allow read, write: if isAuthenticated() && 
+                        isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && 
+                   isOwner(request.resource.data.userId);
+    }
+  }
+}
