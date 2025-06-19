@@ -41,9 +41,9 @@ const About: React.FC = () => {
 
   const team = [
     {
-      name: 'Alex Johnson',
+      name: 'Ali Raza',
       role: 'CEO & Founder',
-      bio: 'Former hedge fund trader with 15+ years of experience. Built ZellaX to solve the problems he faced as a professional trader.',
+      bio: 'Built ZellaX to solve the problems he faced as a professional trader.',
       avatar: 'AJ',
       gradient: 'from-blue-500 to-purple-600'
     },
