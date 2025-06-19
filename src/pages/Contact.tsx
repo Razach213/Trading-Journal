@@ -62,8 +62,8 @@ const Contact: React.FC = () => {
       icon: Phone,
       title: 'Phone Support',
       description: 'Speak directly with our team',
-      contact: '+1 (555) 123-4567',
-      action: 'tel:+15551234567'
+      contact: '+923117824909',
+      action: 'tel:+923117824909'
     }
   ];
 
@@ -276,8 +276,8 @@ const Contact: React.FC = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">Business Address</h3>
                       <p className="text-gray-600">ZellaX LLC</p>
-                      <p className="text-gray-600">123 Trading Street</p>
-                      <p className="text-gray-600">New York, NY 10001</p>
+                      <p className="text-gray-600">DHA Phse1</p>
+                      <p className="text-gray-600">Lahore,Pakistan</p>
                     </div>
                   </div>
                 </div>
@@ -291,13 +291,13 @@ const Contact: React.FC = () => {
                     href="#"
                     className="bg-blue-100 p-3 rounded-lg hover:bg-blue-200 transition-colors"
                   >
-                    <Twitter className="h-5 w-5 text-blue-600" />
+                    <Twitter className="https://x.com/Zellax" />
                   </a>
                   <a
                     href="#"
                     className="bg-blue-100 p-3 rounded-lg hover:bg-blue-200 transition-colors"
                   >
-                    <Linkedin className="h-5 w-5 text-blue-600" />
+                    <Linkedin className="https://www.facebook.com/zellax" />
                   </a>
                   <a
                     href="#"
