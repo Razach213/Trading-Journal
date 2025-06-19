@@ -44,7 +44,7 @@ const About: React.FC = () => {
       name: 'Ali Raza',
       role: 'CEO & Founder',
       bio: 'Built ZellaX to solve the problems he faced as a professional trader.',
-      avatar: 'AJ',
+      avatar: 'AR',
       gradient: 'from-blue-500 to-purple-600'
     },
     {
@@ -84,19 +84,19 @@ const About: React.FC = () => {
       description: 'ZellaX was born from the need for better trading analytics and journaling tools.'
     },
     {
-      year: '2023',
+      year: '2025',
       title: 'First 10K Users',
       description: 'Reached our first major milestone with traders from over 50 countries.'
     },
     {
-      year: '2024',
+      year: '2025',
       title: 'Advanced Analytics',
       description: 'Launched AI-powered insights and advanced performance analytics features.'
     },
     {
       year: '2025',
       title: 'Global Expansion',
-      description: 'Serving 75K+ traders worldwide with enterprise-grade features and support.'
+      description: 'Serving 15K+ traders worldwide with enterprise-grade features and support.'
     }
   ];
 
@@ -190,7 +190,7 @@ const About: React.FC = () => {
                     <span className="text-white font-semibold">AJ</span>
                   </div>
                   <div>
-                    <div className="font-semibold">Alex Johnson</div>
+                    <div className="font-semibold">Ali Raza</div>
                     <div className="text-blue-200 text-sm">CEO & Founder</div>
                   </div>
                 </div>
