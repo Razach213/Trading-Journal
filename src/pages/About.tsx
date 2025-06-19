@@ -84,7 +84,7 @@ const About: React.FC = () => {
       description: 'ZellaX was born from the need for better trading analytics and journaling tools.'
     },
     {
-      year: '2025',
+      year: '2023',
       title: 'First 10K Users',
       description: 'Reached our first major milestone with traders from over 50 countries.'
     },
@@ -96,7 +96,7 @@ const About: React.FC = () => {
     {
       year: '2025',
       title: 'Global Expansion',
-      description: 'Serving 15K+ traders worldwide with enterprise-grade features and support.'
+      description: 'Serving 75K+ traders worldwide with enterprise-grade features and support.'
     }
   ];
 
