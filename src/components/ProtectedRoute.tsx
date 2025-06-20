@@ -1,26 +1,31 @@
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-// import { useAuth } from '../hooks/useAuth'; // Missing hook call removed
+import { useAuth } from '../hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ProtectedRoute = ({ children }: { children: any }) => {
-    // const { user, loading } = useAuth(); // Missing hook call removed
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
 
-    // This is a temporary fix. 
-    // Since we don't have the user authentication system, 
-    // we will allow access for now.
-    const user = true; // Temporary: Assume user is logged in
-    const loading = false; // Temporary: Assume loading is done
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { user, loading } = useAuth();
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-    if (loading) {
-        return <div>Loading...</div>; // Or a spinner component
-    }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
-    if (!user) {
-        return <Navigate to="/login" />;
-    }
-
-    return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
