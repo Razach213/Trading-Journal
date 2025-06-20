@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/Layout/Header';
@@ -19,7 +19,9 @@ import Privacy from './pages/Privacy';
 import Settings from './pages/Settings';
 
 function App() {
-  // Dark Mode Logic
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Enhanced Dark Mode Logic with Animation
   useEffect(() => {
     // Check for saved theme preference or default to light mode
     const savedTheme = localStorage.getItem('theme');
@@ -33,16 +35,35 @@ function App() {
   }, []);
 
   const toggleTheme = () => {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    setIsTransitioning(true);
+    
+    // Create transition overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'theme-transition-overlay active';
+    document.body.appendChild(overlay);
+    
+    // Add a smooth transition effect
+    setTimeout(() => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      
+      // Remove overlay after transition
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        setTimeout(() => {
+          document.body.removeChild(overlay);
+          setIsTransitioning(false);
+        }, 300);
+      }, 150);
+    }, 150);
   };
 
   return (
     <ErrorBoundary>
       <Router>
-        <div className="relative min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+        <div className="relative min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col transition-all duration-300">
           <Header toggleTheme={toggleTheme} />
-          <main className="flex-1">
+          <main className="flex-1 animate-fade-in-scale">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
