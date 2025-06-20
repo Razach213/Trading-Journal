@@ -10,8 +10,9 @@ const navigation = [
   { name: 'Contact', href: '/contact' },
 ];
 
-// Hum yahan 'toggleTheme' function App.tsx se le rahe hain
 export default function Header({ toggleTheme }) {
+  // const { user, handleLogout } = useAuth(); // Missing hook call removed
+
   return (
     <header className="relative bg-white dark:bg-gray-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -40,6 +41,7 @@ export default function Header({ toggleTheme }) {
             ))}
           </Popover.Group>
           <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+            {/* Conditional rendering for user login can be added back later */}
             <Link to="/login" className="whitespace-nowrap text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
               Sign in
             </Link>
@@ -49,30 +51,18 @@ export default function Header({ toggleTheme }) {
             >
               Get Started
             </Link>
-
-            {/* DARK MODE BUTTON AB HEADER KE ANDAR HAI */}
+            
             <div className="ml-4">
               <button onClick={toggleTheme} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full text-sm">
                 Toggle
               </button>
             </div>
-
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu ka baaqi code */}
-      <Transition
-        as={Fragment}
-        enter="duration-200 ease-out"
-        enterFrom="opacity-0 scale-95"
-        enterTo="opacity-100 scale-100"
-        leave="duration-100 ease-in"
-        leaveFrom="opacity-100 scale-100"
-        leaveTo="opacity-0 scale-95"
-      >
+      <Transition as={Fragment} enter="duration-200 ease-out" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="duration-100 ease-in" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
         <Popover.Panel focus className="absolute top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden z-20">
-            {/* Yahan mobile menu ka code aayega */}
+          {/* Mobile menu content */}
         </Popover.Panel>
       </Transition>
     </header>
