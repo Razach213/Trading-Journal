@@ -75,6 +75,12 @@ export default function Header({ toggleTheme }: HeaderProps) {
                 >
                   Dashboard
                 </Link>
+                <Link
+                  to="/playbooks"
+                  className="text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                >
+                  Playbooks
+                </Link>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
                     <span className="text-white text-sm font-semibold">
@@ -167,6 +173,13 @@ export default function Header({ toggleTheme }: HeaderProps) {
                       className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                     >
                       Dashboard
+                    </Link>
+                    <Link
+                      to="/playbooks"
+                      onClick={() => close()}
+                      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Playbooks
                     </Link>
                     <button
                       onClick={() => {

@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import Playbooks from './pages/Playbooks';
 import Pricing from './pages/Pricing';
 import Features from './pages/Features';
 import About from './pages/About';
@@ -80,6 +81,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/playbooks"
+                element={
+                  <ProtectedRoute>
+                    <Playbooks />
                   </ProtectedRoute>
                 }
               />

@@ -55,3 +55,27 @@ export interface AccountBalance {
   totalReturnPercent: number;
   lastUpdated: Date;
 }
+
+export interface Playbook {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  strategy: string;
+  chartImage?: string | null; // Base64 encoded image
+  imageMetadata?: {
+    originalName: string;
+    size: number;
+    type: string;
+    compressedSize?: number;
+  } | null;
+  tags: string[];
+  marketConditions?: string | null;
+  entryRules?: string | null;
+  exitRules?: string | null;
+  riskManagement?: string | null;
+  notes?: string | null;
+  isPublic: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
