@@ -43,59 +43,59 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
       title: 'Total P&L',
       value: formatCurrency(totalPnL),
       icon: DollarSign,
-      color: totalPnL >= 0 ? 'text-green-600' : 'text-red-600',
-      bgColor: totalPnL >= 0 ? 'bg-green-50' : 'bg-red-50',
-      iconBg: totalPnL >= 0 ? 'bg-green-600' : 'bg-red-600',
+      color: totalPnL >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
+      bgColor: totalPnL >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20',
+      iconBg: totalPnL >= 0 ? 'bg-green-600 dark:bg-green-500' : 'bg-red-600 dark:bg-red-500',
       change: totalPnL >= 0 ? '+' : '',
       gradient: totalPnL >= 0 ? 'from-green-500 to-emerald-600' : 'from-red-500 to-rose-600',
       status: totalPnL >= 0 ? 'Profitable' : totalPnL < 0 ? 'Loss' : 'No Trades',
-      statusColor: totalPnL >= 0 ? 'bg-green-100 text-green-800' : totalPnL < 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+      statusColor: totalPnL >= 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : totalPnL < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
     },
     {
       title: 'Win Rate',
       value: formatPercentage(winRate),
       icon: Target,
-      color: winRate >= 50 ? 'text-green-600' : winRate > 0 ? 'text-yellow-600' : 'text-gray-600',
-      bgColor: winRate >= 50 ? 'bg-green-50' : winRate > 0 ? 'bg-yellow-50' : 'bg-gray-50',
-      iconBg: winRate >= 50 ? 'bg-green-600' : winRate > 0 ? 'bg-yellow-600' : 'bg-gray-600',
+      color: winRate >= 50 ? 'text-green-600 dark:text-green-400' : winRate > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400',
+      bgColor: winRate >= 50 ? 'bg-green-50 dark:bg-green-900/20' : winRate > 0 ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-gray-50 dark:bg-gray-800',
+      iconBg: winRate >= 50 ? 'bg-green-600 dark:bg-green-500' : winRate > 0 ? 'bg-yellow-600 dark:bg-yellow-500' : 'bg-gray-600 dark:bg-gray-500',
       change: '',
       gradient: winRate >= 50 ? 'from-green-500 to-emerald-600' : winRate > 0 ? 'from-yellow-500 to-orange-600' : 'from-gray-500 to-gray-600',
       status: winRate >= 50 ? 'Excellent' : winRate >= 30 ? 'Good' : winRate > 0 ? 'Needs Work' : 'No Data',
-      statusColor: winRate >= 50 ? 'bg-green-100 text-green-800' : winRate >= 30 ? 'bg-yellow-100 text-yellow-800' : winRate > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+      statusColor: winRate >= 50 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : winRate >= 30 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : winRate > 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
     },
     {
       title: 'Total Trades',
       value: totalTrades.toString(),
       icon: BarChart3,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      iconBg: 'bg-blue-600',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+      iconBg: 'bg-blue-600 dark:bg-blue-500',
       change: '',
       gradient: 'from-blue-500 to-cyan-600',
       status: totalTrades > 50 ? 'Very Active' : totalTrades > 20 ? 'Active' : totalTrades > 0 ? 'Getting Started' : 'New User',
-      statusColor: 'bg-blue-100 text-blue-800'
+      statusColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
     },
     {
       title: 'Profit Factor',
       value: formatNumber(profitFactor, 2),
       icon: Award,
-      color: profitFactor >= 1.5 ? 'text-green-600' : profitFactor >= 1 ? 'text-yellow-600' : profitFactor > 0 ? 'text-red-600' : 'text-gray-600',
-      bgColor: profitFactor >= 1.5 ? 'bg-green-50' : profitFactor >= 1 ? 'bg-yellow-50' : profitFactor > 0 ? 'bg-red-50' : 'bg-gray-50',
-      iconBg: profitFactor >= 1.5 ? 'bg-green-600' : profitFactor >= 1 ? 'bg-yellow-600' : profitFactor > 0 ? 'bg-red-600' : 'bg-gray-600',
+      color: profitFactor >= 1.5 ? 'text-green-600 dark:text-green-400' : profitFactor >= 1 ? 'text-yellow-600 dark:text-yellow-400' : profitFactor > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400',
+      bgColor: profitFactor >= 1.5 ? 'bg-green-50 dark:bg-green-900/20' : profitFactor >= 1 ? 'bg-yellow-50 dark:bg-yellow-900/20' : profitFactor > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800',
+      iconBg: profitFactor >= 1.5 ? 'bg-green-600 dark:bg-green-500' : profitFactor >= 1 ? 'bg-yellow-600 dark:bg-yellow-500' : profitFactor > 0 ? 'bg-red-600 dark:bg-red-500' : 'bg-gray-600 dark:bg-gray-500',
       change: '',
       gradient: profitFactor >= 1.5 ? 'from-green-500 to-emerald-600' : profitFactor >= 1 ? 'from-yellow-500 to-orange-600' : profitFactor > 0 ? 'from-red-500 to-rose-600' : 'from-gray-500 to-gray-600',
       status: profitFactor >= 1.5 ? 'Excellent' : profitFactor >= 1 ? 'Profitable' : profitFactor > 0 ? 'Unprofitable' : 'No Data',
-      statusColor: profitFactor >= 1.5 ? 'bg-green-100 text-green-800' : profitFactor >= 1 ? 'bg-yellow-100 text-yellow-800' : profitFactor > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+      statusColor: profitFactor >= 1.5 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : profitFactor >= 1 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : profitFactor > 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
     }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {cards.map((card, index) => (
-        <div key={index} className={`${card.bgColor} rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
+        <div key={index} className={`${card.bgColor} rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-2">{card.title}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{card.title}</p>
               <div className="flex items-baseline">
                 <p className={`text-2xl font-bold ${card.color}`}>
                   {card.change}{card.value}
@@ -115,7 +115,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               </div>
               
               {/* Additional info for better understanding */}
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 {card.title === 'Total P&L' && (
                   <span>
                     {stats.winningTrades > 0 || stats.losingTrades > 0 

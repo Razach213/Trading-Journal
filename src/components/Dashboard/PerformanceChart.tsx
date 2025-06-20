@@ -36,7 +36,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ trades }) => {
 
   if (chartData.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-gray-500">
+      <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
         <p>No closed trades to display</p>
       </div>
     );
@@ -46,24 +46,28 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ trades }) => {
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-gray-700" />
           <XAxis 
             dataKey="date" 
-            stroke="#6b7280"
+            stroke="currentColor"
+            className="text-gray-600 dark:text-gray-400"
             tick={{ fontSize: 12 }}
           />
           <YAxis 
-            stroke="#6b7280"
+            stroke="currentColor"
+            className="text-gray-600 dark:text-gray-400"
             tick={{ fontSize: 12 }}
             tickFormatter={formatCurrency}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'var(--tooltip-bg, #ffffff)',
+              color: 'var(--tooltip-color, #374151)',
+              border: '1px solid var(--tooltip-border, #e5e7eb)',
               borderRadius: '6px',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
+            className="dark:bg-gray-800 dark:text-white dark:border-gray-600"
             formatter={(value: number, name: string) => [
               formatCurrency(value),
               name === 'cumulativePnL' ? 'Cumulative P&L' : 'Trade P&L'
