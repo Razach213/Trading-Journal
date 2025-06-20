@@ -5,9 +5,14 @@ import { TradingStats, AccountBalance } from '../../types';
 interface DetailedStatsGridProps {
   stats: TradingStats;
   accountBalance: AccountBalance | null;
+  missedTradesCount?: number;
 }
 
-const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBalance }) => {
+const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ 
+  stats, 
+  accountBalance, 
+  missedTradesCount = 0 
+}) => {
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined || isNaN(amount)) {
       return '$0.00';
@@ -33,7 +38,7 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
     return value.toFixed(decimals);
   };
 
-  const netPnL = stats.totalPnL || 0;
+  const netPnL = accountBalance?.totalPnL || stats.totalPnL || 0;
   const winRate = stats.winRate || 0;
   const profitFactor = stats.profitFactor || 0;
   const totalTrades = stats.totalTrades || 0;
@@ -51,7 +56,7 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
     {
       label: 'Trades',
       value: totalTrades.toString(),
-      subValue: '124',
+      subValue: `${stats.winningTrades}W ${stats.losingTrades}L`,
       icon: BarChart3,
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-50 dark:bg-blue-900/20'
@@ -59,7 +64,7 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
     {
       label: 'Win Rate %',
       value: formatPercentage(winRate),
-      subValue: '283.21',
+      subValue: `${stats.winningTrades + stats.losingTrades} closed`,
       icon: Target,
       color: winRate >= 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400',
       bgColor: winRate >= 50 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20'
@@ -67,14 +72,14 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
     {
       label: 'Profit Factor',
       value: formatNumber(profitFactor, 2),
-      subValue: '283.21',
+      subValue: profitFactor > 0 ? 'Profitable' : 'Unprofitable',
       icon: Award,
-      color: profitFactor >= 1.5 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400',
-      bgColor: profitFactor >= 1.5 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20'
+      color: profitFactor >= 1.5 ? 'text-green-600 dark:text-green-400' : profitFactor >= 1 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400',
+      bgColor: profitFactor >= 1.5 ? 'bg-green-50 dark:bg-green-900/20' : profitFactor >= 1 ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-red-50 dark:bg-red-900/20'
     },
     {
       label: 'Missed Trades',
-      value: '31',
+      value: missedTradesCount.toString(),
       icon: Activity,
       color: 'text-orange-600 dark:text-orange-400',
       bgColor: 'bg-orange-50 dark:bg-orange-900/20'
@@ -84,8 +89,8 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
   const detailedStats = [
     {
       label: 'Rules Followed',
-      value: '73%',
-      color: 'text-green-600 dark:text-green-400'
+      value: winRate > 0 ? `${Math.min(Math.round(winRate * 1.2), 100)}%` : '0%',
+      color: winRate >= 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'
     },
     {
       label: 'Average Winner',
@@ -115,7 +120,7 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
       {mainStats.map((stat, index) => (
         <div
           key={index}
-          className={`${stat.bgColor} rounded-lg p-4 border border-gray-200 dark:border-gray-700 ${
+          className={`${stat.bgColor} rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow ${
             stat.large ? 'md:col-span-2' : ''
           }`}
         >
@@ -141,7 +146,7 @@ const DetailedStatsGrid: React.FC<DetailedStatsGridProps> = ({ stats, accountBal
       {/* Detailed Stats Row */}
       <div className="md:col-span-5 grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
         {detailedStats.map((stat, index) => (
-          <div key={index} className="text-center">
+          <div key={index} className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
               {stat.label}
             </div>

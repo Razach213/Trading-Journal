@@ -15,7 +15,7 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
   const { accountBalance, updateStartingBalance } = useAccountBalance(user?.id);
-  const { playbooks } = usePlaybooks(user?.id);
+  const { playbooks, addPlaybook } = usePlaybooks(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -39,6 +39,12 @@ const Dashboard: React.FC = () => {
     { id: 'notes', label: 'Notes', icon: Calendar }
   ];
 
+  // Calculate missed trades (example logic)
+  const missedTrades = trades.filter(trade => 
+    trade.notes?.toLowerCase().includes('missed') || 
+    trade.tags.some(tag => tag.toLowerCase().includes('missed'))
+  );
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -48,7 +54,9 @@ const Dashboard: React.FC = () => {
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Playbook /</span>
-                <span className="text-sm text-blue-600 dark:text-blue-400">Opening</span>
+                <span className="text-sm text-blue-600 dark:text-blue-400">
+                  {playbooks.length > 0 ? playbooks[0].title : 'Opening'}
+                </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400">/ Overview</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -84,6 +92,16 @@ const Dashboard: React.FC = () => {
                 >
                   <tab.icon className="h-4 w-4" />
                   <span>{tab.label}</span>
+                  {tab.id === 'executed-trades' && (
+                    <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-0.5 rounded-full">
+                      {trades.filter(t => t.status === 'closed').length}
+                    </span>
+                  )}
+                  {tab.id === 'missed-trades' && missedTrades.length > 0 && (
+                    <span className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-xs px-2 py-0.5 rounded-full">
+                      {missedTrades.length}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -93,7 +111,11 @@ const Dashboard: React.FC = () => {
             {/* Main Content */}
             <div className="xl:col-span-3 space-y-6">
               {/* Stats Grid */}
-              <DetailedStatsGrid stats={stats} accountBalance={accountBalance} />
+              <DetailedStatsGrid 
+                stats={stats} 
+                accountBalance={accountBalance}
+                missedTradesCount={missedTrades.length}
+              />
 
               {/* Performance Chart */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -102,13 +124,13 @@ const Dashboard: React.FC = () => {
                     Daily Net Cumulative P&L
                   </h2>
                   <div className="flex items-center space-x-2">
-                    <button className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                    <button className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                       1D
                     </button>
                     <button className="text-xs px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
                       1W
                     </button>
-                    <button className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                    <button className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                       1M
                     </button>
                   </div>
@@ -116,15 +138,17 @@ const Dashboard: React.FC = () => {
                 <AdvancedPerformanceChart trades={trades} />
               </div>
 
-              {/* Trades Table */}
+              {/* Content based on active tab */}
               {activeTab === 'overview' && (
-                <TradeTable
-                  trades={trades.slice(0, 10)} // Show recent trades
-                  onUpdateTrade={updateTrade}
-                  onDeleteTrade={deleteTrade}
-                  loading={loading}
-                  error={error}
-                />
+                <div className="space-y-6">
+                  <TradeTable
+                    trades={trades.slice(0, 10)} // Show recent trades
+                    onUpdateTrade={updateTrade}
+                    onDeleteTrade={deleteTrade}
+                    loading={loading}
+                    error={error}
+                  />
+                </div>
               )}
 
               {activeTab === 'executed-trades' && (
@@ -138,18 +162,122 @@ const Dashboard: React.FC = () => {
               )}
 
               {activeTab === 'missed-trades' && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
-                  <Target className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Missed Trades</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Track trades you missed to improve your strategy</p>
+                <div className="space-y-6">
+                  {missedTrades.length > 0 ? (
+                    <TradeTable
+                      trades={missedTrades}
+                      onUpdateTrade={updateTrade}
+                      onDeleteTrade={deleteTrade}
+                      loading={loading}
+                      error={error}
+                    />
+                  ) : (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+                      <Target className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Missed Trades</h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        Track trades you missed to improve your strategy. Add "missed" in notes or tags to categorize them.
+                      </p>
+                      <button
+                        onClick={() => setShowAddTradeModal(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Add Missed Trade
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'playbook-rules' && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                  <div className="text-center mb-6">
+                    <BookOpen className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Trading Rules & Playbooks</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {playbooks.length > 0 
+                        ? `You have ${playbooks.length} playbook${playbooks.length > 1 ? 's' : ''} created`
+                        : 'Create your first trading playbook to define your strategy rules'
+                      }
+                    </p>
+                  </div>
+                  
+                  {playbooks.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {playbooks.slice(0, 4).map((playbook) => (
+                        <div key={playbook.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">{playbook.title}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{playbook.description}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                              {playbook.strategy}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {playbook.tags.length} tags
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <button
+                        onClick={() => window.location.href = '/playbooks'}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Create First Playbook
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeTab === 'notes' && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
-                  <Calendar className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Notes Yet</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Add trading notes and observations</p>
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                  <div className="text-center mb-6">
+                    <Calendar className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Trading Notes</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      View all your trading notes and observations from your trades
+                    </p>
+                  </div>
+                  
+                  {trades.filter(t => t.notes).length > 0 ? (
+                    <div className="space-y-4">
+                      {trades.filter(t => t.notes).slice(0, 5).map((trade) => (
+                        <div key={trade.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-gray-900 dark:text-white">{trade.symbol}</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(trade.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{trade.notes}</p>
+                          {trade.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {trade.tags.map((tag, index) => (
+                                <span key={index} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        No notes yet. Add notes to your trades to track your thoughts and observations.
+                      </p>
+                      <button
+                        onClick={() => setShowAddTradeModal(true)}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Add Trade with Notes
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -160,6 +288,7 @@ const Dashboard: React.FC = () => {
                 playbooks={playbooks} 
                 stats={stats}
                 accountBalance={accountBalance}
+                onUpdateBalance={updateStartingBalance}
               />
             </div>
           </div>
