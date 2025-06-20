@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Edit2, Check, X } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Edit2, Check, X, Calculator, Target } from 'lucide-react';
 
 interface AccountBalanceCardProps {
   startingBalance: number;
@@ -50,7 +50,10 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
         {/* Starting Balance */}
         <div className="text-center md:text-left">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-blue-100 dark:text-blue-200 text-sm font-medium">Starting Balance</p>
+            <p className="text-blue-100 dark:text-blue-200 text-sm font-medium flex items-center">
+              <Calculator className="h-4 w-4 mr-1" />
+              Starting Balance
+            </p>
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
@@ -88,11 +91,17 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
           ) : (
             <p className="text-2xl font-bold">{formatCurrency(startingBalance)}</p>
           )}
+          <p className="text-blue-200 dark:text-blue-300 text-xs mt-1">
+            Initial account value
+          </p>
         </div>
 
         {/* Current Balance */}
         <div className="text-center md:text-left">
-          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2">Current Balance</p>
+          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2 flex items-center justify-center md:justify-start">
+            <DollarSign className="h-4 w-4 mr-1" />
+            Current Balance
+          </p>
           <p className="text-2xl font-bold">{formatCurrency(currentBalance)}</p>
           <div className="flex items-center justify-center md:justify-start mt-1">
             {totalPnL >= 0 ? (
@@ -108,23 +117,29 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
 
         {/* Total P&L */}
         <div className="text-center md:text-left">
-          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2">Total P&L</p>
+          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2 flex items-center justify-center md:justify-start">
+            <Target className="h-4 w-4 mr-1" />
+            Total P&L
+          </p>
           <p className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
             {totalPnL >= 0 ? '+' : ''}{formatCurrency(totalPnL)}
           </p>
-          <p className="text-blue-200 dark:text-blue-300 text-sm">
-            Since start
+          <p className="text-blue-200 dark:text-blue-300 text-xs mt-1">
+            All-time profit/loss
           </p>
         </div>
 
         {/* Total Return */}
         <div className="text-center md:text-left">
-          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2">Total Return</p>
+          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2 flex items-center justify-center md:justify-start">
+            <TrendingUp className="h-4 w-4 mr-1" />
+            Total Return
+          </p>
           <p className={`text-2xl font-bold ${totalReturn >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
             {formatPercentage(totalReturn)}
           </p>
-          <p className="text-blue-200 dark:text-blue-300 text-sm">
-            ROI
+          <p className="text-blue-200 dark:text-blue-300 text-xs mt-1">
+            Return on investment
           </p>
         </div>
       </div>
@@ -144,6 +159,38 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
               width: `${Math.min(Math.abs(totalReturn), 100)}%`
             }}
           ></div>
+        </div>
+        <div className="flex justify-between text-xs text-blue-200 dark:text-blue-300 mt-1">
+          <span>0%</span>
+          <span>{Math.abs(totalReturn) > 100 ? '100%+' : '100%'}</span>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="bg-white/10 rounded-lg p-3">
+          <div className="text-xs text-blue-200 dark:text-blue-300">Balance Change</div>
+          <div className="text-sm font-bold">
+            {formatCurrency(currentBalance - startingBalance)}
+          </div>
+        </div>
+        <div className="bg-white/10 rounded-lg p-3">
+          <div className="text-xs text-blue-200 dark:text-blue-300">Growth Rate</div>
+          <div className="text-sm font-bold">
+            {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(1)}%
+          </div>
+        </div>
+        <div className="bg-white/10 rounded-lg p-3">
+          <div className="text-xs text-blue-200 dark:text-blue-300">Performance</div>
+          <div className="text-sm font-bold">
+            {totalReturn >= 10 ? 'Excellent' : totalReturn >= 5 ? 'Good' : totalReturn >= 0 ? 'Positive' : 'Negative'}
+          </div>
+        </div>
+        <div className="bg-white/10 rounded-lg p-3">
+          <div className="text-xs text-blue-200 dark:text-blue-300">Status</div>
+          <div className="text-sm font-bold">
+            {totalPnL >= 0 ? 'Profitable' : 'Loss'}
+          </div>
         </div>
       </div>
     </div>

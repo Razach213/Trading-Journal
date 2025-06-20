@@ -20,7 +20,7 @@ export const useTrades = (userId: string | undefined) => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { accountBalance, updateBalanceFromTrade } = useAccountBalance(userId);
+  const { accountBalance, updateBalanceFromTrade, recalculateBalance } = useAccountBalance(userId);
   const [stats, setStats] = useState<TradingStats>({
     totalTrades: 0,
     winningTrades: 0,
@@ -135,7 +135,7 @@ export const useTrades = (userId: string | undefined) => {
         winningTrades: 0,
         losingTrades: 0,
         winRate: 0,
-        totalPnL: 0,
+        totalPnL: accountBalance?.totalPnL || 0,
         avgWin: 0,
         avgLoss: 0,
         profitFactor: 0,
@@ -172,7 +172,7 @@ export const useTrades = (userId: string | undefined) => {
         winningTrades: winningTrades.length,
         losingTrades: losingTrades.length,
         winRate: Math.round(winRate * 10) / 10,
-        totalPnL: Math.round(totalPnL * 100) / 100,
+        totalPnL: accountBalance?.totalPnL || totalPnL,
         avgWin: Math.round(avgWin * 100) / 100,
         avgLoss: Math.round(avgLoss * 100) / 100,
         profitFactor: Math.round(profitFactor * 100) / 100,
@@ -189,6 +189,13 @@ export const useTrades = (userId: string | undefined) => {
       console.error('Error calculating stats:', err);
     }
   };
+
+  // Recalculate stats when account balance changes
+  useEffect(() => {
+    if (accountBalance && trades.length > 0) {
+      calculateStats(trades);
+    }
+  }, [accountBalance]);
 
   const addTrade = async (tradeData: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -281,9 +288,12 @@ export const useTrades = (userId: string | undefined) => {
         return acc;
       }, {} as any);
 
-      // Handle balance update if P&L changed
-      if (cleanUpdates.pnl !== undefined && originalTrade.status === 'closed') {
-        const pnlDifference = (cleanUpdates.pnl || 0) - (originalTrade.pnl || 0);
+      // Handle balance update if P&L changed and trade is closed
+      if (cleanUpdates.pnl !== undefined && cleanUpdates.status === 'closed') {
+        const originalPnL = originalTrade.status === 'closed' ? (originalTrade.pnl || 0) : 0;
+        const newPnL = cleanUpdates.pnl || 0;
+        const pnlDifference = newPnL - originalPnL;
+        
         if (pnlDifference !== 0) {
           cleanUpdates.balanceAfterTrade = await updateBalanceFromTrade(pnlDifference);
         }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, DollarSign, Target, Award, BookOpen, BarChart3, Activity, Calendar, Settings, AlertCircle, FileText } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrades } from '../hooks/useTrades';
@@ -9,15 +9,24 @@ import DetailedStatsGrid from '../components/Dashboard/DetailedStatsGrid';
 import TradeTable from '../components/Dashboard/TradeTable';
 import PlaybookSidebar from '../components/Dashboard/PlaybookSidebar';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
+import StartingBalanceModal from '../components/Dashboard/StartingBalanceModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const { accountBalance, loading: balanceLoading, needsSetup, createAccountBalance, updateStartingBalance } = useAccountBalance(user?.id);
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
-  const { accountBalance, updateStartingBalance } = useAccountBalance(user?.id);
   const { playbooks, addPlaybook } = usePlaybooks(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Show balance setup modal for new users
+  useEffect(() => {
+    if (!balanceLoading && needsSetup && user) {
+      setShowBalanceModal(true);
+    }
+  }, [balanceLoading, needsSetup, user]);
 
   if (!user) {
     return (
@@ -26,6 +35,23 @@ const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Please sign in to access your dashboard
           </h2>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while account balance is being set up
+  if (balanceLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Setting up your account...
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Please wait while we initialize your trading dashboard
+          </p>
         </div>
       </div>
     );
@@ -76,6 +102,15 @@ const Dashboard: React.FC = () => {
   // Get trades with notes
   const tradesWithNotes = trades.filter(t => t.notes && t.notes.trim().length > 0);
 
+  const handleCreateBalance = async (balance: number) => {
+    try {
+      await createAccountBalance(balance);
+      setShowBalanceModal(false);
+    } catch (error) {
+      console.error('Error creating account balance:', error);
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -95,15 +130,11 @@ const Dashboard: React.FC = () => {
                   Daily Net Cumulative P&L
                 </h2>
                 <div className="flex items-center space-x-2">
-                  <button className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                    1D
-                  </button>
-                  <button className="text-xs px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
-                    1W
-                  </button>
-                  <button className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                    1M
-                  </button>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Balance: <span className="font-medium text-gray-900 dark:text-white">
+                      ${accountBalance?.currentBalance?.toLocaleString() || '0'}
+                    </span>
+                  </div>
                 </div>
               </div>
               <AdvancedPerformanceChart trades={trades} />
@@ -398,6 +429,16 @@ const Dashboard: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Trading Dashboard
               </h1>
+              {accountBalance && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Account Balance: <span className="font-medium">${accountBalance.currentBalance.toLocaleString()}</span>
+                  {accountBalance.totalPnL !== 0 && (
+                    <span className={`ml-2 ${accountBalance.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      ({accountBalance.totalPnL >= 0 ? '+' : ''}${accountBalance.totalPnL.toFixed(2)})
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
               <button
@@ -407,7 +448,11 @@ const Dashboard: React.FC = () => {
                 <Plus className="h-4 w-4" />
                 <span>Add Trade</span>
               </button>
-              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <button 
+                onClick={() => setShowBalanceModal(true)}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                title="Update starting balance"
+              >
                 <Settings className="h-5 w-5" />
               </button>
             </div>
@@ -459,12 +504,20 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Add Trade Modal */}
+          {/* Modals */}
           {showAddTradeModal && (
             <AddTradeModal
               onClose={() => setShowAddTradeModal(false)}
               onSubmit={addTrade}
               userId={user.id}
+            />
+          )}
+
+          {showBalanceModal && (
+            <StartingBalanceModal
+              onClose={() => setShowBalanceModal(false)}
+              onSubmit={needsSetup ? handleCreateBalance : updateStartingBalance}
+              isFirstTime={needsSetup}
             />
           )}
         </div>
