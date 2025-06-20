@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'; // useEffect ko import karein
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Header from './components/Layout/Header';
-import Footer from './components/layout/Footer';
+import Header from './components/Layout/Header'; // Path theek kar diya gaya hai
+import Footer from './components/layout/Footer'; // Iska path bhi check kar lein agar masla kare
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -19,44 +19,36 @@ import Settings from './pages/Settings';
 
 function App() {
 
-  // ==========================================================
-  // STEP 1: Dark Mode ka logic yahan daalein
-  // Yeh code component ke pehli baar load hone par chalta hai
+  // Dark Mode ka logic
   useEffect(() => {
-    // Check karta hai ke user ki pehle se 'dark' choice save hai ya nahi
     if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []); // Khaali array ka matlab hai yeh sirf page load par ek baar chalega
+  }, []);
 
-  // Yeh function button ke click par theme badalta hai
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle('dark');
-    // User ki choice ko save karta hai taake agli baar bhi yaad rahe
     if (isDark) {
       localStorage.setItem('theme', 'dark');
     } else {
       localStorage.setItem('theme', 'light');
     }
   };
-  // ==========================================================
 
   return (
     <Router>
-      {/* Main div mein dark mode ki classes add karein */}
+      {/* Main div mein 'relative' class aur dark mode ki classes */}
       <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
         <Header />
 
-        {/* ========================================================== */}
-        {/* STEP 2: Yahan par button daalein */}
-        <div className="absolute top-4 right-4">
+        {/* Dark Mode ka Button */}
+        <div className="absolute top-4 right-4 z-10">
           <button onClick={toggleTheme} className="p-2 bg-gray-300 dark:bg-gray-700 rounded-full text-sm">
             Toggle
           </button>
         </div>
-        {/* ========================================================== */}
 
         <main className="flex-1">
           <Routes>
@@ -88,7 +80,7 @@ function App() {
             />
           </Routes>
         </main>
-        {/* Agar aap Footer istemal kar rahe hain to yahan hoga */}
+        
         {/* <Footer /> */}
       </div>
       <Toaster />
