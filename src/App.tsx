@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Header from './components/Layout/Header'; // Path theek kar diya gaya hai
-import Footer from './components/layout/Footer'; // Iska path bhi check kar lein agar masla kare
+import Header from './components/Layout/Header';
+import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -19,7 +19,7 @@ import Settings from './pages/Settings';
 
 function App() {
 
-  // Dark Mode ka logic
+  // Dark Mode ka logic yahin rahega
   useEffect(() => {
     if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark');
@@ -39,16 +39,12 @@ function App() {
 
   return (
     <Router>
-      {/* Main div mein 'relative' class aur dark mode ki classes */}
       <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
-        <Header />
+        
+        {/* Hum yahan se Header ko toggle function de rahe hain */}
+        <Header toggleTheme={toggleTheme} />
 
-        {/* Dark Mode ka Button */}
-        <div className="absolute top-4 right-4 z-10">
-          <button onClick={toggleTheme} className="p-2 bg-gray-300 dark:bg-gray-700 rounded-full text-sm">
-            Toggle
-          </button>
-        </div>
+        {/* Button ka code yahan se HATA diya gaya hai */}
 
         <main className="flex-1">
           <Routes>
