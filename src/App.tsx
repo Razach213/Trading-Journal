@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'; // useEffect ko import karein
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Header from './components/layout/Header';
+import Header from './components/Layout/Header';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
