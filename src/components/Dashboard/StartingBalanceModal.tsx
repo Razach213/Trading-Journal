@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { DollarSign, X, TrendingUp, Target, Award, Calculator, PiggyBank, BarChart3 } from 'lucide-react';
+import { DollarSign, X, TrendingUp, Calculator, PiggyBank, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface StartingBalanceModalProps {
@@ -21,11 +21,10 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
   currentBalance = 10000
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<BalanceFormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
       startingBalance: currentBalance
     }
@@ -115,20 +114,6 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const presetAmounts = [
-    { amount: 1000, label: '$1K', popular: false },
-    { amount: 5000, label: '$5K', popular: false },
-    { amount: 10000, label: '$10K', popular: true },
-    { amount: 25000, label: '$25K', popular: false },
-    { amount: 50000, label: '$50K', popular: false },
-    { amount: 100000, label: '$100K', popular: false }
-  ];
-
-  const handlePresetClick = (amount: number) => {
-    setValue('startingBalance', amount);
-    setSelectedPreset(amount);
   };
 
   const formatCurrency = (amount: number) => {
@@ -222,7 +207,6 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
                     step="0.01"
                     className="w-full pl-10 pr-4 py-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xl font-bold text-center transition-all duration-200"
                     placeholder="10,000.00"
-                    onChange={() => setSelectedPreset(null)}
                   />
                 </div>
                 {errors.startingBalance && (
@@ -231,38 +215,6 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
                     {errors.startingBalance.message}
                   </p>
                 )}
-              </div>
-
-              {/* Preset Amount Buttons */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  <Target className="h-4 w-4 inline mr-2" />
-                  Quick Select Popular Amounts
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {presetAmounts.map((preset) => (
-                    <button
-                      key={preset.amount}
-                      type="button"
-                      onClick={() => handlePresetClick(preset.amount)}
-                      className={`relative px-4 py-3 text-sm font-medium border-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${
-                        selectedPreset === preset.amount || watchedBalance === preset.amount
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-lg'
-                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {preset.popular && (
-                        <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                          Popular
-                        </div>
-                      )}
-                      <div className="text-center">
-                        <div className="font-bold">{preset.label}</div>
-                        <div className="text-xs opacity-75">{formatCurrency(preset.amount)}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Balance Preview */}
