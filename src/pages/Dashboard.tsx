@@ -8,6 +8,7 @@ import StatsCards from '../components/Dashboard/StatsCards';
 import TradeTable from '../components/Dashboard/TradeTable';
 import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
+import InlineStartingBalanceSetup from '../components/Dashboard/InlineStartingBalanceSetup';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
@@ -45,6 +46,9 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  // CRITICAL: Check if user needs to set starting balance
+  const needsStartingBalance = !accountBalance || accountBalance.startingBalance === 0;
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -59,114 +63,126 @@ const Dashboard: React.FC = () => {
                 Track your trading performance and improve your strategy
               </p>
             </div>
-            <button
-              onClick={() => setShowAddTradeModal(true)}
-              className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
-            >
-              <Plus className="h-5 w-5" />
-              <span>Add Trade</span>
-            </button>
+            {!needsStartingBalance && (
+              <button
+                onClick={() => setShowAddTradeModal(true)}
+                className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add Trade</span>
+              </button>
+            )}
           </div>
 
-          {/* Account Balance Card - TOP */}
-          {accountBalance && (
-            <div className="mb-8">
-              <AccountBalanceCard
-                startingBalance={accountBalance.startingBalance}
-                currentBalance={accountBalance.currentBalance}
-                totalPnL={accountBalance.totalPnL}
-                totalReturn={accountBalance.totalReturnPercent}
-                onUpdateBalance={updateStartingBalance}
-              />
-            </div>
-          )}
+          {/* CRITICAL: Inline Starting Balance Setup - Show if needed */}
+          {needsStartingBalance ? (
+            <InlineStartingBalanceSetup
+              onSubmit={updateStartingBalance}
+              defaultValue={10000}
+            />
+          ) : (
+            <>
+              {/* Account Balance Card - TOP */}
+              {accountBalance && (
+                <div className="mb-8">
+                  <AccountBalanceCard
+                    startingBalance={accountBalance.startingBalance}
+                    currentBalance={accountBalance.currentBalance}
+                    totalPnL={accountBalance.totalPnL}
+                    totalReturn={accountBalance.totalReturnPercent}
+                    onUpdateBalance={updateStartingBalance}
+                  />
+                </div>
+              )}
 
-          {/* Stats Cards */}
-          <div className="mb-8">
-            <StatsCards stats={stats} />
-          </div>
-
-          {/* Charts and Performance */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
-            <div className="xl:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                  Performance Chart
-                </h2>
-                <PerformanceChart trades={trades} />
+              {/* Stats Cards */}
+              <div className="mb-8">
+                <StatsCards stats={stats} />
               </div>
-            </div>
-            
-            <div className="xl:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                  Quick Stats
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
-                        <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Best Day</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          ${stats.largestWin.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
+
+              {/* Charts and Performance */}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+                <div className="xl:col-span-2">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                      Performance Chart
+                    </h2>
+                    <PerformanceChart trades={trades} />
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
-                        <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                
+                <div className="xl:col-span-1">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                      Quick Stats
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
+                            <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Best Day</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              ${stats.largestWin.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Avg Win</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          ${stats.avgWin.toFixed(2)}
-                        </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                            <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Avg Win</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              ${stats.avgWin.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
-                        <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Profit Factor</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {stats.profitFactor.toFixed(2)}
-                        </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                            <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Profit Factor</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              {stats.profitFactor.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Trades Table */}
-          <div>
-            <TradeTable
-              trades={trades}
-              onUpdateTrade={updateTrade}
-              onDeleteTrade={deleteTrade}
-              loading={loading}
-              error={error}
-            />
-          </div>
+              {/* Trades Table */}
+              <div>
+                <TradeTable
+                  trades={trades}
+                  onUpdateTrade={updateTrade}
+                  onDeleteTrade={deleteTrade}
+                  loading={loading}
+                  error={error}
+                />
+              </div>
 
-          {/* Add Trade Modal */}
-          {showAddTradeModal && (
-            <AddTradeModal
-              onClose={() => setShowAddTradeModal(false)}
-              onSubmit={addTrade}
-              userId={user.id}
-            />
+              {/* Add Trade Modal */}
+              {showAddTradeModal && (
+                <AddTradeModal
+                  onClose={() => setShowAddTradeModal(false)}
+                  onSubmit={addTrade}
+                  userId={user.id}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

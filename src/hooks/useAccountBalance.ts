@@ -29,19 +29,19 @@ export const useAccountBalance = (userId: string | undefined) => {
             const balance: AccountBalance = {
               id: doc.id,
               userId: data.userId,
-              startingBalance: data.startingBalance || 100000, // Default $100,000
-              currentBalance: data.currentBalance || data.startingBalance || 100000,
+              startingBalance: data.startingBalance || 0, // CRITICAL: 0 means needs setup
+              currentBalance: data.currentBalance || data.startingBalance || 0,
               totalPnL: data.totalPnL || 0,
               totalReturnPercent: data.totalReturnPercent || 0,
               lastUpdated: data.lastUpdated?.toDate() || new Date()
             };
             setAccountBalance(balance);
           } else {
-            // CRITICAL: Auto-create default account balance with $100,000
+            // CRITICAL: Create empty balance record - user needs to set starting balance
             const defaultBalance: Omit<AccountBalance, 'id'> = {
               userId,
-              startingBalance: 100000, // Default $100,000
-              currentBalance: 100000,
+              startingBalance: 0, // CRITICAL: 0 triggers inline setup
+              currentBalance: 0,
               totalPnL: 0,
               totalReturnPercent: 0,
               lastUpdated: new Date()
@@ -69,25 +69,29 @@ export const useAccountBalance = (userId: string | undefined) => {
   }, [userId]);
 
   const updateStartingBalance = async (newStartingBalance: number): Promise<void> => {
-    if (!userId || !accountBalance) {
-      throw new Error('Account balance not found');
+    if (!userId) {
+      throw new Error('User ID is required');
     }
 
     try {
-      // CRITICAL: Maintain the same P&L but recalculate current balance
-      const currentPnL = accountBalance.totalPnL;
-      const newCurrentBalance = newStartingBalance + currentPnL;
-      const newReturnPercent = newStartingBalance > 0 ? (currentPnL / newStartingBalance) * 100 : 0;
-
+      // CRITICAL: For new users, set both starting and current balance
+      const isFirstTimeSetup = !accountBalance || accountBalance.startingBalance === 0;
+      
       const updatedBalance = {
         startingBalance: newStartingBalance,
-        currentBalance: newCurrentBalance,
-        totalReturnPercent: newReturnPercent,
+        currentBalance: isFirstTimeSetup ? newStartingBalance : (accountBalance?.currentBalance || newStartingBalance),
+        totalPnL: isFirstTimeSetup ? 0 : (accountBalance?.totalPnL || 0),
+        totalReturnPercent: 0,
         lastUpdated: new Date()
       };
 
       await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
-      toast.success('Starting balance updated successfully!');
+      
+      if (isFirstTimeSetup) {
+        toast.success('🎉 Account setup complete! Ready to start trading!');
+      } else {
+        toast.success('Starting balance updated successfully!');
+      }
     } catch (error) {
       console.error('Error updating starting balance:', error);
       toast.error('Failed to update starting balance');
