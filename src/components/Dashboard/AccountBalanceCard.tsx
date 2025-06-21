@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Edit2, Check, X, Calculator, Target } from 'lucide-react';
+import React from 'react';
+import { DollarSign, TrendingUp, TrendingDown, Calculator, Target } from 'lucide-react';
+import InlineEditableBalance from './InlineEditableBalance';
 
 interface AccountBalanceCardProps {
   startingBalance: number;
   currentBalance: number;
   totalPnL: number;
   totalReturn: number;
-  onUpdateBalance: (newBalance: number) => void;
+  onUpdateBalance: (newBalance: number) => Promise<void>;
 }
 
 const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
@@ -16,9 +17,6 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
   totalReturn,
   onUpdateBalance
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [newBalance, setNewBalance] = useState(startingBalance.toString());
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -31,68 +29,26 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   };
 
-  const handleSave = () => {
-    const balance = parseFloat(newBalance);
-    if (!isNaN(balance) && balance > 0) {
-      onUpdateBalance(balance);
-      setIsEditing(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setNewBalance(startingBalance.toString());
-    setIsEditing(false);
-  };
-
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 rounded-xl p-6 text-white col-span-full">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Starting Balance */}
+        {/* Starting Balance - Now Editable */}
         <div className="text-center md:text-left">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-blue-100 dark:text-blue-200 text-sm font-medium flex items-center">
-              <Calculator className="h-4 w-4 mr-1" />
-              Starting Balance
-            </p>
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="text-blue-200 dark:text-blue-300 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                title="Edit starting balance"
-              >
-                <Edit2 className="h-4 w-4" />
-              </button>
-            ) : (
-              <div className="flex space-x-1">
-                <button
-                  onClick={handleSave}
-                  className="text-green-200 dark:text-green-300 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                >
-                  <Check className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="text-red-200 dark:text-red-300 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
-          {isEditing ? (
-            <input
-              type="number"
-              value={newBalance}
-              onChange={(e) => setNewBalance(e.target.value)}
-              className="bg-white/20 text-white placeholder-blue-200 dark:placeholder-blue-300 border border-white/30 rounded-lg px-3 py-2 text-lg font-bold w-full focus:outline-none focus:ring-2 focus:ring-white/50"
-              placeholder="Enter balance"
-              autoFocus
+          <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-3 flex items-center justify-center md:justify-start">
+            <Calculator className="h-4 w-4 mr-1" />
+            Starting Balance
+          </p>
+          <div className="flex items-center justify-center md:justify-start">
+            <InlineEditableBalance
+              value={startingBalance}
+              onSave={onUpdateBalance}
+              label="Starting Balance"
+              large={true}
+              className="text-white"
             />
-          ) : (
-            <p className="text-2xl font-bold">{formatCurrency(startingBalance)}</p>
-          )}
-          <p className="text-blue-200 dark:text-blue-300 text-xs mt-1">
-            Initial account value
+          </div>
+          <p className="text-blue-200 dark:text-blue-300 text-xs mt-2">
+            💡 Click to edit your initial capital
           </p>
         </div>
 
@@ -168,30 +124,37 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
 
       {/* Quick Stats */}
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-        <div className="bg-white/10 rounded-lg p-3">
+        <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Balance Change</div>
           <div className="text-sm font-bold">
             {formatCurrency(currentBalance - startingBalance)}
           </div>
         </div>
-        <div className="bg-white/10 rounded-lg p-3">
+        <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Growth Rate</div>
           <div className="text-sm font-bold">
             {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(1)}%
           </div>
         </div>
-        <div className="bg-white/10 rounded-lg p-3">
+        <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Performance</div>
           <div className="text-sm font-bold">
             {totalReturn >= 10 ? 'Excellent' : totalReturn >= 5 ? 'Good' : totalReturn >= 0 ? 'Positive' : 'Negative'}
           </div>
         </div>
-        <div className="bg-white/10 rounded-lg p-3">
+        <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Status</div>
           <div className="text-sm font-bold">
             {totalPnL >= 0 ? 'Profitable' : 'Loss'}
           </div>
         </div>
+      </div>
+
+      {/* Help Text */}
+      <div className="mt-4 text-center">
+        <p className="text-xs text-blue-200 dark:text-blue-300 opacity-75">
+          💡 <span className="font-medium">Pro Tip:</span> Hover over the starting balance to edit it inline
+        </p>
       </div>
     </div>
   );

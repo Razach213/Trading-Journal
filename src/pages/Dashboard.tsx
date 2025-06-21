@@ -6,6 +6,7 @@ import { useAccountBalance } from '../hooks/useAccountBalance';
 import { usePlaybooks } from '../hooks/usePlaybooks';
 import AdvancedPerformanceChart from '../components/Dashboard/AdvancedPerformanceChart';
 import DetailedStatsGrid from '../components/Dashboard/DetailedStatsGrid';
+import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import TradeTable from '../components/Dashboard/TradeTable';
 import PlaybookSidebar from '../components/Dashboard/PlaybookSidebar';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
@@ -116,6 +117,17 @@ const Dashboard: React.FC = () => {
       case 'overview':
         return (
           <div className="space-y-6">
+            {/* Account Balance Card */}
+            {accountBalance && (
+              <AccountBalanceCard
+                startingBalance={accountBalance.startingBalance}
+                currentBalance={accountBalance.currentBalance}
+                totalPnL={accountBalance.totalPnL}
+                totalReturn={accountBalance.totalReturnPercent}
+                onUpdateBalance={updateStartingBalance}
+              />
+            )}
+
             {/* Stats Grid */}
             <DetailedStatsGrid 
               stats={stats} 

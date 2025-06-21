@@ -85,8 +85,10 @@ export const useAccountBalance = (userId: string | undefined) => {
     }
   };
 
-  const updateStartingBalance = async (newStartingBalance: number) => {
-    if (!userId || !accountBalance) return;
+  const updateStartingBalance = async (newStartingBalance: number): Promise<void> => {
+    if (!userId || !accountBalance) {
+      throw new Error('Account balance not found');
+    }
 
     try {
       // Calculate new current balance maintaining the same P&L
@@ -102,10 +104,8 @@ export const useAccountBalance = (userId: string | undefined) => {
       };
 
       await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
-      toast.success('Starting balance updated successfully!');
     } catch (error) {
       console.error('Error updating starting balance:', error);
-      toast.error('Failed to update starting balance');
       throw error;
     }
   };
