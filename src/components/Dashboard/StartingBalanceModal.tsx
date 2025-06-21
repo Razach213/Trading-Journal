@@ -74,7 +74,7 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
     }
   }, [onClose, isFirstTime]);
 
-  // CRITICAL: Prevent body scroll and ensure modal is on top
+  // CRITICAL: Prevent body scroll but allow modal scrolling
   useEffect(() => {
     // Store original styles
     const originalBodyOverflow = document.body.style.overflow;
@@ -141,7 +141,7 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 backdrop-blur-sm overflow-y-auto scrollbar-thin">
       <div className="min-h-screen pt-4 pb-8 px-4">
         <div 
           ref={modalRef}
@@ -180,175 +180,177 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-6">
-            {/* Welcome Message for First Time Users */}
-            {isFirstTime && (
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-semibold text-green-900 dark:text-green-200 mb-1">
-                      Start Your Trading Journey
-                    </h3>
-                    <p className="text-xs text-green-700 dark:text-green-300 leading-relaxed">
-                      Your starting balance is the foundation for calculating accurate P&L, returns, and performance metrics. 
-                      Don't worry - you can always update this later!
-                    </p>
+          <div className="max-h-[80vh] overflow-y-auto scrollbar-thin">
+            <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-6">
+              {/* Welcome Message for First Time Users */}
+              {isFirstTime && (
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-900 dark:text-green-200 mb-1">
+                        Start Your Trading Journey
+                      </h3>
+                      <p className="text-xs text-green-700 dark:text-green-300 leading-relaxed">
+                        Your starting balance is the foundation for calculating accurate P&L, returns, and performance metrics. 
+                        Don't worry - you can always update this later!
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Balance Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                <Calculator className="h-4 w-4 inline mr-2" />
-                Starting Account Balance *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-gray-500 dark:text-gray-400 text-xl font-bold">$</span>
-                </div>
-                <input
-                  ref={firstInputRef}
-                  {...register('startingBalance', { 
-                    required: 'Starting balance is required',
-                    min: { value: 100, message: 'Minimum balance is $100' },
-                    max: { value: 10000000, message: 'Maximum balance is $10,000,000' },
-                    valueAsNumber: true
-                  })}
-                  type="number"
-                  step="0.01"
-                  className="w-full pl-10 pr-4 py-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xl font-bold text-center transition-all duration-200"
-                  placeholder="10,000.00"
-                  onChange={() => setSelectedPreset(null)}
-                />
-              </div>
-              {errors.startingBalance && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-2 flex items-center">
-                  <span className="mr-1">⚠️</span>
-                  {errors.startingBalance.message}
-                </p>
               )}
-            </div>
 
-            {/* Preset Amount Buttons */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                <Target className="h-4 w-4 inline mr-2" />
-                Quick Select Popular Amounts
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {presetAmounts.map((preset) => (
-                  <button
-                    key={preset.amount}
-                    type="button"
-                    onClick={() => handlePresetClick(preset.amount)}
-                    className={`relative px-4 py-3 text-sm font-medium border-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${
-                      selectedPreset === preset.amount || watchedBalance === preset.amount
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-lg'
-                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {preset.popular && (
-                      <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                        Popular
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <div className="font-bold">{preset.label}</div>
-                      <div className="text-xs opacity-75">{formatCurrency(preset.amount)}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Balance Preview */}
-            {watchedBalance && watchedBalance >= 100 && (
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Balance Preview
-                </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
-                    <div className="text-gray-600 dark:text-gray-400 text-xs">Starting Balance</div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(watchedBalance)}
-                    </div>
+              {/* Balance Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  <Calculator className="h-4 w-4 inline mr-2" />
+                  Starting Account Balance *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400 text-xl font-bold">$</span>
                   </div>
-                  <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
-                    <div className="text-gray-600 dark:text-gray-400 text-xs">Account Type</div>
-                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                      {watchedBalance < 5000 ? 'Starter' : 
-                       watchedBalance < 25000 ? 'Intermediate' : 
-                       watchedBalance < 100000 ? 'Advanced' : 'Professional'}
-                    </div>
-                  </div>
+                  <input
+                    ref={firstInputRef}
+                    {...register('startingBalance', { 
+                      required: 'Starting balance is required',
+                      min: { value: 100, message: 'Minimum balance is $100' },
+                      max: { value: 10000000, message: 'Maximum balance is $10,000,000' },
+                      valueAsNumber: true
+                    })}
+                    type="number"
+                    step="0.01"
+                    className="w-full pl-10 pr-4 py-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xl font-bold text-center transition-all duration-200"
+                    placeholder="10,000.00"
+                    onChange={() => setSelectedPreset(null)}
+                  />
                 </div>
-              </div>
-            )}
-
-            {/* Information Cards */}
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <Target className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <div className="text-xs text-green-700 dark:text-green-300">
-                  <span className="font-medium">Accurate P&L Tracking:</span> Calculate real profit and loss from your trades
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                <Award className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                <div className="text-xs text-purple-700 dark:text-purple-300">
-                  <span className="font-medium">Performance Metrics:</span> Win rate, profit factor, and return calculations
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <div className="text-xs text-blue-700 dark:text-blue-300">
-                  <span className="font-medium">Growth Tracking:</span> Monitor your account growth over time
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              {!isFirstTime && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={isLoading || !watchedBalance || watchedBalance < 100}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Setting up...
-                  </>
-                ) : (
-                  <>
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    {isFirstTime ? 'Start Trading Journey' : 'Update Balance'}
-                  </>
+                {errors.startingBalance && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-2 flex items-center">
+                    <span className="mr-1">⚠️</span>
+                    {errors.startingBalance.message}
+                  </p>
                 )}
-              </button>
-            </div>
+              </div>
 
-            {/* Help Text */}
-            <div className="text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                💡 <span className="font-medium">Pro Tip:</span> You can always update your starting balance later in settings
-              </p>
-            </div>
-          </form>
+              {/* Preset Amount Buttons */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  <Target className="h-4 w-4 inline mr-2" />
+                  Quick Select Popular Amounts
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {presetAmounts.map((preset) => (
+                    <button
+                      key={preset.amount}
+                      type="button"
+                      onClick={() => handlePresetClick(preset.amount)}
+                      className={`relative px-4 py-3 text-sm font-medium border-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${
+                        selectedPreset === preset.amount || watchedBalance === preset.amount
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-lg'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {preset.popular && (
+                        <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                          Popular
+                        </div>
+                      )}
+                      <div className="text-center">
+                        <div className="font-bold">{preset.label}</div>
+                        <div className="text-xs opacity-75">{formatCurrency(preset.amount)}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Balance Preview */}
+              {watchedBalance && watchedBalance >= 100 && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Balance Preview
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
+                      <div className="text-gray-600 dark:text-gray-400 text-xs">Starting Balance</div>
+                      <div className="text-lg font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(watchedBalance)}
+                      </div>
+                    </div>
+                    <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
+                      <div className="text-gray-600 dark:text-gray-400 text-xs">Account Type</div>
+                      <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        {watchedBalance < 5000 ? 'Starter' : 
+                         watchedBalance < 25000 ? 'Intermediate' : 
+                         watchedBalance < 100000 ? 'Advanced' : 'Professional'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Information Cards */}
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <Target className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  <div className="text-xs text-green-700 dark:text-green-300">
+                    <span className="font-medium">Accurate P&L Tracking:</span> Calculate real profit and loss from your trades
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <Award className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <div className="text-xs text-purple-700 dark:text-purple-300">
+                    <span className="font-medium">Performance Metrics:</span> Win rate, profit factor, and return calculations
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <div className="text-xs text-blue-700 dark:text-blue-300">
+                    <span className="font-medium">Growth Tracking:</span> Monitor your account growth over time
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-gray-800">
+                {!isFirstTime && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isLoading || !watchedBalance || watchedBalance < 100}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      {isFirstTime ? 'Start Trading Journey' : 'Update Balance'}
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Help Text */}
+              <div className="text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  💡 <span className="font-medium">Pro Tip:</span> You can always update your starting balance later in settings
+                </p>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
