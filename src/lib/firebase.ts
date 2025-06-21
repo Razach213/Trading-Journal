@@ -4,35 +4,71 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
-// Firebase configuration - CRITICAL: Update with your actual values
+// CRITICAL: Firebase configuration - Replace with your actual values
 const firebaseConfig = {
-  apiKey: "AIzaSyBqJVJKqJKqJKqJKqJKqJKqJKqJKqJKqJK",
-  authDomain: "zellax-trading-journal.firebaseapp.com",
-  projectId: "zellax-trading-journal",
-  storageBucket: "zellax-trading-journal.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdefghijklmnopqr",
-  measurementId: "G-XXXXXXXXXX"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:demo",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-DEMO"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase only if we have valid configuration
+let app;
+let auth;
+let db;
+let storage;
+let functions;
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app);
-
-// CRITICAL: Enable offline persistence for better reliability
-import { enableNetwork, disableNetwork } from 'firebase/firestore';
-
-// Enable offline persistence
 try {
-  // This helps with connectivity issues
-  enableNetwork(db);
+  // Check if we have a valid API key
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
+    console.warn("⚠️ Firebase not configured. Using demo mode.");
+    throw new Error("Firebase configuration missing");
+  }
+
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  functions = getFunctions(app);
+
+  console.log("✅ Firebase initialized successfully");
 } catch (error) {
-  console.log('Firebase offline persistence already enabled');
+  console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
+  
+  // Create mock objects for demo mode
+  auth = {
+    currentUser: null,
+    onAuthStateChanged: () => () => {},
+    signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
+    createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
+    signInWithPopup: () => Promise.reject(new Error("Demo mode")),
+    signOut: () => Promise.reject(new Error("Demo mode"))
+  } as any;
+
+  db = {
+    collection: () => ({
+      doc: () => ({
+        get: () => Promise.resolve({ exists: false }),
+        set: () => Promise.reject(new Error("Demo mode")),
+        update: () => Promise.reject(new Error("Demo mode")),
+        delete: () => Promise.reject(new Error("Demo mode"))
+      }),
+      add: () => Promise.reject(new Error("Demo mode")),
+      where: () => ({
+        orderBy: () => ({
+          onSnapshot: () => () => {}
+        })
+      })
+    })
+  } as any;
+
+  storage = {} as any;
+  functions = {} as any;
 }
 
+export { auth, db, storage, functions };
 export default app;

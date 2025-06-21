@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, Calculator, TrendingUp, BarChart3, AlertCircle } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, BarChart3, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,8 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  
   const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
       startingBalance: defaultValue
@@ -37,17 +39,25 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
     
     try {
       await onSubmit(data.startingBalance);
-      // Success message is handled in the hook
+      toast.success('🎉 Account setup complete! Ready to start trading!');
     } catch (error: any) {
       console.error('Error setting balance:', error);
-      setError(error.message || 'Failed to set starting balance');
       
-      // Show user-friendly error message
-      if (error.message?.includes('permission')) {
+      // Handle specific Firebase errors
+      if (error.message?.includes('Firebase Auth not configured') || 
+          error.message?.includes('Demo mode') ||
+          error.message?.includes('api-key-not-valid')) {
+        setIsOfflineMode(true);
+        setError('Firebase not configured. Running in demo mode.');
+        toast.error('⚠️ Firebase not configured. Please check your setup.');
+      } else if (error.message?.includes('permission')) {
+        setError('Permission denied. Please sign in again.');
         toast.error('Please sign in again to continue');
       } else if (error.message?.includes('network') || error.message?.includes('unavailable')) {
+        setError('Network error. Please check your internet connection.');
         toast.error('Please check your internet connection and try again');
       } else {
+        setError(error.message || 'Failed to set starting balance');
         toast.error('Failed to set starting balance. Please try again.');
       }
     } finally {
@@ -83,8 +93,26 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
         </p>
       </div>
 
+      {/* Firebase Configuration Warning */}
+      {isOfflineMode && (
+        <div className="bg-orange-500/20 border border-orange-400/30 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-2">
+            <WifiOff className="h-5 w-5 text-orange-300" />
+            <span className="text-orange-200 font-medium">Demo Mode</span>
+          </div>
+          <p className="text-orange-100 text-sm mt-1">
+            Firebase is not configured. Please update your .env file with valid Firebase credentials.
+          </p>
+          <div className="mt-2 text-xs text-orange-200">
+            <p>1. Go to Firebase Console → Project Settings</p>
+            <p>2. Copy your config values to .env file</p>
+            <p>3. Restart the development server</p>
+          </div>
+        </div>
+      )}
+
       {/* Error Display */}
-      {error && (
+      {error && !isOfflineMode && (
         <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-4 mb-6">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-red-300" />
@@ -176,7 +204,7 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
             ) : (
               <>
                 <DollarSign className="h-5 w-5 mr-2" />
-                Start Trading Journey
+                {isOfflineMode ? 'Continue in Demo Mode' : 'Start Trading Journey'}
               </>
             )}
           </button>
@@ -187,6 +215,11 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
           <p className="text-xs text-blue-200 dark:text-blue-300 opacity-75">
             💡 <span className="font-medium">Pro Tip:</span> You can always update your starting balance later in settings
           </p>
+          {isOfflineMode && (
+            <p className="text-xs text-orange-200 mt-2">
+              🔧 <span className="font-medium">Demo Mode:</span> Configure Firebase to save data permanently
+            </p>
+          )}
         </div>
       </form>
     </div>
