@@ -137,14 +137,7 @@ const Dashboard: React.FC = () => {
       case 'overview':
         return (
           <div className="space-y-6">
-            {/* MOVED TO TOP: Stats Grid */}
-            <DetailedStatsGrid 
-              stats={stats} 
-              accountBalance={accountBalance}
-              missedTradesCount={missedTrades.length}
-            />
-
-            {/* Account Balance Card */}
+            {/* MOVED TO TOP: Account Balance Card */}
             {accountBalance && (
               <AccountBalanceCard
                 startingBalance={accountBalance.startingBalance}
@@ -154,6 +147,13 @@ const Dashboard: React.FC = () => {
                 onUpdateBalance={updateStartingBalance}
               />
             )}
+
+            {/* Stats Grid */}
+            <DetailedStatsGrid 
+              stats={stats} 
+              accountBalance={accountBalance}
+              missedTradesCount={missedTrades.length}
+            />
 
             {/* Performance Chart */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
