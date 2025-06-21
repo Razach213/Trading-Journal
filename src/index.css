@@ -379,7 +379,7 @@
   }
 }
 
-/* Modal specific styles */
+/* Modal specific styles - CRITICAL FIXES */
 .modal-backdrop {
   backdrop-filter: blur(4px);
 }
@@ -445,7 +445,7 @@ select:focus {
   }
 }
 
-/* Modal positioning fixes */
+/* CRITICAL: Modal positioning and scrolling fixes */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -457,14 +457,19 @@ select:focus {
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  overflow-y: auto;
+  /* IMPORTANT: Allow scrolling within the overlay */
+  scroll-behavior: smooth;
 }
 
 .modal-content {
   position: relative;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
   width: 100%;
   max-width: 100%;
+  /* IMPORTANT: Ensure content can scroll */
+  scroll-behavior: smooth;
 }
 
 /* Ensure proper stacking context */
@@ -477,10 +482,21 @@ select:focus {
   z-index: 9998;
 }
 
-/* Prevent scrolling on body when modal is open */
+/* CRITICAL: Prevent scrolling on body when modal is open but allow modal scrolling */
 .modal-open {
-  overflow: hidden;
-  height: 100vh;
+  overflow: hidden !important;
+  height: 100vh !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
+/* IMPORTANT: Ensure html and body don't interfere with modal scrolling */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+  position: fixed !important;
+  width: 100% !important;
 }
 
 /* Responsive modal sizing */
@@ -514,4 +530,69 @@ select:focus {
 
 .backdrop-animate {
   animation: backdropFadeIn 0.2s ease-out;
+}
+
+/* CRITICAL: Ensure smooth scrolling works everywhere */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fix any potential overflow issues in containers */
+.dashboard-container {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Ensure forms are always visible and scrollable */
+.form-container {
+  overflow: visible;
+  scroll-behavior: smooth;
+}
+
+/* Auto-scroll animation for forms */
+@keyframes scrollIntoView {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auto-scroll-target {
+  animation: scrollIntoView 0.5s ease-out;
+  scroll-margin-top: 2rem;
+}
+
+/* Ensure modals always appear in viewport center */
+.modal-centered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  padding: 1rem !important;
+}
+
+/* Fix for any potential z-index conflicts */
+.modal-wrapper {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  overflow-y: auto !important;
+  scroll-behavior: smooth !important;
+}
+
+/* Ensure modal content is always accessible */
+.modal-inner {
+  position: relative !important;
+  margin: auto !important;
+  max-height: calc(100vh - 2rem) !important;
+  overflow-y: auto !important;
+  scroll-behavior: smooth !important;
 }

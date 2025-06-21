@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, TrendingUp, DollarSign, Target, Award, BookOpen, BarChart3, Activity, Calendar, Settings, AlertCircle, FileText } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrades } from '../hooks/useTrades';
@@ -22,12 +22,58 @@ const Dashboard: React.FC = () => {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Refs for auto-scrolling
+  const addTradeButtonRef = useRef<HTMLButtonElement>(null);
+  const balanceButtonRef = useRef<HTMLButtonElement>(null);
+
   // Show balance setup modal for new users
   useEffect(() => {
     if (!balanceLoading && needsSetup && user) {
       setShowBalanceModal(true);
     }
   }, [balanceLoading, needsSetup, user]);
+
+  // Auto-scroll to modal when opened
+  useEffect(() => {
+    if (showAddTradeModal || showBalanceModal) {
+      // Small delay to ensure modal is rendered
+      const timer = setTimeout(() => {
+        // Scroll to top of page to ensure modal is visible
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showAddTradeModal, showBalanceModal]);
+
+  // Handle Add Trade button click with scroll
+  const handleAddTradeClick = () => {
+    setShowAddTradeModal(true);
+    
+    // Ensure the page scrolls to show the modal
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }, 50);
+  };
+
+  // Handle Balance button click with scroll
+  const handleBalanceClick = () => {
+    setShowBalanceModal(true);
+    
+    // Ensure the page scrolls to show the modal
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }, 50);
+  };
 
   if (!user) {
     return (
@@ -301,7 +347,7 @@ const Dashboard: React.FC = () => {
                 </p>
                 <div className="space-y-4">
                   <button
-                    onClick={() => setShowAddTradeModal(true)}
+                    onClick={handleAddTradeClick}
                     className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
                   >
                     Add Missed Trade
@@ -405,7 +451,7 @@ const Dashboard: React.FC = () => {
                 </p>
                 <div className="space-y-4">
                   <button
-                    onClick={() => setShowAddTradeModal(true)}
+                    onClick={handleAddTradeClick}
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Add Trade with Notes
@@ -426,7 +472,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dashboard-container">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -454,15 +500,17 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
               <button
-                onClick={() => setShowAddTradeModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                ref={addTradeButtonRef}
+                onClick={handleAddTradeClick}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 btn-hover-lift"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Trade</span>
               </button>
               <button 
-                onClick={() => setShowBalanceModal(true)}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                ref={balanceButtonRef}
+                onClick={handleBalanceClick}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors btn-hover-lift"
                 title="Update starting balance"
               >
                 <Settings className="h-5 w-5" />
