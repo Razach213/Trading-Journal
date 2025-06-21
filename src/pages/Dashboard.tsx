@@ -1,53 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, TrendingUp, DollarSign, Target, Award, BookOpen, BarChart3, Activity, Calendar, Settings, AlertCircle, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, TrendingUp, DollarSign, Target, Award } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrades } from '../hooks/useTrades';
 import { useAccountBalance } from '../hooks/useAccountBalance';
-import { usePlaybooks } from '../hooks/usePlaybooks';
-import AdvancedPerformanceChart from '../components/Dashboard/AdvancedPerformanceChart';
-import DetailedStatsGrid from '../components/Dashboard/DetailedStatsGrid';
-import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
+import PerformanceChart from '../components/Dashboard/PerformanceChart';
+import StatsCards from '../components/Dashboard/StatsCards';
 import TradeTable from '../components/Dashboard/TradeTable';
-import PlaybookSidebar from '../components/Dashboard/PlaybookSidebar';
+import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
-import StartingBalanceModal from '../components/Dashboard/StartingBalanceModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { accountBalance, loading: balanceLoading, needsSetup, createAccountBalance, updateStartingBalance, recalculateBalance } = useAccountBalance(user?.id);
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
-  const { playbooks, addPlaybook } = usePlaybooks(user?.id);
+  const { accountBalance, updateStartingBalance } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
-  const [showBalanceModal, setShowBalanceModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  // CRITICAL: Recalculate balance when trades change
-  useEffect(() => {
-    if (accountBalance && trades.length > 0) {
-      const closedTrades = trades.filter(trade => trade.status === 'closed' && trade.pnl !== null);
-      if (closedTrades.length > 0) {
-        recalculateBalance(closedTrades);
-      }
-    }
-  }, [trades, accountBalance, recalculateBalance]);
-
-  // Show balance setup modal for new users
-  useEffect(() => {
-    if (!balanceLoading && needsSetup && user) {
-      setShowBalanceModal(true);
-    }
-  }, [balanceLoading, needsSetup, user]);
-
-  // CRITICAL: Handle Add Trade button click - ensure modal is visible
-  const handleAddTradeClick = () => {
-    setShowAddTradeModal(true);
-  };
-
-  // CRITICAL: Handle Balance button click - ensure modal is visible
-  const handleBalanceClick = () => {
-    setShowBalanceModal(true);
-  };
 
   if (!user) {
     return (
@@ -61,242 +28,32 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // Show loading state while account balance is being set up
-  if (balanceLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Setting up your account...
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Please wait while we initialize your trading dashboard
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const tabs = [
-    { 
-      id: 'overview', 
-      label: 'Overview', 
-      icon: BarChart3,
-      count: null
-    },
-    { 
-      id: 'executed-trades', 
-      label: 'Executed Trades', 
-      icon: Activity,
-      count: trades.filter(t => t.status === 'closed').length
-    },
-    { 
-      id: 'missed-trades', 
-      label: 'Missed Trades', 
-      icon: Target,
-      count: trades.filter(trade => 
-        trade.notes?.toLowerCase().includes('missed') || 
-        trade.tags.some(tag => tag.toLowerCase().includes('missed'))
-      ).length
-    },
-    { 
-      id: 'notes', 
-      label: 'Notes', 
-      icon: FileText,
-      count: trades.filter(t => t.notes && t.notes.trim().length > 0).length
-    },
-    { 
-      id: 'playbook-rules', 
-      label: 'Playbook Rules', 
-      icon: BookOpen,
-      count: playbooks.length
-    }
-  ];
-
-  // Calculate missed trades
-  const missedTrades = trades.filter(trade => 
-    trade.notes?.toLowerCase().includes('missed') || 
-    trade.tags.some(tag => tag.toLowerCase().includes('missed'))
-  );
-
-  // Get trades with notes
-  const tradesWithNotes = trades.filter(t => t.notes && t.notes.trim().length > 0);
-
-  const handleCreateBalance = async (balance: number) => {
-    try {
-      await createAccountBalance(balance);
-      setShowBalanceModal(false);
-    } catch (error) {
-      console.error('Error creating account balance:', error);
-    }
-  };
-
-  // REARRANGED LAYOUT COMPONENTS
-  const SummaryCards = () => {
-    const netPnL = accountBalance?.totalPnL || stats.totalPnL || 0;
-    const winRate = stats.winRate || 0;
-    const profitFactor = stats.profitFactor || 0;
-    const totalTrades = stats.totalTrades || 0;
-    const startingBalance = accountBalance?.startingBalance || 0;
-
-    const formatCurrency = (amount: number | null | undefined) => {
-      if (amount === null || amount === undefined || isNaN(amount)) {
-        return '$0.00';
-      }
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2
-      }).format(amount);
-    };
-
-    const formatPercentage = (value: number | null | undefined) => {
-      if (value === null || value === undefined || isNaN(value)) {
-        return '0.0%';
-      }
-      return `${value.toFixed(1)}%`;
-    };
-
-    const formatNumber = (value: number | null | undefined, decimals: number = 2) => {
-      if (value === null || value === undefined || isNaN(value)) {
-        return '0.00';
-      }
-      return value.toFixed(decimals);
-    };
-
-    const summaryCards = [
-      {
-        label: 'Starting Balance',
-        value: formatCurrency(startingBalance),
-        icon: DollarSign,
-        color: 'text-blue-600 dark:text-blue-400',
-        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-        iconBg: 'bg-blue-600 dark:bg-blue-500'
-      },
-      {
-        label: 'Net P&L',
-        value: formatCurrency(netPnL),
-        icon: TrendingUp,
-        color: netPnL >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
-        bgColor: netPnL >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20',
-        iconBg: netPnL >= 0 ? 'bg-green-600 dark:bg-green-500' : 'bg-red-600 dark:bg-red-500'
-      },
-      {
-        label: 'Trades',
-        value: totalTrades.toString(),
-        icon: BarChart3,
-        color: 'text-purple-600 dark:text-purple-400',
-        bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-        iconBg: 'bg-purple-600 dark:bg-purple-500'
-      },
-      {
-        label: 'Win Rate %',
-        value: formatPercentage(winRate),
-        icon: Target,
-        color: winRate >= 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400',
-        bgColor: winRate >= 50 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20',
-        iconBg: winRate >= 50 ? 'bg-green-600 dark:bg-green-500' : 'bg-yellow-600 dark:bg-yellow-500'
-      },
-      {
-        label: 'Profit Factor',
-        value: formatNumber(profitFactor, 2),
-        icon: Award,
-        color: profitFactor >= 1.5 ? 'text-green-600 dark:text-green-400' : profitFactor >= 1 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400',
-        bgColor: profitFactor >= 1.5 ? 'bg-green-50 dark:bg-green-900/20' : profitFactor >= 1 ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-red-50 dark:bg-red-900/20',
-        iconBg: profitFactor >= 1.5 ? 'bg-green-600 dark:bg-green-500' : profitFactor >= 1 ? 'bg-yellow-600 dark:bg-yellow-500' : 'bg-red-600 dark:bg-red-500'
-      }
-    ];
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {summaryCards.map((card, index) => (
-          <div
-            key={index}
-            className={`${card.bgColor} rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 transform hover:-translate-y-1`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                {card.label}
-              </span>
-              <div className={`p-2 rounded-lg ${card.iconBg}`}>
-                <card.icon className="h-4 w-4 text-white" />
-              </div>
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Welcome back, {user.displayName}!
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Track your trading performance and improve your strategy
+              </p>
             </div>
-            <div className="flex items-baseline space-x-2">
-              <span className={`text-xl font-bold ${card.color}`}>
-                {card.value}
-              </span>
-            </div>
+            <button
+              onClick={() => setShowAddTradeModal(true)}
+              className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Add Trade</span>
+            </button>
           </div>
-        ))}
-      </div>
-    );
-  };
 
-  const DetailedMetrics = () => {
-    const formatCurrency = (amount: number | null | undefined) => {
-      if (amount === null || amount === undefined || isNaN(amount)) {
-        return '$0.00';
-      }
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2
-      }).format(amount);
-    };
-
-    const detailedStats = [
-      {
-        label: 'Current Balance',
-        value: formatCurrency(accountBalance?.currentBalance || 0),
-        color: 'text-blue-600 dark:text-blue-400'
-      },
-      {
-        label: 'Total Return',
-        value: `${accountBalance?.totalReturnPercent >= 0 ? '+' : ''}${(accountBalance?.totalReturnPercent || 0).toFixed(2)}%`,
-        color: (accountBalance?.totalReturnPercent || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-      },
-      {
-        label: 'Average Winner',
-        value: formatCurrency(stats.avgWin),
-        color: 'text-green-600 dark:text-green-400'
-      },
-      {
-        label: 'Average Loser',
-        value: formatCurrency(Math.abs(stats.avgLoss)),
-        color: 'text-red-600 dark:text-red-400'
-      },
-      {
-        label: 'Largest Profit',
-        value: formatCurrency(stats.largestWin),
-        color: 'text-green-600 dark:text-green-400'
-      }
-    ];
-
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {detailedStats.map((stat, index) => (
-          <div key={index} className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-sm transition-shadow">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-              {stat.label}
-            </div>
-            <div className={`text-lg font-semibold ${stat.color}`}>
-              {stat.value}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return (
-          <div className="space-y-6">
-            {/* 🔷 1. GRADIENT SECTION (OVERVIEW) - TOP */}
-            {accountBalance && (
+          {/* Account Balance Card - TOP */}
+          {accountBalance && (
+            <div className="mb-8">
               <AccountBalanceCard
                 startingBalance={accountBalance.startingBalance}
                 currentBalance={accountBalance.currentBalance}
@@ -304,409 +61,94 @@ const Dashboard: React.FC = () => {
                 totalReturn={accountBalance.totalReturnPercent}
                 onUpdateBalance={updateStartingBalance}
               />
-            )}
+            </div>
+          )}
 
-            {/* 🔲 2. SUMMARY CARDS - MIDDLE */}
-            <SummaryCards />
+          {/* Stats Cards */}
+          <div className="mb-8">
+            <StatsCards stats={stats} />
+          </div>
 
-            {/* 📊 3. DETAILED STATS - BELOW SUMMARY */}
-            <DetailedMetrics />
-
-            {/* Performance Chart */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Daily Net Cumulative P&L
+          {/* Charts and Performance */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            <div className="xl:col-span-2">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Performance Chart
                 </h2>
-                <div className="flex items-center space-x-2">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Balance: <span className="font-medium text-gray-900 dark:text-white">
-                      ${accountBalance?.currentBalance?.toLocaleString() || '0'}
-                    </span>
-                  </div>
-                </div>
+                <PerformanceChart trades={trades} />
               </div>
-              <AdvancedPerformanceChart trades={trades} />
             </div>
-
-            {/* Recent Trades */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Trades</h3>
-              </div>
-              <TradeTable
-                trades={trades.slice(0, 5)} // Show only 5 recent trades
-                onUpdateTrade={updateTrade}
-                onDeleteTrade={deleteTrade}
-                loading={loading}
-                error={error}
-              />
-            </div>
-          </div>
-        );
-
-      case 'executed-trades':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                    <Activity className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                    Executed Trades
-                  </h3>
-                  <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm px-3 py-1 rounded-full font-medium">
-                    {trades.filter(t => t.status === 'closed').length} Completed
-                  </span>
-                </div>
-              </div>
-              <TradeTable
-                trades={trades.filter(trade => trade.status === 'closed')}
-                onUpdateTrade={updateTrade}
-                onDeleteTrade={deleteTrade}
-                loading={loading}
-                error={error}
-              />
-            </div>
-          </div>
-        );
-
-      case 'missed-trades':
-        return (
-          <div className="space-y-6">
-            {missedTrades.length > 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-orange-50 dark:bg-orange-900/20">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                      <Target className="h-5 w-5 mr-2 text-orange-600 dark:text-orange-400" />
-                      Missed Trades
-                    </h3>
-                    <span className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-sm px-3 py-1 rounded-full font-medium">
-                      {missedTrades.length} Missed
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    Analyze missed opportunities to improve your trading strategy
-                  </p>
-                </div>
-                <TradeTable
-                  trades={missedTrades}
-                  onUpdateTrade={updateTrade}
-                  onDeleteTrade={deleteTrade}
-                  loading={loading}
-                  error={error}
-                />
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <Target className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">No Missed Trades</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                  Track trades you missed to improve your strategy. Add "missed" in notes or tags to categorize them.
-                </p>
-                <div className="space-y-4">
-                  <button
-                    onClick={handleAddTradeClick}
-                    className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
-                  >
-                    Add Missed Trade
-                  </button>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    💡 Tip: Use tags like "missed", "opportunity" or add "missed" in trade notes
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'notes':
-        return (
-          <div className="space-y-6">
-            {tradesWithNotes.length > 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                      <FileText className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                      Trading Notes
-                    </h3>
-                    <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full font-medium">
-                      {tradesWithNotes.length} Notes
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    All your trading observations and insights
-                  </p>
-                </div>
-                
-                <div className="p-6 space-y-6">
-                  {tradesWithNotes.map((trade) => (
-                    <div key={trade.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <span className="font-semibold text-lg text-gray-900 dark:text-white">{trade.symbol}</span>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            trade.type === 'long' 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
-                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                          }`}>
-                            {trade.type.toUpperCase()}
-                          </span>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            trade.status === 'open' 
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' 
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
-                            {trade.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(trade.createdAt).toLocaleDateString()}
-                          </div>
-                          {trade.pnl !== null && trade.pnl !== undefined && (
-                            <div className={`text-sm font-medium ${
-                              trade.pnl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                            }`}>
-                              {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Notes:</h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{trade.notes}</p>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span>Entry: ${trade.entryPrice}</span>
-                          {trade.exitPrice && <span>Exit: ${trade.exitPrice}</span>}
-                          <span>Qty: {trade.quantity}</span>
-                        </div>
-                        
-                        {trade.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {trade.tags.map((tag, index) => (
-                              <span key={index} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-                <FileText className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">No Trading Notes</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                  Start adding notes to your trades to track your thoughts, observations, and lessons learned.
-                </p>
-                <div className="space-y-4">
-                  <button
-                    onClick={handleAddTradeClick}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Add Trade with Notes
-                  </button>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    💡 Tip: Detailed notes help improve your trading performance over time
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'playbook-rules':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-              <div className="text-center mb-6">
-                <BookOpen className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Trading Rules & Playbooks</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {playbooks.length > 0 
-                    ? `You have ${playbooks.length} playbook${playbooks.length > 1 ? 's' : ''} created`
-                    : 'Create your first trading playbook to define your strategy rules'
-                  }
-                </p>
-              </div>
-              
-              {playbooks.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {playbooks.map((playbook) => (
-                    <div key={playbook.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">{playbook.title}</h4>
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                          {playbook.strategy}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{playbook.description}</p>
-                      
-                      {playbook.entryRules && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Entry Rules:</h5>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 bg-green-50 dark:bg-green-900/20 p-3 rounded">
-                            {playbook.entryRules}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {playbook.exitRules && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Exit Rules:</h5>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 bg-red-50 dark:bg-red-900/20 p-3 rounded">
-                            {playbook.exitRules}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {playbook.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-4">
-                          {playbook.tags.map((tag, index) => (
-                            <span key={index} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center">
-                  <button
-                    onClick={() => window.location.href = '/playbooks'}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create First Playbook
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dashboard-container">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Playbook /</span>
-                <span className="text-sm text-blue-600 dark:text-blue-400">
-                  {playbooks.length > 0 ? playbooks[0].title : 'Opening'}
-                </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">/ {tabs.find(t => t.id === activeTab)?.label}</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Trading Dashboard
-              </h1>
-              {accountBalance && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Account Balance: <span className="font-medium">${accountBalance.currentBalance.toLocaleString()}</span>
-                  {accountBalance.totalPnL !== 0 && (
-                    <span className={`ml-2 ${accountBalance.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ({accountBalance.totalPnL >= 0 ? '+' : ''}${accountBalance.totalPnL.toFixed(2)})
-                    </span>
-                  )}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-              <button
-                onClick={handleAddTradeClick}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 btn-hover-lift"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Trade</span>
-              </button>
-              <button 
-                onClick={handleBalanceClick}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors btn-hover-lift"
-                title="Update starting balance"
-              >
-                <Settings className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-            <nav className="flex space-x-8 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <tab.icon className="h-4 w-4" />
-                  <span>{tab.label}</span>
-                  {tab.count !== null && tab.count > 0 && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      activeTab === tab.id
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            {/* Main Content */}
-            <div className="xl:col-span-3">
-              {renderTabContent()}
-            </div>
-
-            {/* Sidebar */}
+            
             <div className="xl:col-span-1">
-              <PlaybookSidebar 
-                playbooks={playbooks} 
-                stats={stats}
-                accountBalance={accountBalance}
-                onUpdateBalance={updateStartingBalance}
-              />
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Quick Stats
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
+                        <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Best Day</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          ${stats.largestWin.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                        <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Avg Win</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          ${stats.avgWin.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                        <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Profit Factor</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {stats.profitFactor.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* CRITICAL: Modals with proper positioning */}
+          {/* Trades Table */}
+          <div>
+            <TradeTable
+              trades={trades}
+              onUpdateTrade={updateTrade}
+              onDeleteTrade={deleteTrade}
+              loading={loading}
+              error={error}
+            />
+          </div>
+
+          {/* Add Trade Modal */}
           {showAddTradeModal && (
             <AddTradeModal
               onClose={() => setShowAddTradeModal(false)}
               onSubmit={addTrade}
               userId={user.id}
-            />
-          )}
-
-          {showBalanceModal && (
-            <StartingBalanceModal
-              onClose={() => setShowBalanceModal(false)}
-              onSubmit={needsSetup ? handleCreateBalance : updateStartingBalance}
-              isFirstTime={needsSetup}
             />
           )}
         </div>
