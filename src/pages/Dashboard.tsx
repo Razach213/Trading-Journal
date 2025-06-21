@@ -132,12 +132,170 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // REARRANGED LAYOUT COMPONENTS
+  const SummaryCards = () => {
+    const netPnL = accountBalance?.totalPnL || stats.totalPnL || 0;
+    const winRate = stats.winRate || 0;
+    const profitFactor = stats.profitFactor || 0;
+    const totalTrades = stats.totalTrades || 0;
+    const startingBalance = accountBalance?.startingBalance || 0;
+
+    const formatCurrency = (amount: number | null | undefined) => {
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        return '$0.00';
+      }
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+      }).format(amount);
+    };
+
+    const formatPercentage = (value: number | null | undefined) => {
+      if (value === null || value === undefined || isNaN(value)) {
+        return '0.0%';
+      }
+      return `${value.toFixed(1)}%`;
+    };
+
+    const formatNumber = (value: number | null | undefined, decimals: number = 2) => {
+      if (value === null || value === undefined || isNaN(value)) {
+        return '0.00';
+      }
+      return value.toFixed(decimals);
+    };
+
+    const summaryCards = [
+      {
+        label: 'Starting Balance',
+        value: formatCurrency(startingBalance),
+        icon: DollarSign,
+        color: 'text-blue-600 dark:text-blue-400',
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+        iconBg: 'bg-blue-600 dark:bg-blue-500'
+      },
+      {
+        label: 'Net P&L',
+        value: formatCurrency(netPnL),
+        icon: TrendingUp,
+        color: netPnL >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
+        bgColor: netPnL >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20',
+        iconBg: netPnL >= 0 ? 'bg-green-600 dark:bg-green-500' : 'bg-red-600 dark:bg-red-500'
+      },
+      {
+        label: 'Trades',
+        value: totalTrades.toString(),
+        icon: BarChart3,
+        color: 'text-purple-600 dark:text-purple-400',
+        bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+        iconBg: 'bg-purple-600 dark:bg-purple-500'
+      },
+      {
+        label: 'Win Rate %',
+        value: formatPercentage(winRate),
+        icon: Target,
+        color: winRate >= 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400',
+        bgColor: winRate >= 50 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20',
+        iconBg: winRate >= 50 ? 'bg-green-600 dark:bg-green-500' : 'bg-yellow-600 dark:bg-yellow-500'
+      },
+      {
+        label: 'Profit Factor',
+        value: formatNumber(profitFactor, 2),
+        icon: Award,
+        color: profitFactor >= 1.5 ? 'text-green-600 dark:text-green-400' : profitFactor >= 1 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400',
+        bgColor: profitFactor >= 1.5 ? 'bg-green-50 dark:bg-green-900/20' : profitFactor >= 1 ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-red-50 dark:bg-red-900/20',
+        iconBg: profitFactor >= 1.5 ? 'bg-green-600 dark:bg-green-500' : profitFactor >= 1 ? 'bg-yellow-600 dark:bg-yellow-500' : 'bg-red-600 dark:bg-red-500'
+      }
+    ];
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {summaryCards.map((card, index) => (
+          <div
+            key={index}
+            className={`${card.bgColor} rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 transform hover:-translate-y-1`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                {card.label}
+              </span>
+              <div className={`p-2 rounded-lg ${card.iconBg}`}>
+                <card.icon className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <div className="flex items-baseline space-x-2">
+              <span className={`text-xl font-bold ${card.color}`}>
+                {card.value}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const DetailedMetrics = () => {
+    const formatCurrency = (amount: number | null | undefined) => {
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        return '$0.00';
+      }
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+      }).format(amount);
+    };
+
+    const detailedStats = [
+      {
+        label: 'Current Balance',
+        value: formatCurrency(accountBalance?.currentBalance || 0),
+        color: 'text-blue-600 dark:text-blue-400'
+      },
+      {
+        label: 'Total Return',
+        value: `${accountBalance?.totalReturnPercent >= 0 ? '+' : ''}${(accountBalance?.totalReturnPercent || 0).toFixed(2)}%`,
+        color: (accountBalance?.totalReturnPercent || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+      },
+      {
+        label: 'Average Winner',
+        value: formatCurrency(stats.avgWin),
+        color: 'text-green-600 dark:text-green-400'
+      },
+      {
+        label: 'Average Loser',
+        value: formatCurrency(Math.abs(stats.avgLoss)),
+        color: 'text-red-600 dark:text-red-400'
+      },
+      {
+        label: 'Largest Profit',
+        value: formatCurrency(stats.largestWin),
+        color: 'text-green-600 dark:text-green-400'
+      }
+    ];
+
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {detailedStats.map((stat, index) => (
+          <div key={index} className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-sm transition-shadow">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              {stat.label}
+            </div>
+            <div className={`text-lg font-semibold ${stat.color}`}>
+              {stat.value}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
         return (
           <div className="space-y-6">
-            {/* MOVED TO TOP: Account Balance Card */}
+            {/* 🔷 1. GRADIENT SECTION (OVERVIEW) - TOP */}
             {accountBalance && (
               <AccountBalanceCard
                 startingBalance={accountBalance.startingBalance}
@@ -148,12 +306,11 @@ const Dashboard: React.FC = () => {
               />
             )}
 
-            {/* Stats Grid */}
-            <DetailedStatsGrid 
-              stats={stats} 
-              accountBalance={accountBalance}
-              missedTradesCount={missedTrades.length}
-            />
+            {/* 🔲 2. SUMMARY CARDS - MIDDLE */}
+            <SummaryCards />
+
+            {/* 📊 3. DETAILED STATS - BELOW SUMMARY */}
+            <DetailedMetrics />
 
             {/* Performance Chart */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
