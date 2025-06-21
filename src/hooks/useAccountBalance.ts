@@ -8,13 +8,11 @@ export const useAccountBalance = (userId: string | undefined) => {
   const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [needsSetup, setNeedsSetup] = useState(false);
 
   useEffect(() => {
     if (!userId) {
       setLoading(false);
       setAccountBalance(null);
-      setNeedsSetup(false);
       return;
     }
 
@@ -24,25 +22,33 @@ export const useAccountBalance = (userId: string | undefined) => {
     // Set up real-time listener for account balance
     const unsubscribe = onSnapshot(
       doc(db, 'accountBalances', userId),
-      (doc) => {
+      async (doc) => {
         try {
           if (doc.exists()) {
             const data = doc.data();
             const balance: AccountBalance = {
               id: doc.id,
               userId: data.userId,
-              startingBalance: data.startingBalance || 10000,
-              currentBalance: data.currentBalance || data.startingBalance || 10000,
+              startingBalance: data.startingBalance || 100000, // Default $100,000
+              currentBalance: data.currentBalance || data.startingBalance || 100000,
               totalPnL: data.totalPnL || 0,
               totalReturnPercent: data.totalReturnPercent || 0,
               lastUpdated: data.lastUpdated?.toDate() || new Date()
             };
             setAccountBalance(balance);
-            setNeedsSetup(false);
           } else {
-            // No account balance found - user needs to set it up
-            setAccountBalance(null);
-            setNeedsSetup(true);
+            // CRITICAL: Auto-create default account balance with $100,000
+            const defaultBalance: Omit<AccountBalance, 'id'> = {
+              userId,
+              startingBalance: 100000, // Default $100,000
+              currentBalance: 100000,
+              totalPnL: 0,
+              totalReturnPercent: 0,
+              lastUpdated: new Date()
+            };
+            
+            await setDoc(doc(db, 'accountBalances', userId), defaultBalance);
+            setAccountBalance({ ...defaultBalance, id: userId });
           }
           setError(null);
         } catch (err) {
@@ -61,29 +67,6 @@ export const useAccountBalance = (userId: string | undefined) => {
 
     return unsubscribe;
   }, [userId]);
-
-  const createAccountBalance = async (startingBalance: number) => {
-    if (!userId) throw new Error('User ID is required');
-
-    try {
-      const newBalance: Omit<AccountBalance, 'id'> = {
-        userId,
-        startingBalance,
-        currentBalance: startingBalance,
-        totalPnL: 0,
-        totalReturnPercent: 0,
-        lastUpdated: new Date()
-      };
-
-      await setDoc(doc(db, 'accountBalances', userId), newBalance);
-      setNeedsSetup(false);
-      toast.success('Account balance set successfully!');
-    } catch (error) {
-      console.error('Error creating account balance:', error);
-      toast.error('Failed to set account balance');
-      throw error;
-    }
-  };
 
   const updateStartingBalance = async (newStartingBalance: number): Promise<void> => {
     if (!userId || !accountBalance) {
@@ -173,8 +156,6 @@ export const useAccountBalance = (userId: string | undefined) => {
     accountBalance,
     loading,
     error,
-    needsSetup,
-    createAccountBalance,
     updateStartingBalance,
     updateBalanceFromTrade,
     recalculateBalance

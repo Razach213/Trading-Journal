@@ -8,13 +8,12 @@ import StatsCards from '../components/Dashboard/StatsCards';
 import TradeTable from '../components/Dashboard/TradeTable';
 import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
-import StartingBalanceModal from '../components/Dashboard/StartingBalanceModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
-  const { accountBalance, loading: balanceLoading, needsSetup, createAccountBalance, updateStartingBalance } = useAccountBalance(user?.id);
+  const { accountBalance, loading: balanceLoading, updateStartingBalance } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
 
   if (!user) {
@@ -167,15 +166,6 @@ const Dashboard: React.FC = () => {
               onClose={() => setShowAddTradeModal(false)}
               onSubmit={addTrade}
               userId={user.id}
-            />
-          )}
-
-          {/* Starting Balance Modal - Shows for new users */}
-          {needsSetup && (
-            <StartingBalanceModal
-              onClose={() => {}} // Can't close on first time
-              onSubmit={createAccountBalance}
-              isFirstTime={true}
             />
           )}
         </div>
