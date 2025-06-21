@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { DollarSign, X, TrendingUp, Target, Award, Calculator, PiggyBank, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -22,6 +22,8 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
@@ -30,6 +32,54 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
   });
 
   const watchedBalance = watch('startingBalance');
+
+  // Auto-focus first input when modal opens
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (firstInputRef.current) {
+        firstInputRef.current.focus();
+        firstInputRef.current.select();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle escape key to close modal (only if not first time)
+  useEffect(() => {
+    if (!isFirstTime) {
+      const handleEscape = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          onClose();
+        }
+      };
+
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [onClose, isFirstTime]);
+
+  // Handle click outside modal to close (only if not first time)
+  useEffect(() => {
+    if (!isFirstTime) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+          onClose();
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [onClose, isFirstTime]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const onFormSubmit = async (data: BalanceFormData) => {
     setIsLoading(true);
@@ -67,8 +117,11 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div 
+        ref={modalRef}
+        className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full border border-gray-200 dark:border-gray-700 shadow-2xl animate-fade-in-scale"
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 border-b border-gray-200 dark:border-gray-700 rounded-t-xl">
           <div className="flex items-center justify-between">
@@ -129,6 +182,7 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
                 <span className="text-gray-500 dark:text-gray-400 text-xl font-bold">$</span>
               </div>
               <input
+                ref={firstInputRef}
                 {...register('startingBalance', { 
                   required: 'Starting balance is required',
                   min: { value: 100, message: 'Minimum balance is $100' },

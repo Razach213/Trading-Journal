@@ -378,3 +378,69 @@
     background-position: 200% 0;
   }
 }
+
+/* Modal specific styles */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Ensure modals are above everything */
+.modal-container {
+  z-index: 9999;
+}
+
+/* Smooth modal animations */
+.modal-enter {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.modal-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.modal-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-exit-active {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+/* Focus trap for modals */
+.modal-focus-trap {
+  position: relative;
+}
+
+.modal-focus-trap:focus {
+  outline: none;
+}
+
+/* Prevent text selection on buttons */
+button {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Improve form input focus states */
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Better mobile touch targets */
+@media (max-width: 768px) {
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

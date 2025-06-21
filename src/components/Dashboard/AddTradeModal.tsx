@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { Trade } from '../../types';
@@ -30,6 +30,9 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
   userId, 
   initialData 
 }) => {
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<TradeFormData>({
     defaultValues: {
       symbol: initialData?.symbol || '',
@@ -49,6 +52,50 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
       tags: initialData?.tags?.join(', ') || ''
     }
   });
+
+  // Auto-focus first input when modal opens
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (firstInputRef.current) {
+        firstInputRef.current.focus();
+        firstInputRef.current.select();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  // Handle click outside modal to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const status = watch('status');
   const entryPrice = watch('entryPrice');
@@ -94,9 +141,12 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
   const quickSymbols = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'SPY'];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div 
+        ref={modalRef}
+        className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl animate-fade-in-scale"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 sticky top-0 z-10">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {initialData ? 'Edit Trade' : 'Add New Trade'}
           </h2>
@@ -129,6 +179,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
               </div>
             </div>
             <input
+              ref={firstInputRef}
               type="text"
               {...register('symbol', { 
                 required: 'Symbol is required',
@@ -368,7 +419,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-gray-800">
             <button
               type="button"
               onClick={onClose}
