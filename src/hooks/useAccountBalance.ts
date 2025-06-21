@@ -29,7 +29,7 @@ export const useAccountBalance = (userId: string | undefined) => {
             const balance: AccountBalance = {
               id: doc.id,
               userId: data.userId,
-              startingBalance: data.startingBalance || 0, // CRITICAL: 0 means needs setup
+              startingBalance: data.startingBalance || 0,
               currentBalance: data.currentBalance || data.startingBalance || 0,
               totalPnL: data.totalPnL || 0,
               totalReturnPercent: data.totalReturnPercent || 0,
@@ -47,8 +47,14 @@ export const useAccountBalance = (userId: string | undefined) => {
               lastUpdated: new Date()
             };
             
-            await setDoc(doc(db, 'accountBalances', userId), defaultBalance);
-            setAccountBalance({ ...defaultBalance, id: userId });
+            try {
+              await setDoc(doc(db, 'accountBalances', userId), defaultBalance);
+              setAccountBalance({ ...defaultBalance, id: userId });
+            } catch (createError) {
+              console.error('Error creating account balance:', createError);
+              // Still set the balance locally so UI can work
+              setAccountBalance({ ...defaultBalance, id: userId });
+            }
           }
           setError(null);
         } catch (err) {
@@ -61,7 +67,15 @@ export const useAccountBalance = (userId: string | undefined) => {
       (err) => {
         console.error('Error fetching account balance:', err);
         setLoading(false);
-        setError('Failed to load account balance');
+        
+        // CRITICAL: Better error handling
+        if (err.code === 'permission-denied') {
+          setError('Permission denied. Please check your authentication.');
+        } else if (err.code === 'unavailable') {
+          setError('Service temporarily unavailable. Please check your internet connection.');
+        } else {
+          setError('Failed to load account balance. Please try refreshing the page.');
+        }
       }
     );
 
@@ -73,11 +87,16 @@ export const useAccountBalance = (userId: string | undefined) => {
       throw new Error('User ID is required');
     }
 
+    if (!newStartingBalance || newStartingBalance <= 0) {
+      throw new Error('Starting balance must be greater than 0');
+    }
+
     try {
       // CRITICAL: For new users, set both starting and current balance
       const isFirstTimeSetup = !accountBalance || accountBalance.startingBalance === 0;
       
       const updatedBalance = {
+        userId,
         startingBalance: newStartingBalance,
         currentBalance: isFirstTimeSetup ? newStartingBalance : (accountBalance?.currentBalance || newStartingBalance),
         totalPnL: isFirstTimeSetup ? 0 : (accountBalance?.totalPnL || 0),
@@ -85,16 +104,32 @@ export const useAccountBalance = (userId: string | undefined) => {
         lastUpdated: new Date()
       };
 
-      await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
+      // CRITICAL: Use setDoc instead of updateDoc for better reliability
+      await setDoc(doc(db, 'accountBalances', userId), updatedBalance, { merge: true });
+      
+      // Update local state immediately for better UX
+      setAccountBalance(prev => ({
+        ...prev,
+        id: userId,
+        ...updatedBalance
+      }));
       
       if (isFirstTimeSetup) {
         toast.success('🎉 Account setup complete! Ready to start trading!');
       } else {
         toast.success('Starting balance updated successfully!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating starting balance:', error);
-      toast.error('Failed to update starting balance');
+      
+      // CRITICAL: Better error messages
+      if (error.code === 'permission-denied') {
+        toast.error('Permission denied. Please sign in again.');
+      } else if (error.code === 'unavailable') {
+        toast.error('Service unavailable. Please check your internet connection.');
+      } else {
+        toast.error('Failed to update starting balance. Please try again.');
+      }
       throw error;
     }
   };

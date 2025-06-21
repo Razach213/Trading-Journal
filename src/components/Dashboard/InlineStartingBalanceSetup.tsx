@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, Calculator, TrendingUp, BarChart3 } from 'lucide-react';
+import { DollarSign, Calculator, TrendingUp, BarChart3, AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -17,6 +17,7 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
   defaultValue = 10000 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
       startingBalance: defaultValue
@@ -26,13 +27,29 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
   const watchedBalance = watch('startingBalance');
 
   const onFormSubmit = async (data: BalanceFormData) => {
+    if (!data.startingBalance || data.startingBalance <= 0) {
+      toast.error('Please enter a valid starting balance');
+      return;
+    }
+
     setIsLoading(true);
+    setError(null);
+    
     try {
       await onSubmit(data.startingBalance);
-      toast.success('Starting balance set successfully!');
-    } catch (error) {
+      // Success message is handled in the hook
+    } catch (error: any) {
       console.error('Error setting balance:', error);
-      toast.error('Failed to set starting balance');
+      setError(error.message || 'Failed to set starting balance');
+      
+      // Show user-friendly error message
+      if (error.message?.includes('permission')) {
+        toast.error('Please sign in again to continue');
+      } else if (error.message?.includes('network') || error.message?.includes('unavailable')) {
+        toast.error('Please check your internet connection and try again');
+      } else {
+        toast.error('Failed to set starting balance. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +83,17 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
         </p>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-red-300" />
+            <span className="text-red-200 font-medium">Setup Error</span>
+          </div>
+          <p className="text-red-100 text-sm mt-1">{error}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
         {/* Balance Input Section */}
         <div className="bg-white/10 rounded-lg p-6 backdrop-blur-sm">
@@ -92,6 +120,7 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
                   className="w-full pl-12 pr-4 py-3 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-blue-200 dark:placeholder-blue-300 text-lg font-bold"
                   placeholder="10,000.00"
                   autoFocus
+                  disabled={isLoading}
                 />
               </div>
               {errors.startingBalance && (
