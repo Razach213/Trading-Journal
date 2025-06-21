@@ -291,28 +291,6 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
                 </div>
               )}
 
-              {/* Information Cards */}
-              <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <Target className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                  <div className="text-xs text-green-700 dark:text-green-300">
-                    <span className="font-medium">Accurate P&L Tracking:</span> Calculate real profit and loss from your trades
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                  <Award className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                  <div className="text-xs text-purple-700 dark:text-purple-300">
-                    <span className="font-medium">Performance Metrics:</span> Win rate, profit factor, and return calculations
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                  <div className="text-xs text-blue-700 dark:text-blue-300">
-                    <span className="font-medium">Growth Tracking:</span> Monitor your account growth over time
-                  </div>
-                </div>
-              </div>
-
               {/* Action Buttons */}
               <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-gray-800">
                 {!isFirstTime && (
