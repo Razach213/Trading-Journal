@@ -379,72 +379,6 @@
   }
 }
 
-/* Modal specific styles - CRITICAL FIXES */
-.modal-backdrop {
-  backdrop-filter: blur(4px);
-}
-
-/* Ensure modals are above everything */
-.modal-container {
-  z-index: 9999;
-}
-
-/* Smooth modal animations */
-.modal-enter {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-.modal-enter-active {
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-}
-
-.modal-exit {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.modal-exit-active {
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-}
-
-/* Focus trap for modals */
-.modal-focus-trap {
-  position: relative;
-}
-
-.modal-focus-trap:focus {
-  outline: none;
-}
-
-/* Prevent text selection on buttons */
-button {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* Improve form input focus states */
-input:focus,
-textarea:focus,
-select:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Better mobile touch targets */
-@media (max-width: 768px) {
-  button,
-  .clickable {
-    min-height: 44px;
-    min-width: 44px;
-  }
-}
-
 /* CRITICAL: Modal positioning and scrolling fixes */
 .modal-overlay {
   position: fixed;
@@ -454,21 +388,21 @@ select:focus {
   bottom: 0;
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 1rem;
   overflow-y: auto;
-  /* IMPORTANT: Allow scrolling within the overlay */
   scroll-behavior: smooth;
 }
 
 .modal-content {
   position: relative;
-  max-height: 95vh;
+  max-height: calc(100vh - 2rem);
   overflow-y: auto;
   width: 100%;
   max-width: 100%;
-  /* IMPORTANT: Ensure content can scroll */
+  margin-top: 2rem;
+  margin-bottom: 2rem;
   scroll-behavior: smooth;
 }
 
@@ -567,32 +501,128 @@ html {
   scroll-margin-top: 2rem;
 }
 
-/* Ensure modals always appear in viewport center */
-.modal-centered {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 100vh !important;
-  padding: 1rem !important;
+/* CRITICAL: Modal specific fixes for button accessibility */
+.modal-form-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
-/* Fix for any potential z-index conflicts */
-.modal-wrapper {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 9999 !important;
-  overflow-y: auto !important;
-  scroll-behavior: smooth !important;
+.modal-form-content {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
-/* Ensure modal content is always accessible */
-.modal-inner {
-  position: relative !important;
-  margin: auto !important;
-  max-height: calc(100vh - 2rem) !important;
-  overflow-y: auto !important;
-  scroll-behavior: smooth !important;
+.modal-form-actions {
+  position: sticky;
+  bottom: 0;
+  background: inherit;
+  z-index: 10;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: auto;
+}
+
+/* Ensure modal buttons are always accessible */
+.modal-buttons-sticky {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  z-index: 20;
+  padding: 1.5rem;
+  margin: 0 -1.5rem -1.5rem -1.5rem;
+}
+
+.dark .modal-buttons-sticky {
+  background: #1f2937;
+  border-top-color: #374151;
+}
+
+/* Enhanced scrollbar for modals */
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .modal-scrollbar::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark .modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Prevent text selection on buttons */
+button {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Improve form input focus states */
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Better mobile touch targets */
+@media (max-width: 768px) {
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile modal adjustments */
+  .modal-content {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .modal-form-content {
+    max-height: calc(100vh - 200px);
+  }
+}
+
+/* Ensure proper focus management in modals */
+.modal-focus-trap {
+  position: relative;
+}
+
+.modal-focus-trap:focus {
+  outline: none;
+}
+
+/* Smooth transitions for all interactive elements */
+.interactive-element {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-element:hover {
+  transform: translateY(-1px);
+}
+
+.interactive-element:active {
+  transform: translateY(0);
 }
