@@ -4,6 +4,9 @@ import { db } from '../lib/firebase';
 import { AccountBalance } from '../types';
 import toast from 'react-hot-toast';
 
+// Demo mode flag
+const isDemoMode = !db || typeof db.collection !== 'function';
+
 export const useAccountBalance = (userId: string | undefined) => {
   const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +16,46 @@ export const useAccountBalance = (userId: string | undefined) => {
     if (!userId) {
       setLoading(false);
       setAccountBalance(null);
+      return;
+    }
+
+    if (isDemoMode) {
+      // Demo mode - use localStorage
+      const demoBalance = localStorage.getItem(`demoBalance_${userId}`);
+      if (demoBalance) {
+        try {
+          const balance = JSON.parse(demoBalance);
+          setAccountBalance(balance);
+        } catch (error) {
+          console.error('Error loading demo balance:', error);
+          // Create default demo balance
+          const defaultBalance: AccountBalance = {
+            id: userId,
+            userId,
+            startingBalance: 0,
+            currentBalance: 0,
+            totalPnL: 0,
+            totalReturnPercent: 0,
+            lastUpdated: new Date()
+          };
+          setAccountBalance(defaultBalance);
+          localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
+        }
+      } else {
+        // Create default demo balance
+        const defaultBalance: AccountBalance = {
+          id: userId,
+          userId,
+          startingBalance: 0,
+          currentBalance: 0,
+          totalPnL: 0,
+          totalReturnPercent: 0,
+          lastUpdated: new Date()
+        };
+        setAccountBalance(defaultBalance);
+        localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
+      }
+      setLoading(false);
       return;
     }
 
@@ -37,10 +80,10 @@ export const useAccountBalance = (userId: string | undefined) => {
             };
             setAccountBalance(balance);
           } else {
-            // CRITICAL: Create empty balance record - user needs to set starting balance
+            // Create empty balance record
             const defaultBalance: Omit<AccountBalance, 'id'> = {
               userId,
-              startingBalance: 0, // CRITICAL: 0 triggers inline setup
+              startingBalance: 0,
               currentBalance: 0,
               totalPnL: 0,
               totalReturnPercent: 0,
@@ -52,7 +95,6 @@ export const useAccountBalance = (userId: string | undefined) => {
               setAccountBalance({ ...defaultBalance, id: userId });
             } catch (createError) {
               console.error('Error creating account balance:', createError);
-              // Still set the balance locally so UI can work
               setAccountBalance({ ...defaultBalance, id: userId });
             }
           }
@@ -68,7 +110,6 @@ export const useAccountBalance = (userId: string | undefined) => {
         console.error('Error fetching account balance:', err);
         setLoading(false);
         
-        // CRITICAL: Better error handling
         if (err.code === 'permission-denied') {
           setError('Permission denied. Please check your authentication.');
         } else if (err.code === 'unavailable') {
@@ -92,7 +133,6 @@ export const useAccountBalance = (userId: string | undefined) => {
     }
 
     try {
-      // CRITICAL: For new users, set both starting and current balance
       const isFirstTimeSetup = !accountBalance || accountBalance.startingBalance === 0;
       
       const updatedBalance = {
@@ -104,10 +144,23 @@ export const useAccountBalance = (userId: string | undefined) => {
         lastUpdated: new Date()
       };
 
-      // CRITICAL: Use setDoc instead of updateDoc for better reliability
+      if (isDemoMode) {
+        // Demo mode - save to localStorage
+        const balanceWithId = { ...updatedBalance, id: userId };
+        setAccountBalance(balanceWithId);
+        localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(balanceWithId));
+        
+        if (isFirstTimeSetup) {
+          toast.success('🎉 Demo account setup complete! (Data saved locally)');
+        } else {
+          toast.success('Starting balance updated successfully! (Demo Mode)');
+        }
+        return;
+      }
+
+      // Real Firebase mode
       await setDoc(doc(db, 'accountBalances', userId), updatedBalance, { merge: true });
       
-      // Update local state immediately for better UX
       setAccountBalance(prev => ({
         ...prev,
         id: userId,
@@ -122,7 +175,6 @@ export const useAccountBalance = (userId: string | undefined) => {
     } catch (error: any) {
       console.error('Error updating starting balance:', error);
       
-      // CRITICAL: Better error messages
       if (error.code === 'permission-denied') {
         toast.error('Permission denied. Please sign in again.');
       } else if (error.code === 'unavailable') {
@@ -140,7 +192,6 @@ export const useAccountBalance = (userId: string | undefined) => {
     }
 
     try {
-      // CRITICAL: Calculate new values correctly
       const newTotalPnL = accountBalance.totalPnL + tradePnL;
       const newCurrentBalance = accountBalance.startingBalance + newTotalPnL;
       const newReturnPercent = accountBalance.startingBalance > 0 
@@ -154,8 +205,15 @@ export const useAccountBalance = (userId: string | undefined) => {
         lastUpdated: new Date()
       };
 
+      if (isDemoMode) {
+        // Demo mode - update localStorage
+        const newBalance = { ...accountBalance, ...updatedBalance };
+        setAccountBalance(newBalance);
+        localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(newBalance));
+        return newCurrentBalance;
+      }
+
       await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
-      
       return newCurrentBalance;
     } catch (error) {
       console.error('Error updating balance from trade:', error);
@@ -167,7 +225,6 @@ export const useAccountBalance = (userId: string | undefined) => {
     if (!userId || !accountBalance) return;
 
     try {
-      // CRITICAL: Recalculate total P&L from all closed trades
       const totalPnL = allClosedTrades.reduce((sum, trade) => {
         return sum + (trade.pnl || 0);
       }, 0);
@@ -184,6 +241,14 @@ export const useAccountBalance = (userId: string | undefined) => {
         lastUpdated: new Date()
       };
 
+      if (isDemoMode) {
+        // Demo mode - update localStorage
+        const newBalance = { ...accountBalance, ...updatedBalance };
+        setAccountBalance(newBalance);
+        localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(newBalance));
+        return;
+      }
+
       await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
     } catch (error) {
       console.error('Error recalculating balance:', error);
@@ -197,6 +262,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     error,
     updateStartingBalance,
     updateBalanceFromTrade,
-    recalculateBalance
+    recalculateBalance,
+    isDemoMode
   };
 };

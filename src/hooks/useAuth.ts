@@ -13,14 +13,16 @@ import { auth, db } from '../lib/firebase';
 import { User } from '../types';
 import toast from 'react-hot-toast';
 
+// Demo mode flag
+const isDemoMode = !auth || !db || typeof auth.onAuthStateChanged !== 'function';
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if Firebase is properly configured
-    if (!auth || typeof auth.onAuthStateChanged !== 'function') {
-      console.warn("Firebase Auth not available, using demo mode");
+    if (isDemoMode) {
+      console.warn("🔧 Running in demo mode - Firebase not configured");
       setLoading(false);
       return;
     }
@@ -71,7 +73,6 @@ export const useAuth = () => {
       }
     } catch (error) {
       console.error("Error getting user data:", error);
-      // Return a basic user object if database fails
       return {
         id: firebaseUser.uid,
         email: firebaseUser.email!,
@@ -84,10 +85,28 @@ export const useAuth = () => {
     }
   };
 
+  // Demo mode functions
+  const createDemoUser = (email: string, displayName: string): User => {
+    return {
+      id: 'demo-user-' + Date.now(),
+      email,
+      displayName,
+      plan: 'free',
+      accountBalance: 10000,
+      currentBalance: 10000,
+      createdAt: new Date()
+    };
+  };
+
   const signIn = async (email: string, password: string) => {
     try {
-      if (!auth || typeof auth.signInWithEmailAndPassword !== 'function') {
-        throw new Error("Firebase Auth not configured. Please check your Firebase setup.");
+      if (isDemoMode) {
+        // Demo mode - simulate successful login
+        const demoUser = createDemoUser(email, 'Demo User');
+        setUser(demoUser);
+        localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        toast.success('✅ Signed in successfully (Demo Mode)');
+        return;
       }
       
       await signInWithEmailAndPassword(auth, email, password);
@@ -95,8 +114,8 @@ export const useAuth = () => {
     } catch (error: any) {
       console.error("Sign in error:", error);
       
-      if (error.message.includes("Firebase Auth not configured")) {
-        toast.error("Authentication service not available. Please check Firebase configuration.");
+      if (isDemoMode) {
+        toast.error("⚠️ Demo Mode: Authentication simulation failed");
       } else {
         toast.error(error.message || "Failed to sign in");
       }
@@ -106,8 +125,13 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, displayName: string) => {
     try {
-      if (!auth || typeof auth.createUserWithEmailAndPassword !== 'function') {
-        throw new Error("Firebase Auth not configured. Please check your Firebase setup.");
+      if (isDemoMode) {
+        // Demo mode - simulate successful signup
+        const demoUser = createDemoUser(email, displayName);
+        setUser(demoUser);
+        localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        toast.success('✅ Account created successfully (Demo Mode)');
+        return;
       }
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -129,8 +153,8 @@ export const useAuth = () => {
     } catch (error: any) {
       console.error("Sign up error:", error);
       
-      if (error.message.includes("Firebase Auth not configured")) {
-        toast.error("Authentication service not available. Please check Firebase configuration.");
+      if (isDemoMode) {
+        toast.error("⚠️ Demo Mode: Account creation simulation failed");
       } else {
         toast.error(error.message || "Failed to create account");
       }
@@ -140,8 +164,13 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     try {
-      if (!auth || typeof auth.signInWithPopup !== 'function') {
-        throw new Error("Firebase Auth not configured. Please check your Firebase setup.");
+      if (isDemoMode) {
+        // Demo mode - simulate Google sign in
+        const demoUser = createDemoUser('demo@google.com', 'Google Demo User');
+        setUser(demoUser);
+        localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        toast.success('✅ Signed in with Google (Demo Mode)');
+        return;
       }
 
       const provider = new GoogleAuthProvider();
@@ -150,8 +179,8 @@ export const useAuth = () => {
     } catch (error: any) {
       console.error("Google sign in error:", error);
       
-      if (error.message.includes("Firebase Auth not configured")) {
-        toast.error("Authentication service not available. Please check Firebase configuration.");
+      if (isDemoMode) {
+        toast.error("⚠️ Demo Mode: Google sign in simulation failed");
       } else {
         toast.error(error.message || "Failed to sign in with Google");
       }
@@ -161,8 +190,12 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      if (!auth || typeof auth.signOut !== 'function') {
-        throw new Error("Firebase Auth not configured");
+      if (isDemoMode) {
+        // Demo mode - clear demo user
+        setUser(null);
+        localStorage.removeItem('demoUser');
+        toast.success('✅ Signed out successfully (Demo Mode)');
+        return;
       }
 
       await signOut(auth);
@@ -173,12 +206,30 @@ export const useAuth = () => {
     }
   };
 
+  // Load demo user from localStorage on mount
+  useEffect(() => {
+    if (isDemoMode) {
+      const savedDemoUser = localStorage.getItem('demoUser');
+      if (savedDemoUser) {
+        try {
+          const demoUser = JSON.parse(savedDemoUser);
+          setUser(demoUser);
+        } catch (error) {
+          console.error('Error loading demo user:', error);
+          localStorage.removeItem('demoUser');
+        }
+      }
+      setLoading(false);
+    }
+  }, []);
+
   return {
     user,
     loading,
     signIn,
     signUp,
     signInWithGoogle,
-    logout
+    logout,
+    isDemoMode
   };
 };

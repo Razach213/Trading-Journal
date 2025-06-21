@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Zap } from 'lucide-react';
+import { Eye, EyeOff, Zap, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 
@@ -14,7 +14,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
   const onSubmit = async (data: LoginFormData) => {
@@ -68,6 +68,24 @@ const Login: React.FC = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Demo Mode Warning */}
+        {isDemoMode && (
+          <div className="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">Demo Mode Active</h3>
+                <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
+                  Firebase is not configured. You can sign in with any email/password for demo purposes.
+                </p>
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                  Try: demo@example.com / password123
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200 dark:border-gray-700">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
@@ -86,7 +104,7 @@ const Login: React.FC = () => {
                   type="email"
                   autoComplete="email"
                   className="block w-full appearance-none rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white transition-colors"
-                  placeholder="Enter your email"
+                  placeholder={isDemoMode ? "demo@example.com" : "Enter your email"}
                 />
                 {errors.email && (
                   <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
@@ -104,7 +122,7 @@ const Login: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   className="block w-full appearance-none rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 pr-10 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white transition-colors"
-                  placeholder="Enter your password"
+                  placeholder={isDemoMode ? "password123" : "Enter your password"}
                 />
                 <button
                   type="button"
@@ -148,7 +166,9 @@ const Login: React.FC = () => {
                 {isLoading ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 ) : (
-                  'Sign in'
+                  <>
+                    {isDemoMode ? 'Demo Sign in' : 'Sign in'}
+                  </>
                 )}
               </button>
             </div>
@@ -176,7 +196,9 @@ const Login: React.FC = () => {
                     <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                  <span className="ml-2">Sign in with Google</span>
+                  <span className="ml-2">
+                    {isDemoMode ? 'Demo Google Sign in' : 'Sign in with Google'}
+                  </span>
                 </button>
               </div>
             </div>
