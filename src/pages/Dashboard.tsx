@@ -8,12 +8,13 @@ import StatsCards from '../components/Dashboard/StatsCards';
 import TradeTable from '../components/Dashboard/TradeTable';
 import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
+import StartingBalanceModal from '../components/Dashboard/StartingBalanceModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
-  const { accountBalance, updateStartingBalance } = useAccountBalance(user?.id);
+  const { accountBalance, loading: balanceLoading, needsSetup, createAccountBalance, updateStartingBalance } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
 
   if (!user) {
@@ -23,6 +24,23 @@ const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Please sign in to access your dashboard
           </h2>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while checking account balance
+  if (balanceLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Loading your dashboard...
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Setting up your trading environment
+          </p>
         </div>
       </div>
     );
@@ -149,6 +167,15 @@ const Dashboard: React.FC = () => {
               onClose={() => setShowAddTradeModal(false)}
               onSubmit={addTrade}
               userId={user.id}
+            />
+          )}
+
+          {/* Starting Balance Modal - Shows for new users */}
+          {needsSetup && (
+            <StartingBalanceModal
+              onClose={() => {}} // Can't close on first time
+              onSubmit={createAccountBalance}
+              isFirstTime={true}
             />
           )}
         </div>
