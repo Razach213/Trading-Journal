@@ -22,10 +22,6 @@ const Dashboard: React.FC = () => {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Refs for auto-scrolling
-  const addTradeButtonRef = useRef<HTMLButtonElement>(null);
-  const balanceButtonRef = useRef<HTMLButtonElement>(null);
-
   // Show balance setup modal for new users
   useEffect(() => {
     if (!balanceLoading && needsSetup && user) {
@@ -33,46 +29,14 @@ const Dashboard: React.FC = () => {
     }
   }, [balanceLoading, needsSetup, user]);
 
-  // Auto-scroll to modal when opened
-  useEffect(() => {
-    if (showAddTradeModal || showBalanceModal) {
-      // Small delay to ensure modal is rendered
-      const timer = setTimeout(() => {
-        // Scroll to top of page to ensure modal is visible
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }
-  }, [showAddTradeModal, showBalanceModal]);
-
-  // Handle Add Trade button click with scroll
+  // CRITICAL: Handle Add Trade button click - ensure modal is visible
   const handleAddTradeClick = () => {
     setShowAddTradeModal(true);
-    
-    // Ensure the page scrolls to show the modal
-    setTimeout(() => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }, 50);
   };
 
-  // Handle Balance button click with scroll
+  // CRITICAL: Handle Balance button click - ensure modal is visible
   const handleBalanceClick = () => {
     setShowBalanceModal(true);
-    
-    // Ensure the page scrolls to show the modal
-    setTimeout(() => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }, 50);
   };
 
   if (!user) {
@@ -500,7 +464,6 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
               <button
-                ref={addTradeButtonRef}
                 onClick={handleAddTradeClick}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 btn-hover-lift"
               >
@@ -508,7 +471,6 @@ const Dashboard: React.FC = () => {
                 <span>Add Trade</span>
               </button>
               <button 
-                ref={balanceButtonRef}
                 onClick={handleBalanceClick}
                 className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors btn-hover-lift"
                 title="Update starting balance"
@@ -564,7 +526,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Modals */}
+          {/* CRITICAL: Modals with proper positioning */}
           {showAddTradeModal && (
             <AddTradeModal
               onClose={() => setShowAddTradeModal(false)}
