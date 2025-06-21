@@ -91,7 +91,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     }
 
     try {
-      // Calculate new current balance maintaining the same P&L
+      // CRITICAL: Maintain the same P&L but recalculate current balance
       const currentPnL = accountBalance.totalPnL;
       const newCurrentBalance = newStartingBalance + currentPnL;
       const newReturnPercent = newStartingBalance > 0 ? (currentPnL / newStartingBalance) * 100 : 0;
@@ -104,8 +104,10 @@ export const useAccountBalance = (userId: string | undefined) => {
       };
 
       await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
+      toast.success('Starting balance updated successfully!');
     } catch (error) {
       console.error('Error updating starting balance:', error);
+      toast.error('Failed to update starting balance');
       throw error;
     }
   };
@@ -116,7 +118,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     }
 
     try {
-      // Calculate new values
+      // CRITICAL: Calculate new values correctly
       const newTotalPnL = accountBalance.totalPnL + tradePnL;
       const newCurrentBalance = accountBalance.startingBalance + newTotalPnL;
       const newReturnPercent = accountBalance.startingBalance > 0 
@@ -143,7 +145,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     if (!userId || !accountBalance) return;
 
     try {
-      // Calculate total P&L from all closed trades
+      // CRITICAL: Recalculate total P&L from all closed trades
       const totalPnL = allClosedTrades.reduce((sum, trade) => {
         return sum + (trade.pnl || 0);
       }, 0);

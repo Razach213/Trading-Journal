@@ -15,12 +15,22 @@ import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { accountBalance, loading: balanceLoading, needsSetup, createAccountBalance, updateStartingBalance } = useAccountBalance(user?.id);
+  const { accountBalance, loading: balanceLoading, needsSetup, createAccountBalance, updateStartingBalance, recalculateBalance } = useAccountBalance(user?.id);
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
   const { playbooks, addPlaybook } = usePlaybooks(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // CRITICAL: Recalculate balance when trades change
+  useEffect(() => {
+    if (accountBalance && trades.length > 0) {
+      const closedTrades = trades.filter(trade => trade.status === 'closed' && trade.pnl !== null);
+      if (closedTrades.length > 0) {
+        recalculateBalance(closedTrades);
+      }
+    }
+  }, [trades, accountBalance, recalculateBalance]);
 
   // Show balance setup modal for new users
   useEffect(() => {
@@ -76,12 +86,6 @@ const Dashboard: React.FC = () => {
       count: null
     },
     { 
-      id: 'playbook-rules', 
-      label: 'Playbook Rules', 
-      icon: BookOpen,
-      count: playbooks.length
-    },
-    { 
       id: 'executed-trades', 
       label: 'Executed Trades', 
       icon: Activity,
@@ -101,6 +105,12 @@ const Dashboard: React.FC = () => {
       label: 'Notes', 
       icon: FileText,
       count: trades.filter(t => t.notes && t.notes.trim().length > 0).length
+    },
+    { 
+      id: 'playbook-rules', 
+      label: 'Playbook Rules', 
+      icon: BookOpen,
+      count: playbooks.length
     }
   ];
 
@@ -127,6 +137,13 @@ const Dashboard: React.FC = () => {
       case 'overview':
         return (
           <div className="space-y-6">
+            {/* MOVED TO TOP: Stats Grid */}
+            <DetailedStatsGrid 
+              stats={stats} 
+              accountBalance={accountBalance}
+              missedTradesCount={missedTrades.length}
+            />
+
             {/* Account Balance Card */}
             {accountBalance && (
               <AccountBalanceCard
@@ -137,13 +154,6 @@ const Dashboard: React.FC = () => {
                 onUpdateBalance={updateStartingBalance}
               />
             )}
-
-            {/* Stats Grid */}
-            <DetailedStatsGrid 
-              stats={stats} 
-              accountBalance={accountBalance}
-              missedTradesCount={missedTrades.length}
-            />
 
             {/* Performance Chart */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -174,77 +184,6 @@ const Dashboard: React.FC = () => {
                 loading={loading}
                 error={error}
               />
-            </div>
-          </div>
-        );
-
-      case 'playbook-rules':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-              <div className="text-center mb-6">
-                <BookOpen className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Trading Rules & Playbooks</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {playbooks.length > 0 
-                    ? `You have ${playbooks.length} playbook${playbooks.length > 1 ? 's' : ''} created`
-                    : 'Create your first trading playbook to define your strategy rules'
-                  }
-                </p>
-              </div>
-              
-              {playbooks.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {playbooks.map((playbook) => (
-                    <div key={playbook.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">{playbook.title}</h4>
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                          {playbook.strategy}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{playbook.description}</p>
-                      
-                      {playbook.entryRules && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Entry Rules:</h5>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 bg-green-50 dark:bg-green-900/20 p-3 rounded">
-                            {playbook.entryRules}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {playbook.exitRules && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Exit Rules:</h5>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 bg-red-50 dark:bg-red-900/20 p-3 rounded">
-                            {playbook.exitRules}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {playbook.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-4">
-                          {playbook.tags.map((tag, index) => (
-                            <span key={index} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center">
-                  <button
-                    onClick={() => window.location.href = '/playbooks'}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create First Playbook
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         );
@@ -426,6 +365,77 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        );
+
+      case 'playbook-rules':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+              <div className="text-center mb-6">
+                <BookOpen className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Trading Rules & Playbooks</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  {playbooks.length > 0 
+                    ? `You have ${playbooks.length} playbook${playbooks.length > 1 ? 's' : ''} created`
+                    : 'Create your first trading playbook to define your strategy rules'
+                  }
+                </p>
+              </div>
+              
+              {playbooks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {playbooks.map((playbook) => (
+                    <div key={playbook.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">{playbook.title}</h4>
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                          {playbook.strategy}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{playbook.description}</p>
+                      
+                      {playbook.entryRules && (
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Entry Rules:</h5>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 bg-green-50 dark:bg-green-900/20 p-3 rounded">
+                            {playbook.entryRules}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {playbook.exitRules && (
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Exit Rules:</h5>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 bg-red-50 dark:bg-red-900/20 p-3 rounded">
+                            {playbook.exitRules}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {playbook.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-4">
+                          {playbook.tags.map((tag, index) => (
+                            <span key={index} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center">
+                  <button
+                    onClick={() => window.location.href = '/playbooks'}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Create First Playbook
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         );
 
