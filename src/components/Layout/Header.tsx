@@ -33,14 +33,14 @@ export default function Header({ toggleTheme }: HeaderProps) {
   return (
     <Popover className="relative bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex items-center justify-between py-6 md:justify-start md:space-x-10">
+        <div className="flex items-center justify-between py-4 md:py-6 md:justify-start md:space-x-10">
           <div className="flex justify-start lg:w-0 lg:flex-1">
             <Link to="/" className="flex items-center space-x-2 group">
               <div className="relative">
-                <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110" />
+                <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2 h-2 sm:w-3 sm:h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">ZellaX</span>
+              <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-colors">ZellaX</span>
             </Link>
           </div>
           
@@ -51,45 +51,45 @@ export default function Header({ toggleTheme }: HeaderProps) {
             </Popover.Button>
           </div>
           
-          <Popover.Group as="nav" className="hidden space-x-10 md:flex">
+          <Popover.Group as="nav" className="hidden space-x-6 lg:space-x-10 md:flex">
             {navigation.map((item) => (
               <Link 
                 key={item.name} 
                 to={item.href} 
-                className="text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
               >
                 {item.name}
               </Link>
             ))}
           </Popover.Group>
           
-          <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0 space-x-4">
-            {/* Animated Theme Toggle */}
-            <ThemeToggle toggleTheme={toggleTheme} />
+          <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0 space-x-2 lg:space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle toggleTheme={toggleTheme} className="scale-75 lg:scale-100" />
 
             {user ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 lg:space-x-4">
                 <Link
                   to="/dashboard"
-                  className="text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                  className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/playbooks"
-                  className="text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                  className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
                 >
                   Playbooks
                 </Link>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
-                    <span className="text-white text-sm font-semibold">
+                <div className="flex items-center space-x-2 lg:space-x-3">
+                  <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
+                    <span className="text-white text-xs lg:text-sm font-semibold">
                       {user.displayName?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                    className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
                   >
                     Sign out
                   </button>
@@ -99,13 +99,13 @@ export default function Header({ toggleTheme }: HeaderProps) {
               <>
                 <Link 
                   to="/login" 
-                  className="whitespace-nowrap text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                  className="whitespace-nowrap text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/signup"
-                  className="ml-8 inline-flex items-center justify-center whitespace-nowrap rounded-md border border-transparent bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                  className="ml-4 lg:ml-8 inline-flex items-center justify-center whitespace-nowrap rounded-md border border-transparent bg-gradient-to-r from-blue-600 to-purple-600 px-3 lg:px-4 py-2 text-sm lg:text-base font-medium text-white shadow-sm hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
                 >
                   Get Started
                 </Link>
@@ -133,8 +133,8 @@ export default function Header({ toggleTheme }: HeaderProps) {
               <div className="pt-5 pb-6 px-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
+                    <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
                   </div>
                   <div className="-mr-2">
                     <Popover.Button className="bg-white dark:bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-colors">
@@ -144,7 +144,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <nav className="grid gap-y-8">
+                  <nav className="grid gap-y-6">
                     {navigation.map((item) => (
                       <Link
                         key={item.name}
@@ -170,14 +170,14 @@ export default function Header({ toggleTheme }: HeaderProps) {
                     <Link
                       to="/dashboard"
                       onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                      className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                     >
                       Dashboard
                     </Link>
                     <Link
                       to="/playbooks"
                       onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       Playbooks
                     </Link>
@@ -186,7 +186,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                         handleLogout();
                         close();
                       }}
-                      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       Sign out
                     </button>
@@ -196,14 +196,14 @@ export default function Header({ toggleTheme }: HeaderProps) {
                     <Link
                       to="/signup"
                       onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                      className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                     >
                       Sign up
                     </Link>
                     <Link
                       to="/login"
                       onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       Sign in
                     </Link>

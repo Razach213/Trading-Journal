@@ -42,47 +42,47 @@ const Home: React.FC = () => {
         {/* Hero section */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800" />
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
             <div className="text-center">
-              <div className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full text-sm font-medium mb-8">
-                <TrendingUp className="h-4 w-4 mr-2" />
+              <div className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-8">
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                 Trusted by 75,000+ Traders Worldwide
               </div>
               
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 sm:mb-6">
                 <span className="block text-gray-900 dark:text-white">The Trading Journal</span>
                 <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Built for Winners
                 </span>
               </h1>
               
-              <p className="mx-auto mt-6 max-w-2xl text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+              <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 leading-relaxed px-4 sm:px-0">
                 Track, analyze, and improve your trading performance with the most advanced trading journal platform. 
                 Join thousands of successful traders who trust ZellaX to elevate their trading game.
               </p>
               
-              <div className="mx-auto mt-10 flex flex-col sm:flex-row gap-4 justify-center max-w-md sm:max-w-none">
+              <div className="mx-auto mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md sm:max-w-none px-4 sm:px-0">
                 <Link
                   to={user ? "/dashboard" : "/signup"}
-                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 group"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 group"
                 >
                   {user ? "Go to Dashboard" : "Start Free Trial"}
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   to="/features"
-                  className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 dark:border-gray-600 px-8 py-4 text-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+                  className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 dark:border-gray-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
                 >
                   View Features
                 </Link>
               </div>
 
               {/* Trust indicators */}
-              <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="mt-10 sm:mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 px-4 sm:px-0">
                 {stats.map((stat, index) => (
                   <div key={index} className="text-center">
-                    <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -91,30 +91,30 @@ const Home: React.FC = () => {
         </div>
 
         {/* Feature section */}
-        <div className="relative bg-gray-50 dark:bg-gray-800 py-24">
+        <div className="relative bg-gray-50 dark:bg-gray-800 py-16 sm:py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">Everything you need</h2>
-              <p className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-base sm:text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">Everything you need</h2>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
                 All-in-one Trading Platform
               </p>
-              <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-gray-300">
+              <p className="mx-auto max-w-2xl text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 px-4 sm:px-0">
                 A trading journal is one of the most effective tools for improving your trading performance. 
                 Here's what ZellaX offers to help you succeed.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
               {features.map((feature, index) => (
                 <div key={index} className="group">
-                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 h-full">
-                    <div className="bg-blue-100 dark:bg-blue-900 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                      <feature.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 h-full">
+                    <div className="bg-blue-100 dark:bg-blue-900 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+                      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -125,26 +125,26 @@ const Home: React.FC = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-12 sm:py-16">
           <div className="mx-auto max-w-4xl text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
               Ready to Transform Your Trading?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join thousands of traders who have improved their performance with ZellaX. 
               Start your journey to consistent profitability today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Link
                 to={user ? "/dashboard" : "/signup"}
-                className="inline-flex items-center justify-center rounded-lg bg-white text-blue-600 px-8 py-4 text-lg font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 group"
+                className="inline-flex items-center justify-center rounded-lg bg-white text-blue-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 group"
               >
                 {user ? "Go to Dashboard" : "Start Free Trial"}
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/pricing"
-                className="inline-flex items-center justify-center rounded-lg border-2 border-white text-white px-8 py-4 text-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-200"
+                className="inline-flex items-center justify-center rounded-lg border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-200"
               >
                 View Pricing
               </Link>

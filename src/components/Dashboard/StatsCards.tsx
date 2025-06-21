@@ -90,14 +90,14 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       {cards.map((card, index) => (
-        <div key={index} className={`${card.bgColor} rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
+        <div key={index} className={`${card.bgColor} rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{card.title}</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{card.title}</p>
               <div className="flex items-baseline">
-                <p className={`text-2xl font-bold ${card.color}`}>
+                <p className={`text-xl sm:text-2xl font-bold ${card.color}`}>
                   {card.change}{card.value}
                 </p>
               </div>
@@ -150,8 +150,8 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
                 )}
               </div>
             </div>
-            <div className={`bg-gradient-to-r ${card.gradient} p-3 rounded-lg shadow-lg`}>
-              <card.icon className="h-6 w-6 text-white" />
+            <div className={`bg-gradient-to-r ${card.gradient} p-2 sm:p-3 rounded-lg shadow-lg`}>
+              <card.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
         </div>
