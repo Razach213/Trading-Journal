@@ -15,6 +15,14 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-DEMO"
 };
 
+// Check if we have valid Firebase configuration
+const hasValidConfig = firebaseConfig.apiKey && 
+                      firebaseConfig.apiKey !== "demo-api-key" &&
+                      firebaseConfig.projectId && 
+                      firebaseConfig.projectId !== "demo-project" &&
+                      !firebaseConfig.apiKey.includes("your-") &&
+                      !firebaseConfig.projectId.includes("your-");
+
 // Initialize Firebase only if we have valid configuration
 let app = null;
 let auth = null;
@@ -22,41 +30,50 @@ let db = null;
 let storage = null;
 let functions = null;
 
-try {
-  // Check if we have a valid API key
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
-    console.warn("⚠️ Firebase not configured. Using demo mode.");
-    throw new Error("Firebase configuration missing");
+if (hasValidConfig) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    functions = getFunctions(app);
+    console.log("✅ Firebase initialized successfully");
+  } catch (error) {
+    console.warn("⚠️ Firebase initialization failed:", error);
+    // Fall back to demo mode
+    app = null;
+    auth = null;
+    db = null;
+    storage = null;
+    functions = null;
   }
+} else {
+  console.warn("⚠️ Firebase not configured properly. Using demo mode.");
+  console.warn("📝 To fix this:");
+  console.warn("1. Go to Firebase Console → Project Settings");
+  console.warn("2. Copy your config values to .env file");
+  console.warn("3. Restart the development server");
+}
 
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  functions = getFunctions(app);
-
-  console.log("✅ Firebase initialized successfully");
-} catch (error) {
-  console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
-  
-  // Create safe mock objects for demo mode
+// Create safe mock objects for demo mode when Firebase is not configured
+if (!auth) {
   auth = {
     currentUser: null,
     onAuthStateChanged: (callback) => {
-      // Call callback immediately with null user
+      // Call callback immediately with null user for demo mode
       setTimeout(() => callback(null), 0);
       return () => {}; // Return unsubscribe function
     },
-    signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
-    createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
-    signInWithPopup: () => Promise.reject(new Error("Demo mode")),
-    signOut: () => Promise.reject(new Error("Demo mode"))
+    signInWithEmailAndPassword: () => Promise.reject(new Error("Firebase not configured - Demo mode active")),
+    createUserWithEmailAndPassword: () => Promise.reject(new Error("Firebase not configured - Demo mode active")),
+    signInWithPopup: () => Promise.reject(new Error("Firebase not configured - Demo mode active")),
+    signOut: () => Promise.reject(new Error("Firebase not configured - Demo mode active"))
   };
-
-  db = null;
-  storage = null;
-  functions = null;
 }
+
+// Export the configuration status for other components to check
+export const isFirebaseConfigured = hasValidConfig;
+export const isDemoMode = !hasValidConfig;
 
 export { auth, db, storage, functions };
 export default app;

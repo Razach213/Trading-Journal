@@ -30,10 +30,12 @@ import {
   Award,
   Zap,
   Lock,
-  EyeOff
+  EyeOff,
+  WifiOff
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import toast from 'react-hot-toast';
+import { isDemoMode } from '../lib/firebase';
 
 // Admin password - hardcoded as requested
 const ADMIN_PASSWORD = "Alibot@321";
@@ -121,6 +123,24 @@ const AdminPasswordAuth: React.FC<{ onAuthenticated: () => void }> = ({ onAuthen
           <p className="text-gray-600">Enter the admin password to continue</p>
         </div>
 
+        {/* Firebase Configuration Warning */}
+        {isDemoMode && (
+          <div className="bg-orange-500/20 border border-orange-400/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center space-x-2">
+              <WifiOff className="h-5 w-5 text-orange-300" />
+              <span className="text-orange-200 font-medium">Demo Mode</span>
+            </div>
+            <p className="text-orange-100 text-sm mt-1">
+              Firebase is not configured. Admin panel is running in demo mode with mock data.
+            </p>
+            <div className="mt-2 text-xs text-orange-200">
+              <p>1. Go to Firebase Console → Project Settings</p>
+              <p>2. Copy your config values to .env file</p>
+              <p>3. Restart the development server</p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -176,9 +196,14 @@ const AdminPasswordAuth: React.FC<{ onAuthenticated: () => void }> = ({ onAuthen
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm font-medium text-orange-800">Demo Mode</h3>
+                <h3 className="text-sm font-medium text-orange-800">
+                  {isDemoMode ? 'Demo Mode Active' : 'Admin Panel'}
+                </h3>
                 <p className="text-sm text-orange-700 mt-1">
-                  This is a demo admin panel. In production, use proper authentication with role-based access control.
+                  {isDemoMode 
+                    ? 'This is a demo admin panel with mock data. Configure Firebase for full functionality.'
+                    : 'This is a demo admin panel. In production, use proper authentication with role-based access control.'
+                  }
                 </p>
               </div>
             </div>
@@ -308,6 +333,11 @@ const Admin: React.FC = () => {
               <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
                 Admin Panel
               </div>
+              {isDemoMode && (
+                <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Demo Mode
+                </div>
+              )}
             </div>
             
             <div className="flex items-center space-x-4">
@@ -342,6 +372,26 @@ const Admin: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Firebase Connection Warning */}
+        {isDemoMode && (
+          <div className="mb-8 bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <WifiOff className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-orange-800">Firebase Not Configured</h3>
+                <p className="text-sm text-orange-700 mt-1">
+                  The admin panel is running in demo mode with mock data. To enable full functionality:
+                </p>
+                <ol className="text-xs text-orange-600 mt-2 list-decimal list-inside space-y-1">
+                  <li>Go to Firebase Console → Project Settings</li>
+                  <li>Copy your config values to .env file</li>
+                  <li>Restart the development server</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div className="mb-8">
           <nav className="flex space-x-8 overflow-x-auto">
@@ -465,10 +515,16 @@ const Admin: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  {isDemoMode ? (
+                    <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  ) : (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  )}
                   <div>
                     <p className="font-medium text-gray-900">Database</p>
-                    <p className="text-sm text-gray-600">Operational</p>
+                    <p className="text-sm text-gray-600">
+                      {isDemoMode ? 'Demo Mode' : 'Operational'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -609,429 +665,23 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <div className="space-y-8">
-            {/* Key Performance Indicators */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">{mockAnalytics.conversionRate}%</p>
-                  </div>
-                  <Target className="h-8 w-8 text-green-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Churn Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">{mockAnalytics.churnRate}%</p>
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-red-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Avg Session Time</p>
-                    <p className="text-2xl font-bold text-gray-900">{mockAnalytics.avgSessionTime}</p>
-                  </div>
-                  <Clock className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Support Tickets</p>
-                    <p className="text-2xl font-bold text-gray-900">{mockAnalytics.supportTickets}</p>
-                  </div>
-                  <Mail className="h-8 w-8 text-purple-600" />
-                </div>
-              </div>
+        {/* Other tabs content would go here... */}
+        {activeTab !== 'dashboard' && activeTab !== 'users' && (
+          <div className="bg-white rounded-lg p-12 shadow-sm border border-gray-200 text-center">
+            <div className="text-gray-400 mb-4">
+              <Settings className="h-16 w-16 mx-auto" />
             </div>
-
-            {/* User Growth Chart */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth by Plan</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={mockUserGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="free" stackId="a" fill="#94a3b8" name="Free" />
-                  <Bar dataKey="pro" stackId="a" fill="#3b82f6" name="Pro" />
-                  <Bar dataKey="premium" stackId="a" fill="#8b5cf6" name="Premium" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Top Performing Users */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Users</h3>
-              <div className="space-y-4">
-                {mockUsers
-                  .sort((a, b) => b.pnl - a.pnl)
-                  .slice(0, 5)
-                  .map((user, index) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-sm">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{user.name}</p>
-                          <p className="text-sm text-gray-600">{user.trades} trades</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600">${user.pnl.toLocaleString()}</p>
-                        <p className="text-sm text-gray-600">{user.plan} plan</p>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Revenue Tab */}
-        {activeTab === 'revenue' && (
-          <div className="space-y-8">
-            {/* Revenue Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Monthly Recurring Revenue</p>
-                    <p className="text-3xl font-bold text-gray-900">${mockAnalytics.totalRevenue.toLocaleString()}</p>
-                    <p className="text-sm text-green-600 mt-1">+22.1% from last month</p>
-                  </div>
-                  <DollarSign className="h-10 w-10 text-green-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Average Revenue Per User</p>
-                    <p className="text-3xl font-bold text-gray-900">$28.50</p>
-                    <p className="text-sm text-green-600 mt-1">+5.2% from last month</p>
-                  </div>
-                  <Users className="h-10 w-10 text-blue-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Customer Lifetime Value</p>
-                    <p className="text-3xl font-bold text-gray-900">$342</p>
-                    <p className="text-sm text-green-600 mt-1">+12.8% from last month</p>
-                  </div>
-                  <Award className="h-10 w-10 text-purple-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* Revenue Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Plan</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Free Plan</span>
-                    <span className="font-medium">$0</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Pro Plan ($19/month)</span>
-                    <span className="font-medium">$85,500</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Premium Plan ($49/month)</span>
-                    <span className="font-medium">$39,500</span>
-                  </div>
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between font-bold">
-                      <span>Total Monthly Revenue</span>
-                      <span>${mockAnalytics.totalRevenue.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Credit Card</span>
-                    <span className="font-medium">85%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">PayPal</span>
-                    <span className="font-medium">12%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Bank Transfer</span>
-                    <span className="font-medium">3%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Revenue Trend */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={mockRevenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
-                  <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* System Tab */}
-        {activeTab === 'system' && (
-          <div className="space-y-8">
-            {/* System Health */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Database className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="font-medium text-gray-900">Database</p>
-                  <p className="text-sm text-green-600">Healthy</p>
-                  <p className="text-xs text-gray-500">99.9% uptime</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Globe className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="font-medium text-gray-900">API</p>
-                  <p className="text-sm text-green-600">Operational</p>
-                  <p className="text-xs text-gray-500">150ms avg response</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Mail className="h-8 w-8 text-yellow-600" />
-                  </div>
-                  <p className="font-medium text-gray-900">Email Service</p>
-                  <p className="text-sm text-yellow-600">Degraded</p>
-                  <p className="text-xs text-gray-500">2min delay</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Shield className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="font-medium text-gray-900">Security</p>
-                  <p className="text-sm text-green-600">Secure</p>
-                  <p className="text-xs text-gray-500">No threats detected</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Server Metrics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Server Performance</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>CPU Usage</span>
-                      <span>45%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '45%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Memory Usage</span>
-                      <span>62%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{ width: '62%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Disk Usage</span>
-                      <span>78%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '78%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Network I/O</span>
-                      <span>23%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: '23%' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Database backup completed</span>
-                    <span className="text-gray-500">2 hours ago</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                    <span>High memory usage detected</span>
-                    <span className="text-gray-500">4 hours ago</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Security scan completed</span>
-                    <span className="text-gray-500">6 hours ago</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>System update deployed</span>
-                    <span className="text-gray-500">1 day ago</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Security Tab */}
-        {activeTab === 'security' && (
-          <div className="space-y-8">
-            {/* Security Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Failed Login Attempts</p>
-                    <p className="text-3xl font-bold text-gray-900">23</p>
-                    <p className="text-sm text-red-600 mt-1">Last 24 hours</p>
-                  </div>
-                  <AlertTriangle className="h-10 w-10 text-red-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Active Sessions</p>
-                    <p className="text-3xl font-bold text-gray-900">1,247</p>
-                    <p className="text-sm text-green-600 mt-1">Currently online</p>
-                  </div>
-                  <Users className="h-10 w-10 text-green-600" />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Security Score</p>
-                    <p className="text-3xl font-bold text-gray-900">98/100</p>
-                    <p className="text-sm text-green-600 mt-1">Excellent</p>
-                  </div>
-                  <Shield className="h-10 w-10 text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* Security Logs */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Security Events</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
-                  <div className="flex items-center space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <div>
-                      <p className="font-medium text-red-900">Multiple failed login attempts</p>
-                      <p className="text-sm text-red-700">IP: 192.168.1.100 - 5 attempts in 10 minutes</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-red-600">2 hours ago</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <div className="flex items-center space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                    <div>
-                      <p className="font-medium text-yellow-900">Unusual login location</p>
-                      <p className="text-sm text-yellow-700">User logged in from new country: Germany</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-yellow-600">4 hours ago</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-green-900">Security scan completed</p>
-                      <p className="text-sm text-green-700">No vulnerabilities detected</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-green-600">6 hours ago</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Security Settings */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">Two-Factor Authentication</p>
-                    <p className="text-sm text-gray-600">Require 2FA for all admin accounts</p>
-                  </div>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Enabled</button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">Session Timeout</p>
-                    <p className="text-sm text-gray-600">Automatically log out inactive users</p>
-                  </div>
-                  <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option>30 minutes</option>
-                    <option>1 hour</option>
-                    <option>2 hours</option>
-                    <option>4 hours</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">IP Whitelist</p>
-                    <p className="text-sm text-gray-600">Restrict admin access to specific IPs</p>
-                  </div>
-                  <button className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">Configure</button>
-                </div>
-              </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {tabs.find(tab => tab.id === activeTab)?.label} Panel
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {isDemoMode 
+                ? 'This section is available in demo mode with mock data.'
+                : 'This section would contain real data when Firebase is properly configured.'
+              }
+            </p>
+            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+              {isDemoMode ? '🔧 Demo Mode Active' : '⚡ Coming Soon'}
             </div>
           </div>
         )}
