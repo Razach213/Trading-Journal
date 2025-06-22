@@ -6,8 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "NODE_ENV=production tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "firebase:build": "npm run build:prod",
+    "firebase:serve": "firebase serve",
+    "firebase:deploy": "npm run build:prod && firebase deploy"
   },
   "dependencies": {
     "react": "^18.3.1",
