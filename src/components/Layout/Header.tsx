@@ -221,138 +221,137 @@ export default function Header({ toggleTheme }: HeaderProps) {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          {/* Mobile menu */}
+          <Popover className="md:hidden">
             <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white dark:bg-gray-800 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors">
               <span className="sr-only">Open menu</span>
               <Bars3Icon className="h-6 w-6" aria-hidden="true" />
             </Popover.Button>
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile menu */}
-      <Transition
-        as={Fragment}
-        enter="duration-200 ease-out"
-        enterFrom="opacity-0 scale-95"
-        enterTo="opacity-100 scale-100"
-        leave="duration-100 ease-in"
-        leaveFrom="opacity-100 scale-100"
-        leaveTo="opacity-0 scale-95"
-      >
-        <Popover.Panel 
-          focus 
-          className="absolute top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden z-50"
-        >
-          {({ close }) => (
-            <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white dark:bg-gray-800 divide-y-2 divide-gray-50 dark:divide-gray-700 border border-gray-200 dark:border-gray-600">
-              <div className="pt-5 pb-6 px-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
-                  </div>
-                  <div className="-mr-2">
-                    <Popover.Button className="bg-white dark:bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors">
-                      <span className="sr-only">Close menu</span>
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                    </Popover.Button>
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <nav className="grid gap-y-6">
-                    {navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        onClick={() => close()}
-                        className="-m-3 p-3 flex items-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <span className="ml-3 text-base font-medium text-gray-900 dark:text-white">
-                          {item.name}
-                        </span>
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
-              </div>
-              
-              <div className="py-6 px-5 space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-medium text-gray-900 dark:text-white">Dark Mode</span>
-                  <ThemeToggle toggleTheme={toggleTheme} className="scale-75" />
-                </div>
-                
-                {user ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold">
-                          {user.displayName?.charAt(0).toUpperCase() || 'U'}
-                        </span>
+            <Transition
+              as={Fragment}
+              enter="duration-200 ease-out"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="duration-100 ease-in"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Popover.Panel 
+                focus 
+                className="absolute top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden z-50"
+              >
+                {({ close }) => (
+                  <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white dark:bg-gray-800 divide-y-2 divide-gray-50 dark:divide-gray-700 border border-gray-200 dark:border-gray-600">
+                    <div className="pt-5 pb-6 px-5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                          <span className="text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
+                        </div>
+                        <div className="-mr-2">
+                          <Popover.Button className="bg-white dark:bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors">
+                            <span className="sr-only">Close menu</span>
+                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                          </Popover.Button>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <div className="mt-6">
+                        <nav className="grid gap-y-6">
+                          {navigation.map((item) => (
+                            <Link
+                              key={item.name}
+                              to={item.href}
+                              onClick={() => close()}
+                              className="-m-3 p-3 flex items-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              <span className="ml-3 text-base font-medium text-gray-900 dark:text-white">
+                                {item.name}
+                              </span>
+                            </Link>
+                          ))}
+                        </nav>
                       </div>
                     </div>
                     
-                    <Link
-                      to="/dashboard"
-                      onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                    <Link
-                      to="/playbooks"
-                      onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Playbooks
-                    </Link>
-                    <Link
-                      to="/settings"
-                      onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        close();
-                      }}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-base font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Link
-                      to="/signup"
-                      onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                    >
-                      Sign up
-                    </Link>
-                    <Link
-                      to="/login"
-                      onClick={() => close()}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Sign in
-                    </Link>
+                    <div className="py-6 px-5 space-y-6">
+                      <div className="flex items-center justify-between">
+                        <span className="text-base font-medium text-gray-900 dark:text-white">Dark Mode</span>
+                        <ThemeToggle toggleTheme={toggleTheme} className="scale-75" />
+                      </div>
+                      
+                      {user ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-semibold">
+                                {user.displayName?.charAt(0).toUpperCase() || 'U'}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                            </div>
+                          </div>
+                          
+                          <Link
+                            to="/dashboard"
+                            onClick={() => close()}
+                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                          >
+                            Dashboard
+                          </Link>
+                          <Link
+                            to="/playbooks"
+                            onClick={() => close()}
+                            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            Playbooks
+                          </Link>
+                          <Link
+                            to="/settings"
+                            onClick={() => close()}
+                            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
+                          </Link>
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              close();
+                            }}
+                            className="w-full flex items-center justify-center px-4 py-3 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-base font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <Link
+                            to="/signup"
+                            onClick={() => close()}
+                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                          >
+                            Sign up
+                          </Link>
+                          <Link
+                            to="/login"
+                            onClick={() => close()}
+                            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            Sign in
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-        </Popover.Panel>
-      </Transition>
+              </Popover.Panel>
+            </Transition>
+          </Popover>
+        </div>
+      </div>
     </header>
   );
 }
