@@ -353,19 +353,6 @@
   transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
-/* Chart specific styles */
-.recharts-wrapper {
-  animation: chartFadeIn 0.8s ease-out;
-}
-
-.recharts-line-curve {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.recharts-area-curve {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
 /* 3D Chart Styles */
 .chart-3d-container {
   position: relative;
@@ -393,6 +380,83 @@
   transform: rotateX(90deg);
   filter: blur(5px);
   opacity: 0.5;
+}
+
+/* Custom toggle switch styles */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:checked + .toggle-slider {
+  background-color: #3b82f6;
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #3b82f6;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.dark input:checked + .toggle-slider {
+  background-color: #3b82f6;
+}
+
+.dark .toggle-slider {
+  background-color: #4b5563;
+}
+
+.dark .toggle-slider:before {
+  background-color: #e5e7eb;
+}
+
+/* Chart specific styles */
+.recharts-wrapper {
+  animation: chartFadeIn 0.8s ease-out;
+}
+
+.recharts-line-curve {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.recharts-area-curve {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 /* Custom tooltip styles */

@@ -259,13 +259,16 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                         <button
                           type="button"
                           onClick={() => setUseManualPnL(!useManualPnL)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            useManualPnL ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-                          }`}
+                          className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          style={{ backgroundColor: useManualPnL ? '#3b82f6' : '#d1d5db' }}
+                          aria-pressed={useManualPnL}
+                          aria-labelledby="manual-pnl-label"
                         >
+                          <span className="sr-only">Use manual P&L input</span>
                           <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              useManualPnL ? 'translate-x-6' : 'translate-x-1'
+                            aria-hidden="true"
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              useManualPnL ? 'translate-x-5' : 'translate-x-0'
                             }`}
                           />
                         </button>
