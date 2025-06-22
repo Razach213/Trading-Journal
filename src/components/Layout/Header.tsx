@@ -114,8 +114,9 @@ export default function Header({ toggleTheme }: HeaderProps) {
     }
   };
 
-  // CRITICAL: Check if user is admin - ONLY for thealiraza22@gmail.com
-  const isAdmin = user && user.email === 'thealiraza22@gmail.com';
+  // CRITICAL: Check if user is admin - ONLY for specific emails
+  const adminEmails = ['thealiraza22@gmail.com', 'ramdanmubarak10@gmail.com'];
+  const isAdmin = user && adminEmails.includes(user.email);
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -270,7 +271,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                   Playbooks
                 </Link>
                 
-                {/* Admin Link - ONLY show for thealiraza22@gmail.com */}
+                {/* Admin Link - ONLY show for authorized admin emails */}
                 {isAdmin && (
                   <Link
                     to="/admin"
@@ -331,7 +332,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                         )}
                       </Menu.Item>
                       
-                      {/* Admin Panel Link - ONLY for admin */}
+                      {/* Admin Panel Link - ONLY for authorized admin emails */}
                       {isAdmin && (
                         <Menu.Item>
                           {({ active }) => (
@@ -533,7 +534,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                             Playbooks
                           </Link>
                           
-                          {/* Admin Panel Link - Mobile - ONLY for admin */}
+                          {/* Admin Panel Link - Mobile - ONLY for authorized admin emails */}
                           {isAdmin && (
                             <Link
                               to="/admin"
