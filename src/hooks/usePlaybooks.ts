@@ -28,7 +28,6 @@ export const usePlaybooks = (userId: string | undefined) => {
       setLoading(false);
       setError(null);
       setPlaybooks([]);
-      setHasSetupBalance(false);
       return;
     }
 
@@ -145,7 +144,7 @@ export const usePlaybooks = (userId: string | undefined) => {
 
         const updatedPlaybooks = [newPlaybook, ...playbooks];
         setPlaybooks(updatedPlaybooks);
-        localStorage.setItem(`demoPlaybooks_${userId}`, JSON.stringify(updatedPlaybooks));
+        localStorage.setItem(`demoPlaybooks_${playbookData.userId}`, JSON.stringify(updatedPlaybooks));
         toast.success('Playbook added successfully! (Demo Mode)');
         return;
       }
@@ -206,7 +205,7 @@ export const usePlaybooks = (userId: string | undefined) => {
           playbook.id === playbookId ? { ...playbook, ...updates, updatedAt: new Date() } : playbook
         );
         setPlaybooks(updatedPlaybooks);
-        localStorage.setItem(`demoPlaybooks_${userId}`, JSON.stringify(updatedPlaybooks));
+        localStorage.setItem(`demoPlaybooks_${updates.userId}`, JSON.stringify(updatedPlaybooks));
         toast.success('Playbook updated successfully! (Demo Mode)');
         return;
       }
@@ -258,7 +257,13 @@ export const usePlaybooks = (userId: string | undefined) => {
         // Demo mode - remove from localStorage
         const updatedPlaybooks = playbooks.filter(playbook => playbook.id !== playbookId);
         setPlaybooks(updatedPlaybooks);
-        localStorage.setItem(`demoPlaybooks_${userId}`, JSON.stringify(updatedPlaybooks));
+        
+        // Get userId from the playbook being deleted
+        const playbookToDelete = playbooks.find(p => p.id === playbookId);
+        if (playbookToDelete) {
+          localStorage.setItem(`demoPlaybooks_${playbookToDelete.userId}`, JSON.stringify(updatedPlaybooks));
+        }
+        
         toast.success('Playbook deleted successfully! (Demo Mode)');
         return;
       }

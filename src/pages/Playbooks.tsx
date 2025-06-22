@@ -17,19 +17,56 @@ const Playbooks: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStrategy, setFilterStrategy] = useState('');
 
-  // Filter playbooks based on search and strategy filter
-  const filteredPlaybooks = playbooks.filter(playbook => {
-    const matchesSearch = playbook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         playbook.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         playbook.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStrategy = !filterStrategy || playbook.strategy.toLowerCase().includes(filterStrategy.toLowerCase());
-    
-    return matchesSearch && matchesStrategy;
-  });
+  // Safe filter playbooks with error handling
+  const filteredPlaybooks = React.useMemo(() => {
+    try {
+      if (!Array.isArray(playbooks)) {
+        return [];
+      }
 
-  // Get unique strategies for filter dropdown
-  const strategies = Array.from(new Set(playbooks.map(p => p.strategy))).sort();
+      return playbooks.filter(playbook => {
+        if (!playbook || typeof playbook !== 'object') {
+          return false;
+        }
+
+        const title = playbook.title || '';
+        const description = playbook.description || '';
+        const tags = Array.isArray(playbook.tags) ? playbook.tags : [];
+        const strategy = playbook.strategy || '';
+
+        const matchesSearch = !searchTerm || 
+          title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tags.some(tag => tag && tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesStrategy = !filterStrategy || 
+          strategy.toLowerCase().includes(filterStrategy.toLowerCase());
+        
+        return matchesSearch && matchesStrategy;
+      });
+    } catch (error) {
+      console.error('Error filtering playbooks:', error);
+      return [];
+    }
+  }, [playbooks, searchTerm, filterStrategy]);
+
+  // Get unique strategies for filter dropdown with error handling
+  const strategies = React.useMemo(() => {
+    try {
+      if (!Array.isArray(playbooks)) {
+        return [];
+      }
+
+      return Array.from(new Set(
+        playbooks
+          .map(p => p?.strategy)
+          .filter(strategy => strategy && typeof strategy === 'string')
+      )).sort();
+    } catch (error) {
+      console.error('Error getting strategies:', error);
+      return [];
+    }
+  }, [playbooks]);
 
   const handleView = (playbook: Playbook) => {
     setSelectedPlaybook(playbook);
@@ -45,6 +82,27 @@ const Playbooks: React.FC = () => {
       await deletePlaybook(playbookId);
     } catch (error) {
       console.error('Error deleting playbook:', error);
+    }
+  };
+
+  const handleAddPlaybook = async (playbookData: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      await addPlaybook(playbookData);
+    } catch (error) {
+      console.error('Error adding playbook:', error);
+      throw error;
+    }
+  };
+
+  const handleUpdatePlaybook = async (playbookData: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!editingPlaybook) return;
+    
+    try {
+      await updatePlaybook(editingPlaybook.id, playbookData);
+      setEditingPlaybook(null);
+    } catch (error) {
+      console.error('Error updating playbook:', error);
+      throw error;
     }
   };
 
@@ -231,7 +289,7 @@ const Playbooks: React.FC = () => {
           {showAddModal && (
             <AddPlaybookModal
               onClose={() => setShowAddModal(false)}
-              onSubmit={addPlaybook}
+              onSubmit={handleAddPlaybook}
               userId={user.id}
             />
           )}
@@ -247,10 +305,7 @@ const Playbooks: React.FC = () => {
           {editingPlaybook && (
             <AddPlaybookModal
               onClose={() => setEditingPlaybook(null)}
-              onSubmit={(updatedData) => {
-                updatePlaybook(editingPlaybook.id, updatedData);
-                setEditingPlaybook(null);
-              }}
+              onSubmit={handleUpdatePlaybook}
               userId={user.id}
               initialData={editingPlaybook}
             />
