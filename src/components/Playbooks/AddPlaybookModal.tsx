@@ -31,7 +31,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   userId, 
   initialData 
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<PlaybookFormData>({
+  const { register, handleSubmit, formState: { errors }, clearErrors, watch } = useForm<PlaybookFormData>({
     defaultValues: initialData ? {
       title: initialData.title,
       description: initialData.description,
@@ -43,7 +43,8 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
       notes: initialData.notes || '',
       tags: initialData.tags.join(', '),
       isPublic: initialData.isPublic
-    } : {}
+    } : {},
+    mode: 'onChange'
   });
   
   const [chartImage, setChartImage] = useState<string | null>(initialData?.chartImage || null);
@@ -52,6 +53,30 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLInputElement>(null);
+
+  // Watch form values for validation
+  const title = watch('title');
+  const description = watch('description');
+  const strategy = watch('strategy');
+
+  // Clear errors when values change
+  useEffect(() => {
+    if (title && title.trim() !== '') {
+      clearErrors('title');
+    }
+  }, [title, clearErrors]);
+
+  useEffect(() => {
+    if (description && description.trim() !== '') {
+      clearErrors('description');
+    }
+  }, [description, clearErrors]);
+
+  useEffect(() => {
+    if (strategy && strategy.trim() !== '') {
+      clearErrors('strategy');
+    }
+  }, [strategy, clearErrors]);
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -181,10 +206,18 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  {...register('title', { required: 'Title is required' })}
+                  {...register('title', { 
+                    required: 'Title is required',
+                    validate: value => value.trim() !== '' || 'Title is required'
+                  })}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Breakout Strategy"
+                  onChange={(e) => {
+                    if (e.target.value.trim() !== '') {
+                      clearErrors('title');
+                    }
+                  }}
                 />
                 {errors.title && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.title.message}</p>
@@ -197,9 +230,17 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  {...register('strategy', { required: 'Strategy is required' })}
+                  {...register('strategy', { 
+                    required: 'Strategy is required',
+                    validate: value => value.trim() !== '' || 'Strategy is required'
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Momentum, Reversal, Scalping"
+                  onChange={(e) => {
+                    if (e.target.value.trim() !== '') {
+                      clearErrors('strategy');
+                    }
+                  }}
                 />
                 {errors.strategy && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.strategy.message}</p>
@@ -212,10 +253,18 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 Description *
               </label>
               <textarea
-                {...register('description', { required: 'Description is required' })}
+                {...register('description', { 
+                  required: 'Description is required',
+                  validate: value => value.trim() !== '' || 'Description is required'
+                })}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Brief description of this trading setup..."
+                onChange={(e) => {
+                  if (e.target.value.trim() !== '') {
+                    clearErrors('description');
+                  }
+                }}
               />
               {errors.description && (
                 <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.description.message}</p>

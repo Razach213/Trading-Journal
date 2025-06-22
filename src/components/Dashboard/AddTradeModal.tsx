@@ -25,7 +25,9 @@ interface TradeFormData {
 }
 
 const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId }) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<TradeFormData>();
+  const { register, handleSubmit, watch, setValue, formState: { errors }, clearErrors } = useForm<TradeFormData>({
+    mode: 'onChange'
+  });
   const [useManualPnL, setUseManualPnL] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLInputElement>(null);
@@ -36,6 +38,14 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   const quantity = watch('quantity');
   const type = watch('type');
   const manualPnL = watch('pnl');
+  const symbol = watch('symbol');
+
+  // Clear error when value is entered
+  useEffect(() => {
+    if (symbol && symbol.trim() !== '') {
+      clearErrors('symbol');
+    }
+  }, [symbol, clearErrors]);
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -161,14 +171,16 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   type="text"
                   {...register('symbol', { 
                     required: 'Symbol is required',
-                    pattern: {
-                      value: /^[A-Za-z0-9]+$/,
-                      message: 'Symbol must contain only letters and numbers'
-                    }
+                    validate: value => value.trim() !== '' || 'Symbol is required'
                   })}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="AAPL"
+                  onChange={(e) => {
+                    if (e.target.value.trim() !== '') {
+                      clearErrors('symbol');
+                    }
+                  }}
                 />
                 {errors.symbol && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.symbol.message}</p>
@@ -182,6 +194,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 <select
                   {...register('type', { required: 'Type is required' })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => {
+                    if (e.target.value !== '') {
+                      clearErrors('type');
+                    }
+                  }}
                 >
                   <option value="">Select type</option>
                   <option value="long">Long</option>
@@ -208,6 +225,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="150.00"
+                  onChange={(e) => {
+                    if (e.target.value !== '') {
+                      clearErrors('entryPrice');
+                    }
+                  }}
                 />
                 {errors.entryPrice && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
@@ -227,6 +249,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="100"
+                  onChange={(e) => {
+                    if (e.target.value !== '') {
+                      clearErrors('quantity');
+                    }
+                  }}
                 />
                 {errors.quantity && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.quantity.message}</p>
@@ -243,6 +270,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   type="datetime-local"
                   {...register('entryDate', { required: 'Entry date is required' })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => {
+                    if (e.target.value !== '') {
+                      clearErrors('entryDate');
+                    }
+                  }}
                 />
                 {errors.entryDate && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
@@ -256,6 +288,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 <select
                   {...register('status', { required: 'Status is required' })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => {
+                    if (e.target.value !== '') {
+                      clearErrors('status');
+                    }
+                  }}
                 >
                   <option value="">Select status</option>
                   <option value="open">Open</option>
@@ -285,6 +322,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       disabled={useManualPnL}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="155.00"
+                      onChange={(e) => {
+                        if (e.target.value !== '') {
+                          clearErrors('exitPrice');
+                        }
+                      }}
                     />
                     {errors.exitPrice && (
                       <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.exitPrice.message}</p>
@@ -339,6 +381,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                           })}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="Enter profit (+) or loss (-) amount"
+                          onChange={(e) => {
+                            if (e.target.value !== '') {
+                              clearErrors('pnl');
+                            }
+                          }}
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Enter positive number for profit, negative for loss (e.g., 500 or -200)

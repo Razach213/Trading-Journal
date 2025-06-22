@@ -1085,7 +1085,7 @@ select:focus {
   flex: 1;
   padding: 1.25rem;
   overflow-y: auto;
-  max-height: calc(90vh - 4.5rem);
+  max-height: calc(90vh - 9rem); /* Adjusted to ensure buttons are visible */
 }
 
 /* Modal footer */
@@ -1183,12 +1183,12 @@ body.modal-open {
 /* Ensure modal is centered on all screen sizes */
 @media (max-width: 640px) {
   .fixed-modal {
-    align-items: flex-end;
+    align-items: center; /* Changed from flex-end to center */
   }
   
   .modal-container {
     max-height: 85vh;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    margin: auto; /* Center the modal */
+    border-radius: 0.75rem; /* Keep rounded corners on all sides */
   }
 }
