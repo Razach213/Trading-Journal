@@ -29,9 +29,18 @@ import {
   Award,
   Zap,
   Lock,
-  EyeOff
+  EyeOff,
+  Server,
+  HardDrive,
+  Cpu,
+  Wifi,
+  Monitor,
+  UserX,
+  UserCheck,
+  CreditCard,
+  PieChart
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import toast from 'react-hot-toast';
 
 // Admin password - hardcoded as requested
@@ -43,7 +52,10 @@ const mockUsers = [
   { id: '2', name: 'Sarah Smith', email: 'sarah@example.com', plan: 'free', status: 'active', joinDate: '2024-02-20', trades: 12, pnl: 150 },
   { id: '3', name: 'Mike Johnson', email: 'mike@example.com', plan: 'premium', status: 'inactive', joinDate: '2024-01-10', trades: 89, pnl: 5200 },
   { id: '4', name: 'Emily Davis', email: 'emily@example.com', plan: 'pro', status: 'active', joinDate: '2024-03-05', trades: 67, pnl: 3100 },
-  { id: '5', name: 'Alex Wilson', email: 'alex@example.com', plan: 'free', status: 'active', joinDate: '2024-03-12', trades: 8, pnl: -50 }
+  { id: '5', name: 'Alex Wilson', email: 'alex@example.com', plan: 'free', status: 'active', joinDate: '2024-03-12', trades: 8, pnl: -50 },
+  { id: '6', name: 'Lisa Chen', email: 'lisa@example.com', plan: 'premium', status: 'active', joinDate: '2024-02-28', trades: 156, pnl: 8900 },
+  { id: '7', name: 'David Brown', email: 'david@example.com', plan: 'pro', status: 'inactive', joinDate: '2024-01-22', trades: 34, pnl: -200 },
+  { id: '8', name: 'Maria Garcia', email: 'maria@example.com', plan: 'free', status: 'active', joinDate: '2024-03-10', trades: 23, pnl: 450 }
 ];
 
 const mockAnalytics = {
@@ -80,6 +92,77 @@ const mockPlanDistribution = [
   { name: 'Pro', value: 25, color: '#3b82f6' },
   { name: 'Premium', value: 10, color: '#8b5cf6' }
 ];
+
+// Additional mock data for Analytics tab
+const mockAnalyticsData = {
+  conversionRate: 12.5,
+  churnRate: 3.2,
+  avgSessionTime: '24m 15s',
+  supportTickets: 45,
+  topPerformingUsers: [
+    { name: 'Lisa Chen', trades: 156, pnl: 8900, plan: 'premium' },
+    { name: 'Mike Johnson', trades: 89, pnl: 5200, plan: 'premium' },
+    { name: 'Emily Davis', trades: 67, pnl: 3100, plan: 'pro' },
+    { name: 'John Doe', trades: 45, pnl: 2500, plan: 'pro' },
+    { name: 'Maria Garcia', trades: 23, pnl: 450, plan: 'free' }
+  ]
+};
+
+// Mock data for Revenue tab
+const mockRevenueBreakdown = {
+  monthlyRecurringRevenue: 125000,
+  averageRevenuePerUser: 28.50,
+  customerLifetimeValue: 342,
+  revenueByPlan: {
+    free: 0,
+    pro: 85500,
+    premium: 39500
+  },
+  paymentMethods: {
+    creditCard: 85,
+    paypal: 12,
+    bankTransfer: 3
+  }
+};
+
+// Mock data for System tab
+const mockSystemData = {
+  serverMetrics: {
+    cpuUsage: 45,
+    memoryUsage: 62,
+    diskUsage: 78,
+    networkIO: 23
+  },
+  systemHealth: {
+    database: { status: 'healthy', uptime: '99.9%', responseTime: '50ms' },
+    api: { status: 'operational', uptime: '99.8%', responseTime: '150ms' },
+    email: { status: 'degraded', uptime: '98.5%', responseTime: '2min delay' },
+    security: { status: 'secure', threats: 0, lastScan: '2 hours ago' }
+  },
+  recentActivities: [
+    { type: 'success', message: 'Database backup completed', time: '2 hours ago' },
+    { type: 'warning', message: 'High memory usage detected', time: '4 hours ago' },
+    { type: 'success', message: 'Security scan completed', time: '6 hours ago' },
+    { type: 'success', message: 'System update deployed', time: '1 day ago' }
+  ]
+};
+
+// Mock data for Security tab
+const mockSecurityData = {
+  failedLoginAttempts: 23,
+  activeSessions: 1247,
+  securityScore: 98,
+  recentEvents: [
+    { type: 'critical', message: 'Multiple failed login attempts', details: 'IP: 192.168.1.100 - 5 attempts in 10 minutes', time: '2 hours ago' },
+    { type: 'warning', message: 'Unusual login location', details: 'User logged in from new country: Germany', time: '4 hours ago' },
+    { type: 'success', message: 'Security scan completed', details: 'No vulnerabilities detected', time: '6 hours ago' }
+  ],
+  securitySettings: {
+    twoFactorAuth: true,
+    sessionTimeout: 30,
+    ipWhitelist: false
+  }
+};
 
 // Password Authentication Component
 const AdminPasswordAuth: React.FC<{ onAuthenticated: () => void }> = ({ onAuthenticated }) => {
@@ -422,7 +505,7 @@ const AdminPanal: React.FC = () => {
               <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Plan Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
+                  <RechartsPieChart>
                     <Pie
                       data={mockPlanDistribution}
                       cx="50%"
@@ -437,7 +520,7 @@ const AdminPanal: React.FC = () => {
                       ))}
                     </Pie>
                     <Tooltip />
-                  </PieChart>
+                  </RechartsPieChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -571,13 +654,22 @@ const AdminPanal: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.joinDate}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
+                            <button 
+                              onClick={() => toast.success(`Viewing ${user.name}'s profile`)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
                               <Eye className="h-4 w-4" />
                             </button>
-                            <button className="text-gray-600 hover:text-gray-900">
+                            <button 
+                              onClick={() => toast.success(`Editing ${user.name}'s account`)}
+                              className="text-gray-600 hover:text-gray-900"
+                            >
                               <Edit className="h-4 w-4" />
                             </button>
-                            <button className="text-red-600 hover:text-red-900">
+                            <button 
+                              onClick={() => toast.error(`Deleted ${user.name}'s account`)}
+                              className="text-red-600 hover:text-red-900"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -591,18 +683,438 @@ const AdminPanal: React.FC = () => {
           </div>
         )}
 
-        {/* Other tabs content would go here... */}
-        {activeTab !== 'dashboard' && activeTab !== 'users' && (
-          <div className="bg-white rounded-lg p-12 text-center shadow-sm border border-gray-200">
-            <div className="text-gray-400 mb-4">
-              <Settings className="h-16 w-16 mx-auto" />
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-8">
+            {/* Key Performance Indicators */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
+                    <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.conversionRate}%</p>
+                  </div>
+                  <Target className="h-8 w-8 text-green-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Churn Rate</p>
+                    <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.churnRate}%</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-red-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Avg Session Time</p>
+                    <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.avgSessionTime}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-blue-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Support Tickets</p>
+                    <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.supportTickets}</p>
+                  </div>
+                  <Mail className="h-8 w-8 text-purple-600" />
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {tabs.find(tab => tab.id === activeTab)?.label} Section
-            </h3>
-            <p className="text-gray-600">
-              This section is under development. More features coming soon!
-            </p>
+
+            {/* User Growth Chart */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth by Plan</h3>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={mockUserGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="free" stackId="a" fill="#94a3b8" name="Free" />
+                  <Bar dataKey="pro" stackId="a" fill="#3b82f6" name="Pro" />
+                  <Bar dataKey="premium" stackId="a" fill="#8b5cf6" name="Premium" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Top Performing Users */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Users</h3>
+              <div className="space-y-4">
+                {mockAnalyticsData.topPerformingUsers.map((user, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{user.name}</p>
+                        <p className="text-sm text-gray-600">{user.trades} trades</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-green-600">${user.pnl.toLocaleString()}</p>
+                      <p className="text-sm text-gray-600">{user.plan} plan</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Revenue Tab */}
+        {activeTab === 'revenue' && (
+          <div className="space-y-8">
+            {/* Revenue Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Monthly Recurring Revenue</p>
+                    <p className="text-3xl font-bold text-gray-900">${mockRevenueBreakdown.monthlyRecurringRevenue.toLocaleString()}</p>
+                    <p className="text-sm text-green-600 mt-1">+22.1% from last month</p>
+                  </div>
+                  <DollarSign className="h-10 w-10 text-green-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Average Revenue Per User</p>
+                    <p className="text-3xl font-bold text-gray-900">${mockRevenueBreakdown.averageRevenuePerUser}</p>
+                    <p className="text-sm text-green-600 mt-1">+5.2% from last month</p>
+                  </div>
+                  <Users className="h-10 w-10 text-blue-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Customer Lifetime Value</p>
+                    <p className="text-3xl font-bold text-gray-900">${mockRevenueBreakdown.customerLifetimeValue}</p>
+                    <p className="text-sm text-green-600 mt-1">+12.8% from last month</p>
+                  </div>
+                  <Award className="h-10 w-10 text-purple-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Plan</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Free Plan</span>
+                    <span className="font-medium">${mockRevenueBreakdown.revenueByPlan.free}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Pro Plan ($19/month)</span>
+                    <span className="font-medium">${mockRevenueBreakdown.revenueByPlan.pro.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Premium Plan ($49/month)</span>
+                    <span className="font-medium">${mockRevenueBreakdown.revenueByPlan.premium.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between font-bold">
+                      <span>Total Monthly Revenue</span>
+                      <span>${mockRevenueBreakdown.monthlyRecurringRevenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Credit Card</span>
+                    <span className="font-medium">{mockRevenueBreakdown.paymentMethods.creditCard}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">PayPal</span>
+                    <span className="font-medium">{mockRevenueBreakdown.paymentMethods.paypal}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Bank Transfer</span>
+                    <span className="font-medium">{mockRevenueBreakdown.paymentMethods.bankTransfer}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue Trend */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={mockRevenueData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
+                  <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* System Tab */}
+        {activeTab === 'system' && (
+          <div className="space-y-8">
+            {/* System Health */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Database className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="font-medium text-gray-900">Database</p>
+                  <p className="text-sm text-green-600">{mockSystemData.systemHealth.database.status}</p>
+                  <p className="text-xs text-gray-500">{mockSystemData.systemHealth.database.uptime} uptime</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Globe className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="font-medium text-gray-900">API</p>
+                  <p className="text-sm text-green-600">{mockSystemData.systemHealth.api.status}</p>
+                  <p className="text-xs text-gray-500">{mockSystemData.systemHealth.api.responseTime} avg response</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Mail className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <p className="font-medium text-gray-900">Email Service</p>
+                  <p className="text-sm text-yellow-600">{mockSystemData.systemHealth.email.status}</p>
+                  <p className="text-xs text-gray-500">{mockSystemData.systemHealth.email.responseTime}</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Shield className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="font-medium text-gray-900">Security</p>
+                  <p className="text-sm text-green-600">{mockSystemData.systemHealth.security.status}</p>
+                  <p className="text-xs text-gray-500">No threats detected</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Server Metrics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Server Performance</h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>CPU Usage</span>
+                      <span>{mockSystemData.serverMetrics.cpuUsage}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${mockSystemData.serverMetrics.cpuUsage}%` }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Memory Usage</span>
+                      <span>{mockSystemData.serverMetrics.memoryUsage}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-green-600 h-2 rounded-full" style={{ width: `${mockSystemData.serverMetrics.memoryUsage}%` }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Disk Usage</span>
+                      <span>{mockSystemData.serverMetrics.diskUsage}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-yellow-600 h-2 rounded-full" style={{ width: `${mockSystemData.serverMetrics.diskUsage}%` }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Network I/O</span>
+                      <span>{mockSystemData.serverMetrics.networkIO}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${mockSystemData.serverMetrics.networkIO}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+                <div className="space-y-3">
+                  {mockSystemData.recentActivities.map((activity, index) => (
+                    <div key={index} className="flex items-center space-x-3 text-sm">
+                      {activity.type === 'success' ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      )}
+                      <span>{activity.message}</span>
+                      <span className="text-gray-500">{activity.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Security Tab */}
+        {activeTab === 'security' && (
+          <div className="space-y-8">
+            {/* Security Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Failed Login Attempts</p>
+                    <p className="text-3xl font-bold text-gray-900">{mockSecurityData.failedLoginAttempts}</p>
+                    <p className="text-sm text-red-600 mt-1">Last 24 hours</p>
+                  </div>
+                  <AlertTriangle className="h-10 w-10 text-red-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Sessions</p>
+                    <p className="text-3xl font-bold text-gray-900">{mockSecurityData.activeSessions.toLocaleString()}</p>
+                    <p className="text-sm text-green-600 mt-1">Currently online</p>
+                  </div>
+                  <Users className="h-10 w-10 text-green-600" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Security Score</p>
+                    <p className="text-3xl font-bold text-gray-900">{mockSecurityData.securityScore}/100</p>
+                    <p className="text-sm text-green-600 mt-1">Excellent</p>
+                  </div>
+                  <Shield className="h-10 w-10 text-green-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Security Logs */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Security Events</h3>
+              <div className="space-y-4">
+                {mockSecurityData.recentEvents.map((event, index) => (
+                  <div key={index} className={`flex items-center justify-between p-4 rounded-lg border ${
+                    event.type === 'critical' ? 'bg-red-50 border-red-200' :
+                    event.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+                    'bg-green-50 border-green-200'
+                  }`}>
+                    <div className="flex items-center space-x-3">
+                      {event.type === 'critical' ? (
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      ) : event.type === 'warning' ? (
+                        <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                      ) : (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      )}
+                      <div>
+                        <p className={`font-medium ${
+                          event.type === 'critical' ? 'text-red-900' :
+                          event.type === 'warning' ? 'text-yellow-900' :
+                          'text-green-900'
+                        }`}>{event.message}</p>
+                        <p className={`text-sm ${
+                          event.type === 'critical' ? 'text-red-700' :
+                          event.type === 'warning' ? 'text-yellow-700' :
+                          'text-green-700'
+                        }`}>{event.details}</p>
+                      </div>
+                    </div>
+                    <span className={`text-sm ${
+                      event.type === 'critical' ? 'text-red-600' :
+                      event.type === 'warning' ? 'text-yellow-600' :
+                      'text-green-600'
+                    }`}>{event.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Security Settings */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Two-Factor Authentication</p>
+                    <p className="text-sm text-gray-600">Require 2FA for all admin accounts</p>
+                  </div>
+                  <button 
+                    onClick={() => toast.success('2FA settings updated')}
+                    className={`px-4 py-2 rounded-lg text-sm ${
+                      mockSecurityData.securitySettings.twoFactorAuth 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-600 text-white'
+                    }`}
+                  >
+                    {mockSecurityData.securitySettings.twoFactorAuth ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Session Timeout</p>
+                    <p className="text-sm text-gray-600">Automatically log out inactive users</p>
+                  </div>
+                  <select 
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    defaultValue={mockSecurityData.securitySettings.sessionTimeout}
+                    onChange={(e) => toast.success(`Session timeout updated to ${e.target.value} minutes`)}
+                  >
+                    <option value={30}>30 minutes</option>
+                    <option value={60}>1 hour</option>
+                    <option value={120}>2 hours</option>
+                    <option value={240}>4 hours</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">IP Whitelist</p>
+                    <p className="text-sm text-gray-600">Restrict admin access to specific IPs</p>
+                  </div>
+                  <button 
+                    onClick={() => toast.success('IP whitelist configuration opened')}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    Configure
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
