@@ -74,7 +74,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ trades }) => {
               fontSize: '12px'
             }}
             className="dark:bg-gray-800 dark:text-white dark:border-gray-600"
-            formatter={(value: number, name: string) => [
+            formatter={(value: number, name: string, props: any) => [
               formatCurrency(value),
               name === 'cumulativePnL' ? 'Cumulative P&L' : 'Trade P&L'
             ]}
