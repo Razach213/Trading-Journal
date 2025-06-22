@@ -169,8 +169,11 @@ const Playbooks: React.FC = () => {
           {/* Search and Filters */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
             <div className="flex flex-col md:flex-row gap-4">
+              {/* Search Input - Fixed positioning of search icon */}
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                  <Search className="h-4 w-4" />
+                </div>
                 <input
                   type="text"
                   placeholder="Search playbooks by title, description, or tags..."
@@ -179,12 +182,16 @@ const Playbooks: React.FC = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
+              
+              {/* Strategy Filter - Fixed positioning of filter icon */}
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                  <Filter className="h-4 w-4" />
+                </div>
                 <select
                   value={filterStrategy}
                   onChange={(e) => setFilterStrategy(e.target.value)}
-                  className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-w-[200px]"
+                  className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-w-[200px] w-full md:w-auto"
                 >
                   <option value="">All Strategies</option>
                   {strategies.map(strategy => (
