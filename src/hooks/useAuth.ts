@@ -23,6 +23,18 @@ export const useAuth = () => {
   useEffect(() => {
     if (isDemoMode) {
       console.warn("🔧 Running in demo mode - Firebase not configured");
+      
+      // Load demo user from localStorage if exists
+      const savedDemoUser = localStorage.getItem('demoUser');
+      if (savedDemoUser) {
+        try {
+          const demoUser = JSON.parse(savedDemoUser);
+          setUser(demoUser);
+        } catch (error) {
+          console.error('Error loading demo user:', error);
+          localStorage.removeItem('demoUser');
+        }
+      }
       setLoading(false);
       return;
     }
@@ -55,7 +67,17 @@ export const useAuth = () => {
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (userDoc.exists()) {
-        return userDoc.data() as User;
+        const data = userDoc.data();
+        return {
+          id: firebaseUser.uid,
+          email: firebaseUser.email!,
+          displayName: data.displayName || firebaseUser.displayName || 'User',
+          photoURL: data.photoURL || firebaseUser.photoURL || undefined,
+          plan: data.plan || 'free',
+          accountBalance: data.accountBalance || 0,
+          currentBalance: data.currentBalance || 0,
+          createdAt: data.createdAt?.toDate() || new Date()
+        };
       } else {
         const newUser: User = {
           id: firebaseUser.uid,
@@ -205,23 +227,6 @@ export const useAuth = () => {
       toast.error(error.message || "Failed to sign out");
     }
   };
-
-  // Load demo user from localStorage on mount
-  useEffect(() => {
-    if (isDemoMode) {
-      const savedDemoUser = localStorage.getItem('demoUser');
-      if (savedDemoUser) {
-        try {
-          const demoUser = JSON.parse(savedDemoUser);
-          setUser(demoUser);
-        } catch (error) {
-          console.error('Error loading demo user:', error);
-          localStorage.removeItem('demoUser');
-        }
-      }
-      setLoading(false);
-    }
-  }, []);
 
   return {
     user,

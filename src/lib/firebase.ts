@@ -39,7 +39,7 @@ try {
 } catch (error) {
   console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
   
-  // Create mock objects for demo mode
+  // Create safe mock objects for demo mode
   auth = {
     currentUser: null,
     onAuthStateChanged: () => () => {},
@@ -49,25 +49,9 @@ try {
     signOut: () => Promise.reject(new Error("Demo mode"))
   } as any;
 
-  db = {
-    collection: () => ({
-      doc: () => ({
-        get: () => Promise.resolve({ exists: false }),
-        set: () => Promise.reject(new Error("Demo mode")),
-        update: () => Promise.reject(new Error("Demo mode")),
-        delete: () => Promise.reject(new Error("Demo mode"))
-      }),
-      add: () => Promise.reject(new Error("Demo mode")),
-      where: () => ({
-        orderBy: () => ({
-          onSnapshot: () => () => {}
-        })
-      })
-    })
-  } as any;
-
-  storage = {} as any;
-  functions = {} as any;
+  db = null as any;
+  storage = null as any;
+  functions = null as any;
 }
 
 export { auth, db, storage, functions };

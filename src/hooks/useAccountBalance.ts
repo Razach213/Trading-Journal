@@ -5,7 +5,7 @@ import { AccountBalance } from '../types';
 import toast from 'react-hot-toast';
 
 // Demo mode flag
-const isDemoMode = !db || typeof db.collection !== 'function';
+const isDemoMode = !db;
 
 export const useAccountBalance = (userId: string | undefined) => {
   const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
@@ -17,6 +17,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     if (!userId) {
       setLoading(false);
       setAccountBalance(null);
+      setHasSetupBalance(false);
       return;
     }
 
