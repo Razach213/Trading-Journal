@@ -14,7 +14,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
-  const { accountBalance, loading: balanceLoading, updateStartingBalance } = useAccountBalance(user?.id);
+  const { accountBalance, loading: balanceLoading, hasSetupBalance, updateStartingBalance } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
 
   if (!user) {
@@ -46,13 +46,13 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // CRITICAL: Check if user needs to set starting balance
-  const needsStartingBalance = !accountBalance || accountBalance.startingBalance === 0;
+  // CRITICAL: Check if user needs to set starting balance (only show once)
+  const needsStartingBalance = !hasSetupBalance;
 
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {/* CRITICAL: Inline Starting Balance Setup - Show if needed */}
+        {/* CRITICAL: Inline Starting Balance Setup - Show only if needed and not set up */}
         {needsStartingBalance ? (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <InlineStartingBalanceSetup

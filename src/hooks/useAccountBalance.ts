@@ -11,6 +11,7 @@ export const useAccountBalance = (userId: string | undefined) => {
   const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasSetupBalance, setHasSetupBalance] = useState(false);
 
   useEffect(() => {
     if (!userId) {
@@ -22,27 +23,33 @@ export const useAccountBalance = (userId: string | undefined) => {
     if (isDemoMode) {
       // Demo mode - use localStorage
       const demoBalance = localStorage.getItem(`demoBalance_${userId}`);
+      const hasSetup = localStorage.getItem(`hasSetupBalance_${userId}`);
+      
+      setHasSetupBalance(!!hasSetup);
+      
       if (demoBalance) {
         try {
           const balance = JSON.parse(demoBalance);
           setAccountBalance(balance);
         } catch (error) {
           console.error('Error loading demo balance:', error);
-          // Create default demo balance
-          const defaultBalance: AccountBalance = {
-            id: userId,
-            userId,
-            startingBalance: 0,
-            currentBalance: 0,
-            totalPnL: 0,
-            totalReturnPercent: 0,
-            lastUpdated: new Date()
-          };
-          setAccountBalance(defaultBalance);
-          localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
+          // Create default demo balance only if not set up
+          if (!hasSetup) {
+            const defaultBalance: AccountBalance = {
+              id: userId,
+              userId,
+              startingBalance: 0,
+              currentBalance: 0,
+              totalPnL: 0,
+              totalReturnPercent: 0,
+              lastUpdated: new Date()
+            };
+            setAccountBalance(defaultBalance);
+            localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
+          }
         }
-      } else {
-        // Create default demo balance
+      } else if (!hasSetup) {
+        // Create default demo balance only if not set up
         const defaultBalance: AccountBalance = {
           id: userId,
           userId,
@@ -79,6 +86,7 @@ export const useAccountBalance = (userId: string | undefined) => {
               lastUpdated: data.lastUpdated?.toDate() || new Date()
             };
             setAccountBalance(balance);
+            setHasSetupBalance(balance.startingBalance > 0);
           } else {
             // Create empty balance record
             const defaultBalance: Omit<AccountBalance, 'id'> = {
@@ -93,9 +101,11 @@ export const useAccountBalance = (userId: string | undefined) => {
             try {
               await setDoc(doc(db, 'accountBalances', userId), defaultBalance);
               setAccountBalance({ ...defaultBalance, id: userId });
+              setHasSetupBalance(false);
             } catch (createError) {
               console.error('Error creating account balance:', createError);
               setAccountBalance({ ...defaultBalance, id: userId });
+              setHasSetupBalance(false);
             }
           }
           setError(null);
@@ -133,7 +143,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     }
 
     try {
-      const isFirstTimeSetup = !accountBalance || accountBalance.startingBalance === 0;
+      const isFirstTimeSetup = !hasSetupBalance || !accountBalance || accountBalance.startingBalance === 0;
       
       const updatedBalance = {
         userId,
@@ -149,6 +159,8 @@ export const useAccountBalance = (userId: string | undefined) => {
         const balanceWithId = { ...updatedBalance, id: userId };
         setAccountBalance(balanceWithId);
         localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(balanceWithId));
+        localStorage.setItem(`hasSetupBalance_${userId}`, 'true');
+        setHasSetupBalance(true);
         
         if (isFirstTimeSetup) {
           toast.success('🎉 Demo account setup complete! (Data saved locally)');
@@ -166,6 +178,8 @@ export const useAccountBalance = (userId: string | undefined) => {
         id: userId,
         ...updatedBalance
       }));
+      
+      setHasSetupBalance(true);
       
       if (isFirstTimeSetup) {
         toast.success('🎉 Account setup complete! Ready to start trading!');
@@ -260,6 +274,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     accountBalance,
     loading,
     error,
+    hasSetupBalance,
     updateStartingBalance,
     updateBalanceFromTrade,
     recalculateBalance,

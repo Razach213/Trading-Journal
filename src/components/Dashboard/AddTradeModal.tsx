@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X } from 'lucide-react';
+import { X, Calculator, DollarSign } from 'lucide-react';
 import { Trade } from '../../types';
 
 interface AddTradeModalProps {
@@ -18,30 +18,57 @@ interface TradeFormData {
   entryDate: string;
   exitDate?: string;
   status: 'open' | 'closed';
+  pnl?: number; // Manual P&L input
   notes?: string;
   strategy?: string;
   tags: string;
 }
 
 const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId }) => {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<TradeFormData>();
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<TradeFormData>();
+  const [useManualPnL, setUseManualPnL] = useState(false);
+  
   const status = watch('status');
   const entryPrice = watch('entryPrice');
   const exitPrice = watch('exitPrice');
   const quantity = watch('quantity');
   const type = watch('type');
+  const manualPnL = watch('pnl');
+
+  // Auto-calculate P&L when prices change (if not using manual)
+  React.useEffect(() => {
+    if (!useManualPnL && status === 'closed' && entryPrice && exitPrice && quantity) {
+      let calculatedPnL: number;
+      if (type === 'long') {
+        calculatedPnL = (exitPrice - entryPrice) * quantity;
+      } else {
+        calculatedPnL = (entryPrice - exitPrice) * quantity;
+      }
+      setValue('pnl', Number(calculatedPnL.toFixed(2)));
+    }
+  }, [entryPrice, exitPrice, quantity, type, status, useManualPnL, setValue]);
 
   const onFormSubmit = (data: TradeFormData) => {
-    let pnl: number | null = null;
+    let finalPnL: number | null = null;
     let pnlPercent: number | null = null;
 
-    if (data.status === 'closed' && data.exitPrice && entryPrice && quantity) {
-      if (type === 'long') {
-        pnl = (data.exitPrice - entryPrice) * quantity;
-      } else {
-        pnl = (entryPrice - data.exitPrice) * quantity;
+    if (data.status === 'closed') {
+      if (useManualPnL && data.pnl !== undefined) {
+        // Use manual P&L
+        finalPnL = Number(data.pnl);
+      } else if (data.exitPrice && entryPrice && quantity) {
+        // Auto-calculate P&L
+        if (type === 'long') {
+          finalPnL = (data.exitPrice - entryPrice) * quantity;
+        } else {
+          finalPnL = (entryPrice - data.exitPrice) * quantity;
+        }
       }
-      pnlPercent = (pnl / (entryPrice * quantity)) * 100;
+
+      // Calculate percentage
+      if (finalPnL !== null && entryPrice && quantity) {
+        pnlPercent = (finalPnL / (entryPrice * quantity)) * 100;
+      }
     }
 
     const trade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -54,7 +81,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
       entryDate: new Date(data.entryDate),
       exitDate: data.status === 'closed' && data.exitDate ? new Date(data.exitDate) : null,
       status: data.status,
-      pnl,
+      pnl: finalPnL,
       pnlPercent,
       notes: data.notes?.trim() || null,
       tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
@@ -192,17 +219,18 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Exit Price *
+                    Exit Price {!useManualPnL && '*'}
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     {...register('exitPrice', { 
-                      required: status === 'closed' ? 'Exit price is required for closed trades' : false,
+                      required: status === 'closed' && !useManualPnL ? 'Exit price is required for closed trades' : false,
                       min: { value: 0.01, message: 'Exit price must be greater than 0' },
                       valueAsNumber: true
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={useManualPnL}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
                     placeholder="155.00"
                   />
                   {errors.exitPrice && (
@@ -219,6 +247,80 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                     {...register('exitDate')}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
+                </div>
+
+                {/* P&L Calculation Options */}
+                <div className="md:col-span-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">P&L Calculation</h3>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Manual Input</span>
+                        <button
+                          type="button"
+                          onClick={() => setUseManualPnL(!useManualPnL)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            useManualPnL ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              useManualPnL ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {useManualPnL ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <DollarSign className="h-4 w-4 inline mr-1" />
+                          Profit/Loss Amount *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register('pnl', { 
+                            required: useManualPnL ? 'P&L amount is required' : false,
+                            valueAsNumber: true
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          placeholder="Enter profit (+) or loss (-) amount"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Enter positive number for profit, negative for loss (e.g., 500 or -200)
+                        </p>
+                        {errors.pnl && (
+                          <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.pnl.message}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">Auto-calculated P&L</span>
+                        </div>
+                        {entryPrice && exitPrice && quantity && type && (
+                          <div className="bg-white dark:bg-gray-800 rounded p-3 border border-gray-200 dark:border-gray-600">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              {type === 'long' 
+                                ? `(${exitPrice} - ${entryPrice}) × ${quantity} = `
+                                : `(${entryPrice} - ${exitPrice}) × ${quantity} = `
+                              }
+                              <span className={`font-bold ${
+                                ((type === 'long' ? exitPrice - entryPrice : entryPrice - exitPrice) * quantity) >= 0 
+                                  ? 'text-green-600 dark:text-green-400' 
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}>
+                                ${((type === 'long' ? exitPrice - entryPrice : entryPrice - exitPrice) * quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </>
             )}
