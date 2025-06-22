@@ -71,8 +71,13 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
   const handleSave = async () => {
     const numValue = parseFloat(editValue);
     
-    if (isNaN(numValue) || numValue <= 0) {
-      toast.error('Please enter a valid positive number');
+    if (isNaN(numValue)) {
+      toast.error('Please enter a valid number');
+      return;
+    }
+
+    if (numValue < 0) {
+      toast.error('Balance cannot be negative');
       return;
     }
 
@@ -119,7 +124,7 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
         <div className="relative">
           {currency && (
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <DollarSign className="h-4 w-4 text-gray-400" />
+              <DollarSign className="h-4 w-4 text-gray-400 dark:text-gray-300" />
             </div>
           )}
           <input
@@ -128,7 +133,7 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
             value={editValue}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
-            className={`${currency ? 'pl-8' : 'pl-3'} pr-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-bold transition-all duration-200 ${
+            className={`${currency ? 'pl-8' : 'pl-3'} pr-3 py-2 border border-blue-300 dark:border-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white/90 dark:bg-gray-700/90 text-gray-900 dark:text-white font-bold transition-all duration-200 ${
               large ? 'text-xl w-32' : 'text-base w-28'
             }`}
             placeholder="Enter amount"
@@ -171,12 +176,12 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
     >
       <span className={`font-bold transition-all duration-200 ${
         large ? 'text-2xl' : 'text-lg'
-      } ${isHovered ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+      } ${isHovered ? 'text-blue-300 dark:text-blue-300' : ''}`}>
         {currency ? formatCurrency(value) : formatNumber(value)}
       </span>
       
       <button
-        className={`p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 transform ${
+        className={`p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-300 dark:hover:text-blue-300 hover:bg-blue-50/30 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 transform ${
           isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
         }`}
         title={`Edit ${label.toLowerCase()}`}

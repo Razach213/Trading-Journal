@@ -134,71 +134,102 @@ export const useAccountBalance = (userId: string | undefined) => {
     return unsubscribe;
   }, [userId]);
 
-  const updateStartingBalance = async (newStartingBalance: number): Promise<void> => {
+  const updateBalance = async (field: 'startingBalance' | 'currentBalance', newValue: number): Promise<void> => {
     if (!userId) {
       throw new Error('User ID is required');
     }
 
-    if (!newStartingBalance || newStartingBalance <= 0) {
-      throw new Error('Starting balance must be greater than 0');
+    if (newValue < 0) {
+      throw new Error('Balance cannot be negative');
     }
 
     try {
-      const isFirstTimeSetup = !hasSetupBalance || !accountBalance || accountBalance.startingBalance === 0;
-      
-      const updatedBalance = {
-        userId,
-        startingBalance: newStartingBalance,
-        currentBalance: isFirstTimeSetup ? newStartingBalance : (accountBalance?.currentBalance || newStartingBalance),
-        totalPnL: isFirstTimeSetup ? 0 : (accountBalance?.totalPnL || 0),
-        totalReturnPercent: 0,
+      if (!accountBalance) {
+        throw new Error('Account balance not found');
+      }
+
+      // Calculate new values based on which field is being updated
+      let updatedBalance: Partial<AccountBalance> = {
         lastUpdated: new Date()
       };
 
+      if (field === 'startingBalance') {
+        // When starting balance changes, recalculate totalPnL and totalReturnPercent
+        const newStartingBalance = newValue;
+        const totalPnL = accountBalance.currentBalance - newStartingBalance;
+        const totalReturnPercent = newStartingBalance > 0 ? (totalPnL / newStartingBalance) * 100 : 0;
+
+        updatedBalance = {
+          ...updatedBalance,
+          startingBalance: newStartingBalance,
+          totalPnL,
+          totalReturnPercent
+        };
+      } else if (field === 'currentBalance') {
+        // When current balance changes, recalculate totalPnL and totalReturnPercent
+        const newCurrentBalance = newValue;
+        const totalPnL = newCurrentBalance - accountBalance.startingBalance;
+        const totalReturnPercent = accountBalance.startingBalance > 0 
+          ? (totalPnL / accountBalance.startingBalance) * 100 
+          : 0;
+
+        updatedBalance = {
+          ...updatedBalance,
+          currentBalance: newCurrentBalance,
+          totalPnL,
+          totalReturnPercent
+        };
+      }
+
       if (isDemoMode) {
         // Demo mode - save to localStorage
-        const balanceWithId = { ...updatedBalance, id: userId };
-        setAccountBalance(balanceWithId);
-        localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(balanceWithId));
+        const newBalance = { ...accountBalance, ...updatedBalance };
+        setAccountBalance(newBalance);
+        localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(newBalance));
         localStorage.setItem(`hasSetupBalance_${userId}`, 'true');
         setHasSetupBalance(true);
         
-        if (isFirstTimeSetup) {
-          toast.success('🎉 Demo account setup complete! (Data saved locally)');
-        } else {
-          toast.success('Starting balance updated successfully! (Demo Mode)');
-        }
+        toast.success(`${field === 'startingBalance' ? 'Starting' : 'Current'} balance updated successfully! (Demo Mode)`);
         return;
       }
 
       // Real Firebase mode
-      await setDoc(doc(db, 'accountBalances', userId), updatedBalance, { merge: true });
+      await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
       
-      setAccountBalance(prev => ({
-        ...prev,
-        id: userId,
-        ...updatedBalance
-      }));
+      // Update local state
+      setAccountBalance(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          ...updatedBalance
+        } as AccountBalance;
+      });
       
       setHasSetupBalance(true);
       
-      if (isFirstTimeSetup) {
-        toast.success('🎉 Account setup complete! Ready to start trading!');
-      } else {
-        toast.success('Starting balance updated successfully!');
-      }
+      toast.success(`${field === 'startingBalance' ? 'Starting' : 'Current'} balance updated successfully!`);
     } catch (error: any) {
-      console.error('Error updating starting balance:', error);
+      console.error(`Error updating ${field}:`, error);
       
-      if (error.code === 'permission-denied') {
+      if (error.message?.includes('negative')) {
+        toast.error('Balance cannot be negative');
+      } else if (error.code === 'permission-denied') {
         toast.error('Permission denied. Please sign in again.');
       } else if (error.code === 'unavailable') {
         toast.error('Service unavailable. Please check your internet connection.');
       } else {
-        toast.error('Failed to update starting balance. Please try again.');
+        toast.error(`Failed to update ${field}. Please try again.`);
       }
       throw error;
     }
+  };
+
+  const updateStartingBalance = async (newStartingBalance: number): Promise<void> => {
+    return updateBalance('startingBalance', newStartingBalance);
+  };
+
+  const updateCurrentBalance = async (newCurrentBalance: number): Promise<void> => {
+    return updateBalance('currentBalance', newCurrentBalance);
   };
 
   const updateBalanceFromTrade = async (tradePnL: number) => {
@@ -277,6 +308,7 @@ export const useAccountBalance = (userId: string | undefined) => {
     error,
     hasSetupBalance,
     updateStartingBalance,
+    updateCurrentBalance,
     updateBalanceFromTrade,
     recalculateBalance,
     isDemoMode

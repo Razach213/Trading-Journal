@@ -7,7 +7,7 @@ interface AccountBalanceCardProps {
   currentBalance: number;
   totalPnL: number;
   totalReturn: number;
-  onUpdateBalance: (newBalance: number) => Promise<void>;
+  onUpdateBalance: (field: 'startingBalance' | 'currentBalance', newBalance: number) => Promise<void>;
 }
 
 const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
@@ -41,7 +41,7 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
           <div className="flex items-center justify-center md:justify-start">
             <InlineEditableBalance
               value={startingBalance}
-              onSave={onUpdateBalance}
+              onSave={(newValue) => onUpdateBalance('startingBalance', newValue)}
               label="Starting Balance"
               large={true}
               className="text-white"
@@ -52,13 +52,21 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
           </p>
         </div>
 
-        {/* Current Balance */}
+        {/* Current Balance - Now Editable */}
         <div className="text-center md:text-left">
           <p className="text-blue-100 dark:text-blue-200 text-sm font-medium mb-2 flex items-center justify-center md:justify-start">
             <DollarSign className="h-4 w-4 mr-1" />
             Current Balance
           </p>
-          <p className="text-2xl font-bold">{formatCurrency(currentBalance)}</p>
+          <div className="flex items-center justify-center md:justify-start">
+            <InlineEditableBalance
+              value={currentBalance}
+              onSave={(newValue) => onUpdateBalance('currentBalance', newValue)}
+              label="Current Balance"
+              large={true}
+              className="text-white"
+            />
+          </div>
           <div className="flex items-center justify-center md:justify-start mt-1">
             {totalPnL >= 0 ? (
               <TrendingUp className="h-4 w-4 text-green-300 dark:text-green-400 mr-1" />
@@ -153,7 +161,7 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
       {/* Help Text */}
       <div className="mt-4 text-center">
         <p className="text-xs text-blue-200 dark:text-blue-300 opacity-75">
-          💡 <span className="font-medium">Pro Tip:</span> Hover over the starting balance to edit it inline
+          💡 <span className="font-medium">Pro Tip:</span> Click on either balance to edit it inline
         </p>
       </div>
     </div>

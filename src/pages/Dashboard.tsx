@@ -14,8 +14,22 @@ import ErrorBoundary from '../components/ErrorBoundary';
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
-  const { accountBalance, loading: balanceLoading, hasSetupBalance, updateStartingBalance } = useAccountBalance(user?.id);
+  const { 
+    accountBalance, 
+    loading: balanceLoading, 
+    hasSetupBalance, 
+    updateStartingBalance,
+    updateCurrentBalance
+  } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
+
+  const handleUpdateBalance = async (field: 'startingBalance' | 'currentBalance', newValue: number) => {
+    if (field === 'startingBalance') {
+      await updateStartingBalance(newValue);
+    } else {
+      await updateCurrentBalance(newValue);
+    }
+  };
 
   if (!user) {
     return (
@@ -89,7 +103,7 @@ const Dashboard: React.FC = () => {
                   currentBalance={accountBalance.currentBalance}
                   totalPnL={accountBalance.totalPnL}
                   totalReturn={accountBalance.totalReturnPercent}
-                  onUpdateBalance={updateStartingBalance}
+                  onUpdateBalance={handleUpdateBalance}
                 />
               </div>
             )}
