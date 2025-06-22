@@ -7,7 +7,7 @@ interface AccountBalanceCardProps {
   currentBalance: number;
   totalPnL: number;
   totalReturn: number;
-  onUpdateBalance: (field: 'startingBalance' | 'currentBalance', newBalance: number) => Promise<void>;
+  onUpdateBalance: (field: 'startingBalance' | 'currentBalance', newValue: number) => Promise<void>;
 }
 
 const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
