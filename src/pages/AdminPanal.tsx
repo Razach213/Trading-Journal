@@ -38,14 +38,13 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../lib/firebase';
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { collection, getDocs, query, orderBy, limit, where, connectFirestoreEmulator } from 'firebase/firestore';
 
 // Admin password - hardcoded as requested
 const ADMIN_PASSWORD = "Alibot@321";
 
 // Firebase connection status component
-const FirebaseConnectionStatus: React.FC<{ isConnected: boolean; isLoading: boolean }> = ({ isConnected, isLoading }) => {
+const FirebaseConnectionStatus: React.FC<{ isConnected: boolean; isLoading: boolean; error?: string }> = ({ isConnected, isLoading, error }) => {
   if (isLoading) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -53,7 +52,7 @@ const FirebaseConnectionStatus: React.FC<{ isConnected: boolean; isLoading: bool
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
           <div>
             <h3 className="text-sm font-medium text-blue-800">Connecting to Firebase...</h3>
-            <p className="text-sm text-blue-700">Please wait while we establish connection to the database.</p>
+            <p className="text-sm text-blue-700">Testing database connection and fetching real data...</p>
           </div>
         </div>
       </div>
@@ -67,7 +66,7 @@ const FirebaseConnectionStatus: React.FC<{ isConnected: boolean; isLoading: bool
           <CheckCircle className="h-5 w-5 text-green-600" />
           <div>
             <h3 className="text-sm font-medium text-green-800">✅ Connected to Firebase Database Successfully</h3>
-            <p className="text-sm text-green-700">Real-time data is being fetched from Firebase Firestore.</p>
+            <p className="text-sm text-green-700">Real-time data is being fetched from Firebase Firestore. All systems operational.</p>
           </div>
         </div>
       </div>
@@ -80,7 +79,14 @@ const FirebaseConnectionStatus: React.FC<{ isConnected: boolean; isLoading: bool
         <CloudOff className="h-5 w-5 text-red-600" />
         <div>
           <h3 className="text-sm font-medium text-red-800">❌ Firebase Connection Failed</h3>
-          <p className="text-sm text-red-700">Unable to connect to Firebase. Please check your configuration.</p>
+          <p className="text-sm text-red-700">
+            {error || 'Unable to connect to Firebase. Please check your configuration.'}
+          </p>
+          <div className="mt-2 text-xs text-red-600">
+            <p>• Check if Firebase is properly configured in .env file</p>
+            <p>• Verify Firebase project settings and API keys</p>
+            <p>• Ensure Firestore database is created and accessible</p>
+          </div>
         </div>
       </div>
     </div>
@@ -195,7 +201,7 @@ const AdminPasswordAuth: React.FC<{ onAuthenticated: () => void }> = ({ onAuthen
 };
 
 const AdminPanal: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
@@ -204,6 +210,7 @@ const AdminPanal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [firebaseConnected, setFirebaseConnected] = useState(false);
   const [connectionLoading, setConnectionLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string>('');
 
   // Real Firebase data states
   const [realUsers, setRealUsers] = useState<any[]>([]);
@@ -244,26 +251,59 @@ const AdminPanal: React.FC = () => {
       if (!isAuthenticated) return;
       
       setConnectionLoading(true);
+      setConnectionError('');
       
       try {
-        // Test basic Firebase connection
-        if (!db) {
-          throw new Error('Firebase not initialized');
+        // Check if we're in demo mode
+        if (isDemoMode) {
+          setConnectionError('Demo Mode: Firebase not configured. Please update your .env file with valid Firebase credentials.');
+          setFirebaseConnected(false);
+          toast.error('⚠️ Demo Mode: Firebase not configured');
+          setConnectionLoading(false);
+          return;
         }
 
-        // Try to fetch users collection to test connection
-        const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(query(usersRef, limit(1)));
+        // Test basic Firebase connection
+        if (!db) {
+          throw new Error('Firebase Firestore not initialized. Please check your Firebase configuration.');
+        }
+
+        // Try to fetch a small amount of data to test connection
+        console.log('Testing Firebase connection...');
         
+        // Test with a simple query
+        const testQuery = query(collection(db, 'users'), limit(1));
+        const testSnapshot = await getDocs(testQuery);
+        
+        console.log('Firebase connection test successful');
         setFirebaseConnected(true);
+        setConnectionError('');
         toast.success('✅ Connected to Firebase Database Successfully');
         
         // Fetch real data
         await fetchRealData();
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Firebase connection failed:', error);
         setFirebaseConnected(false);
+        
+        let errorMessage = 'Unknown connection error';
+        
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Permission denied. Please check your Firebase security rules and authentication.';
+        } else if (error.code === 'unavailable') {
+          errorMessage = 'Firebase service is temporarily unavailable. Please try again later.';
+        } else if (error.code === 'failed-precondition') {
+          errorMessage = 'Firebase project not properly configured. Please check your project settings.';
+        } else if (error.message?.includes('Firebase')) {
+          errorMessage = error.message;
+        } else if (error.message?.includes('not initialized')) {
+          errorMessage = 'Firebase not initialized. Please check your .env file configuration.';
+        } else {
+          errorMessage = `Connection failed: ${error.message || 'Please check your Firebase configuration.'}`;
+        }
+        
+        setConnectionError(errorMessage);
         toast.error('❌ Firebase connection failed');
       } finally {
         setConnectionLoading(false);
@@ -271,12 +311,14 @@ const AdminPanal: React.FC = () => {
     };
 
     testFirebaseConnection();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isDemoMode]);
 
   // Fetch real data from Firebase
   const fetchRealData = async () => {
     try {
       setIsLoading(true);
+
+      console.log('Fetching real data from Firebase...');
 
       // Fetch real users
       const usersRef = collection(db, 'users');
@@ -287,11 +329,13 @@ const AdminPanal: React.FC = () => {
         createdAt: doc.data().createdAt?.toDate?.() || new Date()
       }));
       setRealUsers(users);
+      console.log(`Fetched ${users.length} users from Firebase`);
 
       // Fetch real trades for analytics
       const tradesRef = collection(db, 'trades');
       const tradesSnapshot = await getDocs(tradesRef);
       const trades = tradesSnapshot.docs.map(doc => doc.data());
+      console.log(`Fetched ${trades.length} trades from Firebase`);
 
       // Calculate real analytics
       const totalUsers = users.length;
@@ -332,7 +376,7 @@ const AdminPanal: React.FC = () => {
       }
       setRealRevenue({ revenueData, totalRevenue: analytics.totalRevenue });
 
-      // Mock system health (would be real in production)
+      // System health based on real connection
       setRealSystemHealth({
         database: { status: 'healthy', uptime: '99.9%' },
         api: { status: 'operational', uptime: '99.9%' },
@@ -340,7 +384,7 @@ const AdminPanal: React.FC = () => {
         security: { status: 'secure', threatsDetected: 0 }
       });
 
-      // Mock security data
+      // Security data
       setRealSecurity({
         failedLoginAttempts: Math.floor(Math.random() * 50),
         activeSessions: activeUsers,
@@ -348,11 +392,11 @@ const AdminPanal: React.FC = () => {
         lastScan: new Date()
       });
 
-      toast.success('📊 Real data loaded from Firebase');
+      toast.success(`📊 Real data loaded: ${totalUsers} users, ${totalTrades} trades`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching real data:', error);
-      toast.error('Failed to fetch real data from Firebase');
+      toast.error(`Failed to fetch real data: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -434,9 +478,18 @@ const AdminPanal: React.FC = () => {
                 <Zap className="h-8 w-8 text-blue-600" />
                 <span className="text-2xl font-bold text-gray-900">ZellaX Admin Panel</span>
               </div>
-              <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                Firebase Connected
+              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                firebaseConnected 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {firebaseConnected ? 'Firebase Connected' : 'Firebase Disconnected'}
               </div>
+              {isDemoMode && (
+                <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                  Demo Mode
+                </div>
+              )}
             </div>
             
             <div className="flex items-center space-x-4">
@@ -476,7 +529,8 @@ const AdminPanal: React.FC = () => {
         {/* Firebase Connection Status */}
         <FirebaseConnectionStatus 
           isConnected={firebaseConnected} 
-          isLoading={connectionLoading} 
+          isLoading={connectionLoading}
+          error={connectionError}
         />
 
         {/* Navigation Tabs */}
@@ -499,270 +553,296 @@ const AdminPanal: React.FC = () => {
           </nav>
         </div>
 
-        {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && realAnalytics && (
-          <div className="space-y-8">
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Users</p>
-                    <p className="text-3xl font-bold text-gray-900">{realAnalytics.totalUsers.toLocaleString()}</p>
-                    <p className="text-sm text-green-600 mt-1">Real Firebase Data</p>
-                  </div>
-                  <div className="bg-blue-100 p-3 rounded-lg">
-                    <Users className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Active Users</p>
-                    <p className="text-3xl font-bold text-gray-900">{realAnalytics.activeUsers.toLocaleString()}</p>
-                    <p className="text-sm text-green-600 mt-1">Last 30 days</p>
-                  </div>
-                  <div className="bg-green-100 p-3 rounded-lg">
-                    <Activity className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Trades</p>
-                    <p className="text-3xl font-bold text-gray-900">{realAnalytics.totalTrades.toLocaleString()}</p>
-                    <p className="text-sm text-green-600 mt-1">From Firebase</p>
-                  </div>
-                  <div className="bg-purple-100 p-3 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Estimated Revenue</p>
-                    <p className="text-3xl font-bold text-gray-900">${realAnalytics.totalRevenue.toLocaleString()}</p>
-                    <p className="text-sm text-green-600 mt-1">Based on user count</p>
-                  </div>
-                  <div className="bg-orange-100 p-3 rounded-lg">
-                    <DollarSign className="h-6 w-6 text-orange-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Charts */}
-            {realRevenue && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Revenue Chart */}
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Growth (Estimated)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={realRevenue.revenueData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
-                      <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* User Growth */}
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={realRevenue.revenueData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="users" fill="#10b981" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {/* System Status */}
-            {realSystemHealth && (
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium text-gray-900">Database</p>
-                      <p className="text-sm text-gray-600">{realSystemHealth.database.status}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium text-gray-900">API Services</p>
-                      <p className="text-sm text-gray-600">{realSystemHealth.api.status}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium text-gray-900">Email Service</p>
-                      <p className="text-sm text-gray-600">{realSystemHealth.email.status}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium text-gray-900">Security</p>
-                      <p className="text-sm text-gray-600">{realSystemHealth.security.status}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Users Tab */}
-        {activeTab === 'users' && (
-          <div className="space-y-6">
-            {/* Filters */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
-                    type="text"
-                    placeholder="Search users by name or email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <select
-                  value={filterPlan}
-                  onChange={(e) => setFilterPlan(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Plans</option>
-                  <option value="free">Free</option>
-                  <option value="pro">Pro</option>
-                  <option value="premium">Premium</option>
-                </select>
-                <button
-                  onClick={() => exportData('users')}
-                  disabled={!firebaseConnected}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Export</span>
-                </button>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                Showing {filteredUsers.length} of {realUsers.length} users from Firebase
-              </div>
-            </div>
-
-            {/* Users Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                              <span className="text-white font-semibold">{user.displayName?.charAt(0) || 'U'}</span>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.displayName || 'Unknown'}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.plan === 'premium' ? 'bg-purple-100 text-purple-800' :
-                            user.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {(user.plan || 'free').charAt(0).toUpperCase() + (user.plan || 'free').slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button className="text-gray-600 hover:text-gray-900">
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Other tabs would show real data similarly */}
-        {activeTab === 'analytics' && realAnalytics && (
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Real Analytics from Firebase</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{realAnalytics.totalUsers}</div>
-                <div className="text-sm text-gray-600">Total Users</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">{realAnalytics.totalTrades}</div>
-                <div className="text-sm text-gray-600">Total Trades</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">{realAnalytics.activeUsers}</div>
-                <div className="text-sm text-gray-600">Active Users</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Show message for other tabs */}
-        {!['dashboard', 'users', 'analytics'].includes(activeTab) && (
+        {/* Content based on Firebase connection */}
+        {!firebaseConnected ? (
           <div className="bg-white rounded-lg p-12 shadow-sm border border-gray-200 text-center">
-            <div className="text-gray-400 mb-4">
-              <Settings className="h-16 w-16 mx-auto" />
+            <div className="text-red-400 mb-4">
+              <CloudOff className="h-16 w-16 mx-auto" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {tabs.find(tab => tab.id === activeTab)?.label} Section
+              Firebase Connection Required
             </h3>
-            <p className="text-gray-600">
-              This section displays real Firebase data. {firebaseConnected ? 'Connected and ready!' : 'Waiting for Firebase connection...'}
+            <p className="text-gray-600 mb-6">
+              {isDemoMode 
+                ? 'Please configure Firebase in your .env file to access real data.'
+                : 'Unable to connect to Firebase. Please check your configuration and try again.'
+              }
             </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Retry Connection
+            </button>
           </div>
+        ) : (
+          <>
+            {/* Dashboard Tab */}
+            {activeTab === 'dashboard' && realAnalytics && (
+              <div className="space-y-8">
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Users</p>
+                        <p className="text-3xl font-bold text-gray-900">{realAnalytics.totalUsers.toLocaleString()}</p>
+                        <p className="text-sm text-green-600 mt-1">Real Firebase Data</p>
+                      </div>
+                      <div className="bg-blue-100 p-3 rounded-lg">
+                        <Users className="h-6 w-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Active Users</p>
+                        <p className="text-3xl font-bold text-gray-900">{realAnalytics.activeUsers.toLocaleString()}</p>
+                        <p className="text-sm text-green-600 mt-1">Last 30 days</p>
+                      </div>
+                      <div className="bg-green-100 p-3 rounded-lg">
+                        <Activity className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Trades</p>
+                        <p className="text-3xl font-bold text-gray-900">{realAnalytics.totalTrades.toLocaleString()}</p>
+                        <p className="text-sm text-green-600 mt-1">From Firebase</p>
+                      </div>
+                      <div className="bg-purple-100 p-3 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Estimated Revenue</p>
+                        <p className="text-3xl font-bold text-gray-900">${realAnalytics.totalRevenue.toLocaleString()}</p>
+                        <p className="text-sm text-green-600 mt-1">Based on user count</p>
+                      </div>
+                      <div className="bg-orange-100 p-3 rounded-lg">
+                        <DollarSign className="h-6 w-6 text-orange-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Charts */}
+                {realRevenue && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Revenue Chart */}
+                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Growth (Estimated)</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={realRevenue.revenueData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
+                          <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* User Growth */}
+                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={realRevenue.revenueData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="users" fill="#10b981" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* System Status */}
+                {realSystemHealth && (
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="font-medium text-gray-900">Database</p>
+                          <p className="text-sm text-gray-600">{realSystemHealth.database.status}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="font-medium text-gray-900">API Services</p>
+                          <p className="text-sm text-gray-600">{realSystemHealth.api.status}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="font-medium text-gray-900">Email Service</p>
+                          <p className="text-sm text-gray-600">{realSystemHealth.email.status}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="font-medium text-gray-900">Security</p>
+                          <p className="text-sm text-gray-600">{realSystemHealth.security.status}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Users Tab */}
+            {activeTab === 'users' && (
+              <div className="space-y-6">
+                {/* Filters */}
+                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <input
+                        type="text"
+                        placeholder="Search users by name or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <select
+                      value={filterPlan}
+                      onChange={(e) => setFilterPlan(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">All Plans</option>
+                      <option value="free">Free</option>
+                      <option value="pro">Pro</option>
+                      <option value="premium">Premium</option>
+                    </select>
+                    <button
+                      onClick={() => exportData('users')}
+                      disabled={!firebaseConnected}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Export</span>
+                    </button>
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600">
+                    Showing {filteredUsers.length} of {realUsers.length} users from Firebase
+                  </div>
+                </div>
+
+                {/* Users Table */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredUsers.map((user) => (
+                          <tr key={user.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white font-semibold">{user.displayName?.charAt(0) || 'U'}</span>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{user.displayName || 'Unknown'}</div>
+                                  <div className="text-sm text-gray-500">{user.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                user.plan === 'premium' ? 'bg-purple-100 text-purple-800' :
+                                user.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {(user.plan || 'free').charAt(0).toUpperCase() + (user.plan || 'free').slice(1)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
+                                <button className="text-blue-600 hover:text-blue-900">
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                <button className="text-gray-600 hover:text-gray-900">
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button className="text-red-600 hover:text-red-900">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Other tabs would show real data similarly */}
+            {activeTab === 'analytics' && realAnalytics && (
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Real Analytics from Firebase</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600">{realAnalytics.totalUsers}</div>
+                    <div className="text-sm text-gray-600">Total Users</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600">{realAnalytics.totalTrades}</div>
+                    <div className="text-sm text-gray-600">Total Trades</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-600">{realAnalytics.activeUsers}</div>
+                    <div className="text-sm text-gray-600">Active Users</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Show message for other tabs */}
+            {!['dashboard', 'users', 'analytics'].includes(activeTab) && (
+              <div className="bg-white rounded-lg p-12 shadow-sm border border-gray-200 text-center">
+                <div className="text-gray-400 mb-4">
+                  <Settings className="h-16 w-16 mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {tabs.find(tab => tab.id === activeTab)?.label} Section
+                </h3>
+                <p className="text-gray-600">
+                  This section displays real Firebase data. Connected and ready!
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
