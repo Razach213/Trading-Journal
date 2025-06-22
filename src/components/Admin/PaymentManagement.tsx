@@ -17,7 +17,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Payment } from '../../types';
 import { format } from 'date-fns';
@@ -32,10 +32,11 @@ const PaymentManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const paymentsQuery = query(
-      collection(db, 'payments'),
+      collection(db || getFirestore(), 'payments'),
       orderBy('submittedAt', 'desc')
     );
 
@@ -43,6 +44,7 @@ const PaymentManagement: React.FC = () => {
       const paymentsData: Payment[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
+        
         paymentsData.push({
           id: doc.id,
           ...data,
@@ -52,28 +54,31 @@ const PaymentManagement: React.FC = () => {
           updatedAt: data.updatedAt?.toDate() || new Date()
         } as Payment);
       });
+      
       setPayments(paymentsData);
       setLoading(false);
+    }, (err) => {
+      console.error('Error fetching payments:', err);
+      setLoading(false);
+      setError('Failed to load payments data');
     });
 
     return unsubscribe;
   }, []);
 
-  const filteredPayments = payments.filter(payment => {
-    const matchesStatus = !filterStatus || payment.status === filterStatus;
-    const matchesMethod = !filterMethod || payment.paymentMethod === filterMethod;
-    const matchesSearch = !searchTerm || 
-      payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesStatus && matchesMethod && matchesSearch;
-  });
-
   const handleApprovePayment = async (payment: Payment) => {
+    if (!payment || !payment.id) {
+      toast.error('Invalid payment data');
+      return;
+    }
+
     setIsProcessing(true);
+    setError(null);
+    
     try {
-      await updateDoc(doc(db, 'payments', payment.id), {
+      // First, update the payment status
+      const paymentRef = doc(db || getFirestore(), 'payments', payment.id);
+      await updateDoc(paymentRef, {
         status: 'approved',
         reviewedAt: new Date(),
         reviewedBy: 'admin', // In real app, use actual admin user
@@ -81,32 +86,44 @@ const PaymentManagement: React.FC = () => {
         updatedAt: serverTimestamp()
       });
 
-      // Update user's plan in users collection
-      await updateDoc(doc(db, 'users', payment.userId), {
-        plan: payment.plan,
-        updatedAt: serverTimestamp()
-      });
+      // Then, update user's plan in users collection
+      if (payment.userId) {
+        const userRef = doc(db || getFirestore(), 'users', payment.userId);
+        await updateDoc(userRef, {
+          plan: payment.plan,
+          updatedAt: serverTimestamp()
+        });
+      }
 
       toast.success('Payment approved successfully!');
       setSelectedPayment(null);
       setAdminNotes('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving payment:', error);
-      toast.error('Failed to approve payment');
+      setError(error.message || 'Failed to approve payment');
+      toast.error('Failed to approve payment: ' + (error.message || 'Unknown error'));
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleRejectPayment = async (payment: Payment) => {
+    if (!payment || !payment.id) {
+      toast.error('Invalid payment data');
+      return;
+    }
+
     if (!adminNotes.trim()) {
       toast.error('Please provide a reason for rejection');
       return;
     }
 
     setIsProcessing(true);
+    setError(null);
+    
     try {
-      await updateDoc(doc(db, 'payments', payment.id), {
+      const paymentRef = doc(db || getFirestore(), 'payments', payment.id);
+      await updateDoc(paymentRef, {
         status: 'rejected',
         reviewedAt: new Date(),
         reviewedBy: 'admin', // In real app, use actual admin user
@@ -117,9 +134,10 @@ const PaymentManagement: React.FC = () => {
       toast.success('Payment rejected');
       setSelectedPayment(null);
       setAdminNotes('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting payment:', error);
-      toast.error('Failed to reject payment');
+      setError(error.message || 'Failed to reject payment');
+      toast.error('Failed to reject payment: ' + (error.message || 'Unknown error'));
     } finally {
       setIsProcessing(false);
     }
@@ -141,13 +159,13 @@ const PaymentManagement: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800';
       case 'approved':
-        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800';
       case 'rejected':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
       default:
-        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -183,6 +201,18 @@ const PaymentManagement: React.FC = () => {
     toast.success('Payments exported successfully!');
   };
 
+  // Filter payments based on search and filters
+  const filteredPayments = payments.filter(payment => {
+    const matchesStatus = !filterStatus || payment.status === filterStatus;
+    const matchesMethod = !filterMethod || payment.paymentMethod === filterMethod;
+    const matchesSearch = !searchTerm || 
+      payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesStatus && matchesMethod && matchesSearch;
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -193,6 +223,19 @@ const PaymentManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Error display */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+          <div className="flex items-center space-x-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -565,7 +608,7 @@ const PaymentManagement: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Account Details</h3>
                 </div>
                 
-                {selectedPayment.paymentMethod === 'pakistan' ? (
+                {selectedPayment.paymentMethod === 'pakistan' && selectedPayment.accountDetails ? (
                   <div className="space-y-2">
                     <div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Account Title</p>
@@ -586,7 +629,7 @@ const PaymentManagement: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                ) : (
+                ) : selectedPayment.paymentMethod === 'international' && selectedPayment.accountDetails ? (
                   <div className="space-y-2">
                     <div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Binance ID</p>
@@ -601,6 +644,8 @@ const PaymentManagement: React.FC = () => {
                       </p>
                     </div>
                   </div>
+                ) : (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Account details not available</p>
                 )}
               </div>
 
