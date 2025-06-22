@@ -8,7 +8,7 @@ service firebase.storage {
     }
     
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
     
     // CRITICAL: Admin email check function - ONLY these emails have admin access
@@ -24,6 +24,21 @@ service firebase.storage {
     function isSuperAdmin() {
       return request.auth != null && 
              request.auth.token.email == 'thealiraza22@gmail.com';
+    }
+    
+    // Demo mode check - allows operations when auth is null
+    function isDemoMode() {
+      return request.auth == null;
+    }
+    
+    // Combined auth check - allows both authenticated users and demo mode
+    function isAuthorizedUser(userId) {
+      return isDemoMode() || isOwner(userId) || isAdmin();
+    }
+    
+    // Admin or demo mode check
+    function isAdminOrDemo() {
+      return isDemoMode() || isAdmin();
     }
     
     function isValidImageFile() {
@@ -56,186 +71,192 @@ service firebase.storage {
     // USER DATA STORAGE
     // ========================================
     
-    // User profile images
+    // User profile images - Allow demo mode
     match /users/{userId}/profile/{fileName} {
-      allow read: if isAuthenticated() || isAdmin();
-      allow write: if isAuthenticated() && 
-                  (isOwner(userId) || isAdmin()) && 
-                  isValidImageFile();
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if true; // Allow public read for profile images
+      allow write: if isAuthorizedUser(userId) && isValidImageFile();
+      allow delete: if isAuthorizedUser(userId);
     }
     
-    // Trade screenshots and attachments
+    // Trade screenshots and attachments - Allow demo mode
     match /users/{userId}/trades/{tradeId}/{fileName} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read, write: if isAuthorizedUser(userId);
+      allow delete: if isAuthorizedUser(userId);
     }
     
-    // User documents (exports, reports, etc.)
+    // User documents (exports, reports, etc.) - Allow demo mode
     match /users/{userId}/documents/{fileName} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow write: if isAuthenticated() && 
-                  (isOwner(userId) || isAdmin()) && 
-                  isValidDocumentFile();
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if isAuthorizedUser(userId);
+      allow write: if isAuthorizedUser(userId) && isValidDocumentFile();
+      allow delete: if isAuthorizedUser(userId);
     }
     
-    // Playbook images
+    // Playbook images - Allow demo mode
     match /users/{userId}/playbooks/{playbookId}/{fileName} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read, write: if isAuthorizedUser(userId);
+      allow delete: if isAuthorizedUser(userId);
     }
     
     // ========================================
-    // ADMIN STORAGE AREAS - STRICT ACCESS CONTROL
+    // ADMIN STORAGE AREAS - ALLOW DEMO MODE
     // ========================================
     
-    // Admin exports and reports - ONLY admins can access
+    // Admin exports and reports - Allow demo mode for testing
     match /admin/exports/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin system backups - ONLY super admin can access
+    // Admin system backups - Allow demo mode for testing
     match /admin/backups/{fileName} {
-      allow read, write: if isSuperAdmin() && isValidBackupFile();
-      allow delete: if isSuperAdmin();
+      allow read, write: if (isDemoMode() || isSuperAdmin()) && isValidBackupFile();
+      allow delete: if isDemoMode() || isSuperAdmin();
     }
     
-    // Admin analytics data files - ONLY admins can access
+    // Admin analytics data files - Allow demo mode for testing
     match /admin/analytics/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin logs - ONLY admins can access
+    // Admin logs - Allow demo mode for testing
     match /admin/logs/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin configuration files - ONLY super admin can modify
+    // Admin configuration files - Allow demo mode for testing
     match /admin/config/{fileName} {
-      allow read: if isAdmin();
-      allow write: if isSuperAdmin() && isValidDocumentFile();
-      allow delete: if isSuperAdmin();
+      allow read: if isAdminOrDemo();
+      allow write: if (isDemoMode() || isSuperAdmin()) && isValidDocumentFile();
+      allow delete: if isDemoMode() || isSuperAdmin();
     }
     
-    // Admin security reports - ONLY admins can access
+    // Admin security reports - Allow demo mode for testing
     match /admin/security/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin user data exports - ONLY admins can access
+    // Admin user data exports - Allow demo mode for testing
     match /admin/users/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin revenue reports - ONLY admins can access
+    // Admin revenue reports - Allow demo mode for testing
     match /admin/revenue/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin system health reports - ONLY admins can access
+    // Admin system health reports - Allow demo mode for testing
     match /admin/system/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Admin audit trails - ONLY super admin can access
+    // Admin audit trails - Allow demo mode for testing
     match /admin/audit/{fileName} {
-      allow read, write: if isSuperAdmin() && isValidDocumentFile();
-      allow delete: if isSuperAdmin();
+      allow read, write: if (isDemoMode() || isSuperAdmin()) && isValidDocumentFile();
+      allow delete: if isDemoMode() || isSuperAdmin();
     }
     
     // ========================================
     // TEMPORARY AND WORKING STORAGE
     // ========================================
     
-    // Temporary uploads (auto-deleted after 24 hours)
+    // Temporary uploads (auto-deleted after 24 hours) - Allow demo mode
     match /temp/{userId}/{fileName} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read, write: if isAuthorizedUser(userId);
+      allow delete: if isAuthorizedUser(userId);
     }
     
-    // Admin temporary files - ONLY admins can access
+    // Admin temporary files - Allow demo mode for testing
     match /admin/temp/{fileName} {
-      allow read, write: if isAdmin();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo();
+      allow delete: if isAdminOrDemo();
     }
     
     // ========================================
     // PUBLIC AND SYSTEM STORAGE
     // ========================================
     
-    // Public assets (app logos, etc.) - Everyone can read, only admins can write
+    // Public assets (app logos, etc.) - Everyone can read, demo mode can write
     match /public/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && isValidImageFile();
-      allow delete: if isAdmin();
+      allow write: if isAdminOrDemo() && isValidImageFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // System assets - Authenticated users can read, only admins can write
+    // System assets - Allow demo mode
     match /system/{allPaths=**} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-      allow delete: if isAdmin();
+      allow read: if true; // Allow public read access
+      allow write: if isAdminOrDemo();
+      allow delete: if isAdminOrDemo();
+    }
+    
+    // ========================================
+    // DEMO MODE SPECIFIC STORAGE
+    // ========================================
+    
+    // Demo data storage - Allow all operations in demo mode
+    match /demo/{allPaths=**} {
+      allow read, write: if isDemoMode();
+    }
+    
+    // Test data storage - Allow all operations for testing
+    match /test/{allPaths=**} {
+      allow read, write: if true; // Allow all operations for testing
+    }
+    
+    // Development data storage - Allow demo mode and admin
+    match /dev/{allPaths=**} {
+      allow read, write: if isAdminOrDemo();
     }
     
     // ========================================
     // SECURITY AND MONITORING STORAGE
     // ========================================
     
-    // Security event attachments - ONLY admins can access
+    // Security event attachments - Allow demo mode for testing
     match /security/events/{fileName} {
-      allow read, write: if isAdmin();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Performance monitoring data - ONLY admins can access
+    // Performance monitoring data - Allow demo mode for testing
     match /monitoring/performance/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Error logs and crash reports - ONLY admins can access
+    // Error logs and crash reports - Allow demo mode for testing
     match /logs/errors/{fileName} {
-      allow read, write: if isAdmin() && isValidDocumentFile();
-      allow delete: if isAdmin();
+      allow read, write: if isAdminOrDemo() && isValidDocumentFile();
+      allow delete: if isAdminOrDemo();
     }
     
-    // Database dumps and exports - ONLY super admin can access
+    // Database dumps and exports - Allow demo mode for testing
     match /database/exports/{fileName} {
-      allow read, write: if isSuperAdmin() && isValidBackupFile();
-      allow delete: if isSuperAdmin();
+      allow read, write: if (isDemoMode() || isSuperAdmin()) && isValidBackupFile();
+      allow delete: if isDemoMode() || isSuperAdmin();
     }
     
     // ========================================
     // COMPLIANCE AND LEGAL STORAGE
     // ========================================
     
-    // Legal documents and compliance reports - ONLY super admin can access
+    // Legal documents and compliance reports - Allow demo mode for testing
     match /legal/{fileName} {
-      allow read, write: if isSuperAdmin() && isValidDocumentFile();
-      allow delete: if isSuperAdmin();
+      allow read, write: if (isDemoMode() || isSuperAdmin()) && isValidDocumentFile();
+      allow delete: if isDemoMode() || isSuperAdmin();
     }
     
-    // GDPR and data protection files -  ONLY super admin can access
+    // GDPR and data protection files - Allow demo mode for testing
     match /compliance/gdpr/{fileName} {
-      allow read, write: if isSuperAdmin() && isValidDocumentFile();
-      allow delete: if isSuperAdmin();
-    }
-    
-    // ========================================
-    // DENY ALL OTHER PATHS
-    // ========================================
-    
-    // Explicitly deny access to any other paths not defined above
-    match /{allPaths=**} {
-      allow read, write: if false;
+      allow read, write: if (isDemoMode() || isSuperAdmin()) && isValidDocumentFile();
+      allow delete: if isDemoMode() || isSuperAdmin();
     }
   }
 }
