@@ -2,7 +2,7 @@ import React, { Fragment, useState } from 'react';
 import { Popover, Transition, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info } from 'lucide-react';
+import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info, Crown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ThemeToggle from '../ui/ThemeToggle';
 
@@ -113,6 +113,9 @@ export default function Header({ toggleTheme }: HeaderProps) {
       item.onClick();
     }
   };
+
+  // Check if user is admin (in real app, this would check user role)
+  const isAdmin = user && (user.email === 'admin@zellax.com' || user.plan === 'admin');
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -267,6 +270,17 @@ export default function Header({ toggleTheme }: HeaderProps) {
                   Playbooks
                 </Link>
                 
+                {/* Admin Link - Only show for admin users */}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center space-x-1 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                  >
+                    <Crown className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+                
                 {/* User Menu */}
                 <Menu as="div" className="relative">
                   <Menu.Button className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
@@ -291,10 +305,15 @@ export default function Header({ toggleTheme }: HeaderProps) {
                       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
-                        <div className="mt-1">
+                        <div className="mt-1 flex items-center space-x-2">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
                             {user.plan} Plan
                           </span>
+                          {isAdmin && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                              Admin
+                            </span>
+                          )}
                         </div>
                       </div>
                       
@@ -311,6 +330,22 @@ export default function Header({ toggleTheme }: HeaderProps) {
                           </Link>
                         )}
                       </Menu.Item>
+                      
+                      {isAdmin && (
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              to="/admin"
+                              className={`${
+                                active ? 'bg-red-50 dark:bg-red-900/20' : ''
+                              } flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors`}
+                            >
+                              <Crown className="h-4 w-4 mr-3" />
+                              Admin Panel
+                            </Link>
+                          )}
+                        </Menu.Item>
+                      )}
                       
                       <Menu.Item>
                         {({ active }) => (
@@ -469,9 +504,16 @@ export default function Header({ toggleTheme }: HeaderProps) {
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
-                                {user.plan} Plan
-                              </span>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
+                                  {user.plan} Plan
+                                </span>
+                                {isAdmin && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                                    Admin
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           
@@ -489,6 +531,18 @@ export default function Header({ toggleTheme }: HeaderProps) {
                           >
                             Playbooks
                           </Link>
+                          
+                          {isAdmin && (
+                            <Link
+                              to="/admin"
+                              onClick={() => close()}
+                              className="w-full flex items-center justify-center px-4 py-3 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-base font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                            >
+                              <Crown className="h-4 w-4 mr-2" />
+                              Admin Panel
+                            </Link>
+                          )}
+                          
                           <Link
                             to="/settings"
                             onClick={() => close()}

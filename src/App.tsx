@@ -18,6 +18,7 @@ import Help from './pages/Help';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Settings from './pages/Settings';
+import Admin from './pages/Admin';
 
 function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -99,6 +100,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <Admin />
                   </ProtectedRoute>
                 }
               />
