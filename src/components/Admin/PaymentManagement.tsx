@@ -31,6 +31,7 @@ const PaymentManagement: React.FC = () => {
   const [filterMethod, setFilterMethod] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [adminNotes, setAdminNotes] = useState('');
 
   useEffect(() => {
     const paymentsQuery = query(
@@ -69,7 +70,7 @@ const PaymentManagement: React.FC = () => {
     return matchesStatus && matchesMethod && matchesSearch;
   });
 
-  const handleApprovePayment = async (payment: Payment, adminNotes?: string) => {
+  const handleApprovePayment = async (payment: Payment) => {
     setIsProcessing(true);
     try {
       await updateDoc(doc(db, 'payments', payment.id), {
@@ -88,6 +89,7 @@ const PaymentManagement: React.FC = () => {
 
       toast.success('Payment approved successfully!');
       setSelectedPayment(null);
+      setAdminNotes('');
     } catch (error) {
       console.error('Error approving payment:', error);
       toast.error('Failed to approve payment');
@@ -96,7 +98,7 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const handleRejectPayment = async (payment: Payment, adminNotes: string) => {
+  const handleRejectPayment = async (payment: Payment) => {
     if (!adminNotes.trim()) {
       toast.error('Please provide a reason for rejection');
       return;
@@ -114,6 +116,7 @@ const PaymentManagement: React.FC = () => {
 
       toast.success('Payment rejected');
       setSelectedPayment(null);
+      setAdminNotes('');
     } catch (error) {
       console.error('Error rejecting payment:', error);
       toast.error('Failed to reject payment');
@@ -125,26 +128,26 @@ const PaymentManagement: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="h-5 w-5 text-yellow-600" />;
+        return <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />;
       case 'approved':
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
+        return <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />;
       case 'rejected':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />;
       default:
-        return <AlertTriangle className="h-5 w-5 text-gray-600" />;
+        return <AlertTriangle className="h-5 w-5 text-gray-600 dark:text-gray-400" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -183,7 +186,7 @@ const PaymentManagement: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
       </div>
     );
   }
@@ -198,7 +201,7 @@ const PaymentManagement: React.FC = () => {
         </div>
         <button
           onClick={exportPayments}
-          className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-600 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-700 transition-colors"
         >
           <Download className="h-4 w-4" />
           <span>Export CSV</span>
@@ -206,64 +209,64 @@ const PaymentManagement: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Payments</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{payments.length}</p>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Total Payments</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">{payments.length}</p>
             </div>
-            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-              <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <div className="bg-blue-100 dark:bg-blue-900/30 p-2 md:p-3 rounded-lg">
+              <CreditCard className="h-5 w-5 md:h-6 md:w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Pending</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                 {payments.filter(p => p.status === 'pending').length}
               </p>
             </div>
-            <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 md:p-3 rounded-lg">
+              <Clock className="h-5 w-5 md:h-6 md:w-6 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Approved</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                 {payments.filter(p => p.status === 'approved').length}
               </p>
             </div>
-            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <div className="bg-green-100 dark:bg-green-900/30 p-2 md:p-3 rounded-lg">
+              <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Rejected</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                 {payments.filter(p => p.status === 'rejected').length}
               </p>
             </div>
-            <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg">
-              <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            <div className="bg-red-100 dark:bg-red-900/30 p-2 md:p-3 rounded-lg">
+              <XCircle className="h-5 w-5 md:h-6 md:w-6 text-red-600 dark:text-red-400" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
@@ -299,8 +302,88 @@ const PaymentManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Payments Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Payments - Mobile Card View */}
+      <div className="block md:hidden space-y-4">
+        {filteredPayments.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center border border-gray-200 dark:border-gray-700">
+            <CreditCard className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No payments found</h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {searchTerm || filterStatus || filterMethod 
+                ? 'Try adjusting your filters to see more results' 
+                : 'No payments have been submitted yet'}
+            </p>
+          </div>
+        ) : (
+          filteredPayments.map((payment) => (
+            <div key={payment.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-semibold">
+                      {payment.userName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{payment.userName}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{payment.userEmail}</div>
+                  </div>
+                </div>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                  {getStatusIcon(payment.status)}
+                  <span className="ml-1">{payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span>
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Plan:</span>
+                  <span className="ml-1 font-medium text-gray-900 dark:text-white">
+                    {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Amount:</span>
+                  <span className="ml-1 font-medium text-gray-900 dark:text-white">
+                    {formatCurrency(payment.amount, payment.currency)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Method:</span>
+                  <span className="ml-1 font-medium text-gray-900 dark:text-white">
+                    {payment.paymentMethod === 'pakistan' ? 'Pakistan' : 'International'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Date:</span>
+                  <span className="ml-1 font-medium text-gray-900 dark:text-white">
+                    {format(payment.submittedAt, 'MMM dd')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <div className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate max-w-[150px]">
+                  ID: {payment.transactionId}
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedPayment(payment);
+                    setAdminNotes(payment.adminNotes || '');
+                  }}
+                  className="flex items-center space-x-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs"
+                >
+                  <Eye className="h-3 w-3" />
+                  <span>View</span>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Payments Table - Desktop View */}
+      <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {filteredPayments.length === 0 ? (
           <div className="p-8 text-center">
             <CreditCard className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
@@ -347,8 +430,8 @@ const PaymentManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        payment.plan === 'premium' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                        payment.plan === 'premium' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+                        'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                       }`}>
                         {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)}
                       </span>
@@ -379,7 +462,10 @@ const PaymentManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        onClick={() => setSelectedPayment(payment)}
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setAdminNotes(payment.adminNotes || '');
+                        }}
                         className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors"
                       >
                         <Eye className="h-5 w-5" />
@@ -397,9 +483,9 @@ const PaymentManagement: React.FC = () => {
       {selectedPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
               <div className="flex items-center space-x-3">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payment Details</h2>
+                <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">Payment Details</h2>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedPayment.status)}`}>
                   {getStatusIcon(selectedPayment.status)}
                   <span className="ml-1">{selectedPayment.status.charAt(0).toUpperCase() + selectedPayment.status.slice(1)}</span>
@@ -413,7 +499,7 @@ const PaymentManagement: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               {/* User Info */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-3">
@@ -543,28 +629,37 @@ const PaymentManagement: React.FC = () => {
               </div>
 
               {/* Admin Notes */}
-              {selectedPayment.status === 'pending' && (
+              {selectedPayment.status === 'pending' ? (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-3 mb-3">
                     <AlertTriangle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Admin Notes</h3>
                   </div>
                   <textarea
-                    id="adminNotes"
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Add notes about this payment (optional for approval, required for rejection)"
                   ></textarea>
                 </div>
-              )}
+              ) : selectedPayment.adminNotes ? (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <AlertTriangle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Admin Notes</h3>
+                  </div>
+                  <p className="text-gray-900 dark:text-white">{selectedPayment.adminNotes}</p>
+                </div>
+              ) : null}
 
               {/* Admin Actions */}
               {selectedPayment.status === 'pending' && (
                 <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
-                    onClick={() => handleApprovePayment(selectedPayment, (document.getElementById('adminNotes') as HTMLTextAreaElement)?.value)}
+                    onClick={() => handleApprovePayment(selectedPayment)}
                     disabled={isProcessing}
-                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {isProcessing ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -576,9 +671,9 @@ const PaymentManagement: React.FC = () => {
                     )}
                   </button>
                   <button
-                    onClick={() => handleRejectPayment(selectedPayment, (document.getElementById('adminNotes') as HTMLTextAreaElement)?.value)}
+                    onClick={() => handleRejectPayment(selectedPayment)}
                     disabled={isProcessing}
-                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {isProcessing ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -596,7 +691,7 @@ const PaymentManagement: React.FC = () => {
               {selectedPayment.status !== 'pending' && (
                 <button
                   onClick={() => setSelectedPayment(null)}
-                  className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Close
                 </button>

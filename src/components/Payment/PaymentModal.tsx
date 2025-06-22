@@ -107,14 +107,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
               {step === 'location' && 'Select Payment Method'}
               {step === 'payment' && `Payment for ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
               {step === 'confirmation' && 'Payment Submitted'}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {step === 'location' && 'Choose your location to see available payment options'}
               {step === 'payment' && `Amount: ${selectedLocation === 'pakistan' ? '₨' : '$'}${planPrice}`}
               {step === 'confirmation' && 'Your payment is under review'}
@@ -128,11 +128,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Step 1: Location Selection */}
           {step === 'location' && (
             <div className="space-y-6">
-              <div className="text-center mb-8">
+              <div className="text-center mb-6 md:mb-8">
                 <div className="inline-flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium mb-4">
                   <MapPin className="h-4 w-4 mr-2" />
                   Choose Your Location
@@ -142,7 +142,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Pakistan Option */}
                 <button
                   onClick={() => handleLocationSelect('pakistan')}
@@ -196,7 +196,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
               </button>
 
               {/* Payment Instructions */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 md:p-6">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                   <CreditCard className="h-5 w-5 mr-2" />
                   Payment Instructions
@@ -216,7 +216,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                             <span className="font-medium text-gray-900 dark:text-white">{pakistanAccount.accountTitle}</span>
                             <button
                               onClick={() => copyToClipboard(pakistanAccount.accountTitle, 'title')}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                             >
                               {copiedField === 'title' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                             </button>
@@ -229,7 +229,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                             <span className="font-bold text-gray-900 dark:text-white">{pakistanAccount.accountName}</span>
                             <button
                               onClick={() => copyToClipboard(pakistanAccount.accountName, 'name')}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                             >
                               {copiedField === 'name' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                             </button>
@@ -285,7 +285,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                             <span className="font-medium text-gray-900 dark:text-white">{binanceAccount.name}</span>
                             <button
                               onClick={() => copyToClipboard(binanceAccount.name, 'binanceName')}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                             >
                               {copiedField === 'binanceName' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                             </button>
@@ -333,7 +333,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                   <input
                     {...register('confirmTerms', { required: 'You must agree to the terms' })}
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
                   />
                   <label className="text-sm text-gray-700 dark:text-gray-300">
                     I confirm that I have made the payment and the transaction ID provided is accurate. I understand that providing false information may result in account suspension.

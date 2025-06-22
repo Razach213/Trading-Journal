@@ -1,7 +1,7 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { Popover, Transition, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info, Crown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -97,6 +97,23 @@ interface HeaderProps {
 export default function Header({ toggleTheme }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Track scroll position for header styling
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -119,7 +136,9 @@ export default function Header({ toggleTheme }: HeaderProps) {
   const isAdmin = user && adminEmails.includes(user.email);
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header className={`sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+      isScrolled ? 'shadow-md' : ''
+    }`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -260,13 +279,13 @@ export default function Header({ toggleTheme }: HeaderProps) {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/dashboard"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/playbooks"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Playbooks
                 </Link>
@@ -275,7 +294,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="flex items-center space-x-1 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30"
+                    className="hidden md:flex items-center space-x-1 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30"
                   >
                     <Crown className="h-4 w-4" />
                     <span>Admin</span>
@@ -290,7 +309,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                         {user.displayName?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     </div>
-                    <ChevronDownIcon className="h-4 w-4 transition-transform ui-open:rotate-180" />
+                    <ChevronDownIcon className="h-4 w-4 transition-transform ui-open:rotate-180 hidden md:block" />
                   </Menu.Button>
                   
                   <Transition
@@ -386,7 +405,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Sign in
                 </Link>
@@ -400,7 +419,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
             )}
           </div>
 
-          {/* Mobile menu */}
+          {/* Mobile menu button */}
           <Popover className="md:hidden">
             <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white dark:bg-gray-800 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors">
               <span className="sr-only">Open menu</span>
@@ -418,86 +437,106 @@ export default function Header({ toggleTheme }: HeaderProps) {
             >
               <Popover.Panel 
                 focus 
-                className="absolute top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden z-50"
+                className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto"
               >
                 {({ close }) => (
-                  <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white dark:bg-gray-800 divide-y-2 divide-gray-50 dark:divide-gray-700 border border-gray-200 dark:border-gray-600">
-                    <div className="pt-5 pb-6 px-5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                          <span className="text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
-                        </div>
-                        <div className="-mr-2">
-                          <Popover.Button className="bg-white dark:bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors">
-                            <span className="sr-only">Close menu</span>
-                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                          </Popover.Button>
-                        </div>
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                        <span className="text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
                       </div>
-                      
-                      <div className="mt-6">
-                        <nav className="grid gap-y-4">
-                          {/* Features Section */}
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Features</h3>
-                            <div className="grid gap-y-2 pl-4">
-                              {featuresMenu.map((item) => (
-                                <button
-                                  key={item.name}
-                                  onClick={() => {
-                                    handleFeatureClick(item);
-                                    close();
-                                  }}
-                                  className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left"
-                                >
-                                  <item.icon className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-3" />
-                                  <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                      <button
+                        onClick={() => close()}
+                        className="bg-white dark:bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
+                      >
+                        <span className="sr-only">Close menu</span>
+                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto py-6 px-4">
+                      <nav className="grid gap-y-8">
+                        {/* Main Navigation Links */}
+                        <div className="grid grid-cols-1 gap-y-4">
+                          <Link
+                            to="/"
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => close()}
+                          >
+                            <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+                            <span className="text-base font-medium text-gray-900 dark:text-white">Home</span>
+                          </Link>
                           
-                          {/* Pricing */}
+                          <Link
+                            to="/dashboard"
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => close()}
+                          >
+                            <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+                            <span className="text-base font-medium text-gray-900 dark:text-white">Dashboard</span>
+                          </Link>
+                          
+                          <Link
+                            to="/playbooks"
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => close()}
+                          >
+                            <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+                            <span className="text-base font-medium text-gray-900 dark:text-white">Playbooks</span>
+                          </Link>
+                          
                           <Link
                             to="/pricing"
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                             onClick={() => close()}
-                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
-                            <DollarSign className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-3" />
+                            <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
                             <span className="text-base font-medium text-gray-900 dark:text-white">Pricing</span>
                           </Link>
                           
-                          {/* Resources Section */}
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Resources</h3>
-                            <div className="grid gap-y-2 pl-4">
-                              {resourcesMenu.map((item) => (
-                                <Link
-                                  key={item.name}
-                                  to={item.href}
-                                  onClick={() => close()}
-                                  className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                  <item.icon className="h-4 w-4 text-gray-600 dark:text-gray-400 mr-3" />
-                                  <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
-                                </Link>
-                              ))}
-                            </div>
-                          </div>
-                        </nav>
-                      </div>
+                          <Link
+                            to="/settings"
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => close()}
+                          >
+                            <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+                            <span className="text-base font-medium text-gray-900 dark:text-white">Settings</span>
+                          </Link>
+                          
+                          <Link
+                            to="/help"
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => close()}
+                          >
+                            <HelpCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+                            <span className="text-base font-medium text-gray-900 dark:text-white">Help</span>
+                          </Link>
+                          
+                          {/* Admin Panel Link - Mobile - ONLY for authorized admin emails */}
+                          {isAdmin && (
+                            <Link
+                              to="/adminPanal"
+                              onClick={() => close()}
+                              className="flex items-center p-3 rounded-md bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                            >
+                              <Crown className="h-5 w-5 text-red-600 dark:text-red-400 mr-3" />
+                              <span className="text-base font-medium">Admin Panel</span>
+                            </Link>
+                          )}
+                        </div>
+                      </nav>
                     </div>
                     
-                    <div className="py-6 px-5 space-y-6">
-                      <div className="flex items-center justify-between">
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-4 mt-auto">
+                      <div className="flex items-center justify-between mb-4">
                         <span className="text-base font-medium text-gray-900 dark:text-white">Dark Mode</span>
                         <ThemeToggle toggleTheme={toggleTheme} className="scale-75" />
                       </div>
                       
                       {user ? (
                         <div className="space-y-4">
-                          <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                               <span className="text-white font-semibold">
                                 {user.displayName?.charAt(0).toUpperCase() || 'U'}
@@ -519,41 +558,6 @@ export default function Header({ toggleTheme }: HeaderProps) {
                             </div>
                           </div>
                           
-                          <Link
-                            to="/dashboard"
-                            onClick={() => close()}
-                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
-                          >
-                            Dashboard
-                          </Link>
-                          <Link
-                            to="/playbooks"
-                            onClick={() => close()}
-                            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            Playbooks
-                          </Link>
-                          
-                          {/* Admin Panel Link - Mobile - ONLY for authorized admin emails */}
-                          {isAdmin && (
-                            <Link
-                              to="/admin"
-                              onClick={() => close()}
-                              className="w-full flex items-center justify-center px-4 py-3 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-base font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                            >
-                              <Crown className="h-4 w-4 mr-2" />
-                              Admin Panel
-                            </Link>
-                          )}
-                          
-                          <Link
-                            to="/settings"
-                            onClick={() => close()}
-                            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Settings
-                          </Link>
                           <button
                             onClick={() => {
                               handleLogout();
@@ -590,6 +594,75 @@ export default function Header({ toggleTheme }: HeaderProps) {
           </Popover>
         </div>
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      {user && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 md:hidden z-40">
+          <div className="grid grid-cols-4 h-16">
+            <Link 
+              to="/dashboard" 
+              className={`flex flex-col items-center justify-center ${
+                location.pathname === '/dashboard' 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <BarChart3 className="h-6 w-6" />
+              <span className="text-xs mt-1">Dashboard</span>
+            </Link>
+            
+            <Link 
+              to="/playbooks" 
+              className={`flex flex-col items-center justify-center ${
+                location.pathname === '/playbooks' 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <TrendingUp className="h-6 w-6" />
+              <span className="text-xs mt-1">Playbooks</span>
+            </Link>
+            
+            <Link 
+              to="/settings" 
+              className={`flex flex-col items-center justify-center ${
+                location.pathname === '/settings' 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <Settings className="h-6 w-6" />
+              <span className="text-xs mt-1">Settings</span>
+            </Link>
+            
+            {isAdmin ? (
+              <Link 
+                to="/adminPanal" 
+                className={`flex flex-col items-center justify-center ${
+                  location.pathname === '/adminPanal' 
+                    ? 'text-red-600 dark:text-red-400' 
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                <Crown className="h-6 w-6" />
+                <span className="text-xs mt-1">Admin</span>
+              </Link>
+            ) : (
+              <Link 
+                to="/help" 
+                className={`flex flex-col items-center justify-center ${
+                  location.pathname === '/help' 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                <HelpCircle className="h-6 w-6" />
+                <span className="text-xs mt-1">Help</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
