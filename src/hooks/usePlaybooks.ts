@@ -28,6 +28,7 @@ export const usePlaybooks = (userId: string | undefined) => {
       setLoading(false);
       setError(null);
       setPlaybooks([]);
+      setHasSetupBalance(false);
       return;
     }
 
@@ -36,13 +37,21 @@ export const usePlaybooks = (userId: string | undefined) => {
       try {
         const demoPlaybooks = localStorage.getItem(`demoPlaybooks_${userId}`);
         if (demoPlaybooks) {
-          const parsedPlaybooks = JSON.parse(demoPlaybooks);
+          const parsedPlaybooks = JSON.parse(demoPlaybooks).map((playbook: any) => ({
+            ...playbook,
+            createdAt: new Date(playbook.createdAt),
+            updatedAt: new Date(playbook.updatedAt)
+          }));
           setPlaybooks(parsedPlaybooks);
+        } else {
+          setPlaybooks([]);
         }
       } catch (error) {
         console.error('Error loading demo playbooks:', error);
+        setPlaybooks([]);
       }
       setLoading(false);
+      setError(null);
       return;
     }
 

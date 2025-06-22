@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, BookOpen, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Search, Filter, BookOpen, Loader2, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePlaybooks } from '../hooks/usePlaybooks';
 import { Playbook } from '../types';
@@ -9,7 +9,7 @@ import PlaybookDetailModal from '../components/Playbooks/PlaybookDetailModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Playbooks: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { playbooks, loading, error, addPlaybook, updatePlaybook, deletePlaybook } = usePlaybooks(user?.id);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
@@ -64,12 +64,35 @@ const Playbooks: React.FC = () => {
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Demo Mode Warning */}
+          {isDemoMode && (
+            <div className="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <WifiOff className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">Demo Mode Active</h3>
+                  <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
+                    Firebase is not configured. Your playbooks are saved locally and won't sync across devices.
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                    Configure Firebase in your .env file to enable full functionality.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
                 <BookOpen className="h-8 w-8 mr-3 text-blue-600 dark:text-blue-400" />
                 Trading Playbooks
+                {isDemoMode && (
+                  <span className="ml-3 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 px-2 py-1 rounded-full text-xs font-medium">
+                    Demo Mode
+                  </span>
+                )}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
                 Save and organize your trading strategies and setups
@@ -146,14 +169,25 @@ const Playbooks: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Failed to load playbooks</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                {error || 'We encountered an error while loading your playbooks. Please try refreshing the page.'}
+                {error === 'Database index is being created. Please try again in a few minutes.' 
+                  ? 'Database is being set up. This usually takes a few minutes for new Firebase projects.'
+                  : error || 'We encountered an error while loading your playbooks. Please try refreshing the page.'
+                }
               </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Retry
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Retry
+                </button>
+                {error === 'Database index is being created. Please try again in a few minutes.' && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    <p>💡 This is normal for new Firebase projects</p>
+                    <p>Database indexes are being created automatically</p>
+                  </div>
+                )}
+              </div>
             </div>
           ) : filteredPlaybooks.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700">
