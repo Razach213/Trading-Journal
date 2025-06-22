@@ -2,15 +2,56 @@ import React, { Fragment, useState } from 'react';
 import { Popover, Transition, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, Settings, User } from 'lucide-react';
+import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ThemeToggle from '../ui/ThemeToggle';
 
-const navigation = [
-  { name: 'Features', href: '/features' },
-  { name: 'Pricing', href: '/pricing' },
-  { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' },
+const featuresMenu = [
+  {
+    name: 'Analytics',
+    description: 'Advanced trading analytics and insights',
+    href: '/features#analytics',
+    icon: BarChart3
+  },
+  {
+    name: 'Trade Tracking',
+    description: 'Comprehensive trade journaling',
+    href: '/features#tracking',
+    icon: TrendingUp
+  },
+  {
+    name: 'Security',
+    description: 'Bank-level data protection',
+    href: '/features#security',
+    icon: Shield
+  },
+  {
+    name: 'Community',
+    description: 'Connect with other traders',
+    href: '/features#community',
+    icon: Users
+  }
+];
+
+const resourcesMenu = [
+  {
+    name: 'Help Center',
+    description: 'Get help and support',
+    href: '/help',
+    icon: HelpCircle
+  },
+  {
+    name: 'Contact Support',
+    description: 'Reach out to our team',
+    href: '/contact',
+    icon: Mail
+  },
+  {
+    name: 'About Us',
+    description: 'Learn about our mission',
+    href: '/about',
+    icon: Info
+  }
 ];
 
 interface HeaderProps {
@@ -56,75 +97,111 @@ export default function Header({ toggleTheme }: HeaderProps) {
               
               <Transition
                 as={Fragment}
-                enter="transition ease-out duration-100"
+                enter="transition ease-out duration-200"
                 enterFrom="transform opacity-0 scale-95"
                 enterTo="transform opacity-100 scale-100"
                 leave="transition ease-in duration-75"
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
               >
-                <Menu.Items className="absolute left-0 z-50 mt-2 w-48 origin-top-left rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-700">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        to="/features"
-                        className={`${
-                          active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                        } block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors`}
-                      >
-                        All Features
-                      </Link>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        to="/features#analytics"
-                        className={`${
-                          active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                        } block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors`}
-                      >
-                        Analytics
-                      </Link>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        to="/features#tracking"
-                        className={`${
-                          active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                        } block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors`}
-                      >
-                        Trade Tracking
-                      </Link>
-                    )}
-                  </Menu.Item>
+                <Menu.Items className="absolute left-0 z-50 mt-2 w-80 origin-top-left rounded-md bg-white dark:bg-gray-800 py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Features</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Powerful tools for traders</p>
+                  </div>
+                  
+                  {featuresMenu.map((item) => (
+                    <Menu.Item key={item.name}>
+                      {({ active }) => (
+                        <Link
+                          to={item.href}
+                          className={`${
+                            active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                          } flex items-start px-4 py-3 text-sm transition-colors`}
+                        >
+                          <div className="flex-shrink-0">
+                            <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
+                          </div>
+                        </Link>
+                      )}
+                    </Menu.Item>
+                  ))}
+                  
+                  <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <Link
+                          to="/features"
+                          className={`${
+                            active ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                          } block px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors`}
+                        >
+                          View all features →
+                        </Link>
+                      )}
+                    </Menu.Item>
+                  </div>
                 </Menu.Items>
               </Transition>
             </Menu>
 
-            {/* Other Navigation Links */}
+            {/* Pricing Link */}
             <Link
               to="/pricing"
               className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Pricing
             </Link>
-            
-            <Link
-              to="/about"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              About
-            </Link>
-            
-            <Link
-              to="/contact"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Contact
-            </Link>
+
+            {/* Resources Dropdown */}
+            <Menu as="div" className="relative">
+              <Menu.Button className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Resources
+                <ChevronDownIcon className="ml-1 h-4 w-4 transition-transform ui-open:rotate-180" />
+              </Menu.Button>
+              
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-200"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute left-0 z-50 mt-2 w-72 origin-top-left rounded-md bg-white dark:bg-gray-800 py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Resources</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Help and support</p>
+                  </div>
+                  
+                  {resourcesMenu.map((item) => (
+                    <Menu.Item key={item.name}>
+                      {({ active }) => (
+                        <Link
+                          to={item.href}
+                          className={`${
+                            active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                          } flex items-start px-4 py-3 text-sm transition-colors`}
+                        >
+                          <div className="flex-shrink-0">
+                            <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-400 mt-0.5" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
+                          </div>
+                        </Link>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </Menu.Items>
+              </Transition>
+            </Menu>
           </nav>
 
           {/* Right Side Actions */}
@@ -167,10 +244,15 @@ export default function Header({ toggleTheme }: HeaderProps) {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-700">
-                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <Menu.Items className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-700">
+                      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                        <div className="mt-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
+                            {user.plan} Plan
+                          </span>
+                        </div>
                       </div>
                       
                       <Menu.Item>
@@ -181,24 +263,41 @@ export default function Header({ toggleTheme }: HeaderProps) {
                               active ? 'bg-gray-100 dark:bg-gray-700' : ''
                             } flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors`}
                           >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Settings
+                            <Settings className="h-4 w-4 mr-3" />
+                            Account Settings
                           </Link>
                         )}
                       </Menu.Item>
                       
                       <Menu.Item>
                         {({ active }) => (
-                          <button
-                            onClick={handleLogout}
+                          <Link
+                            to="/help"
                             className={`${
-                              active ? 'bg-red-50 dark:bg-red-900/20' : ''
-                            } flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors`}
+                              active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                            } flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors`}
                           >
-                            Sign out
-                          </button>
+                            <HelpCircle className="h-4 w-4 mr-3" />
+                            Help & Support
+                          </Link>
                         )}
                       </Menu.Item>
+                      
+                      <div className="border-t border-gray-200 dark:border-gray-700">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={handleLogout}
+                              className={`${
+                                active ? 'bg-red-50 dark:bg-red-900/20' : ''
+                              } flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors`}
+                            >
+                              <User className="h-4 w-4 mr-3" />
+                              Sign out
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
                     </Menu.Items>
                   </Transition>
                 </Menu>
@@ -213,7 +312,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                 </Link>
                 <Link
                   to="/signup"
-                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
                 >
                   Get Started
                 </Link>
@@ -256,20 +355,54 @@ export default function Header({ toggleTheme }: HeaderProps) {
                           </Popover.Button>
                         </div>
                       </div>
+                      
                       <div className="mt-6">
-                        <nav className="grid gap-y-6">
-                          {navigation.map((item) => (
-                            <Link
-                              key={item.name}
-                              to={item.href}
-                              onClick={() => close()}
-                              className="-m-3 p-3 flex items-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                            >
-                              <span className="ml-3 text-base font-medium text-gray-900 dark:text-white">
-                                {item.name}
-                              </span>
-                            </Link>
-                          ))}
+                        <nav className="grid gap-y-4">
+                          {/* Features Section */}
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Features</h3>
+                            <div className="grid gap-y-2 pl-4">
+                              {featuresMenu.map((item) => (
+                                <Link
+                                  key={item.name}
+                                  to={item.href}
+                                  onClick={() => close()}
+                                  className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                  <item.icon className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-3" />
+                                  <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Pricing */}
+                          <Link
+                            to="/pricing"
+                            onClick={() => close()}
+                            className="flex items-center p-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <DollarSign className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-3" />
+                            <span className="text-base font-medium text-gray-900 dark:text-white">Pricing</span>
+                          </Link>
+                          
+                          {/* Resources Section */}
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Resources</h3>
+                            <div className="grid gap-y-2 pl-4">
+                              {resourcesMenu.map((item) => (
+                                <Link
+                                  key={item.name}
+                                  to={item.href}
+                                  onClick={() => close()}
+                                  className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                  <item.icon className="h-4 w-4 text-gray-600 dark:text-gray-400 mr-3" />
+                                  <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
                         </nav>
                       </div>
                     </div>
@@ -291,13 +424,16 @@ export default function Header({ toggleTheme }: HeaderProps) {
                             <div>
                               <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
+                                {user.plan} Plan
+                              </span>
                             </div>
                           </div>
                           
                           <Link
                             to="/dashboard"
                             onClick={() => close()}
-                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                           >
                             Dashboard
                           </Link>
@@ -331,9 +467,9 @@ export default function Header({ toggleTheme }: HeaderProps) {
                           <Link
                             to="/signup"
                             onClick={() => close()}
-                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                           >
-                            Sign up
+                            Get Started
                           </Link>
                           <Link
                             to="/login"
