@@ -31,7 +31,15 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   userId, 
   initialData 
 }) => {
-  const { register, handleSubmit, formState: { errors }, clearErrors, watch, trigger } = useForm<PlaybookFormData>({
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors }, 
+    clearErrors, 
+    watch, 
+    trigger,
+    setValue
+  } = useForm<PlaybookFormData>({
     defaultValues: initialData ? {
       title: initialData.title,
       description: initialData.description,
@@ -59,25 +67,6 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   const title = watch('title');
   const description = watch('description');
   const strategy = watch('strategy');
-
-  // Clear errors when values change
-  useEffect(() => {
-    if (title && title.trim() !== '') {
-      clearErrors('title');
-    }
-  }, [title, clearErrors]);
-
-  useEffect(() => {
-    if (description && description.trim() !== '') {
-      clearErrors('description');
-    }
-  }, [description, clearErrors]);
-
-  useEffect(() => {
-    if (strategy && strategy.trim() !== '') {
-      clearErrors('strategy');
-    }
-  }, [strategy, clearErrors]);
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -157,16 +146,16 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
     try {
       const playbook: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
-        title: data.title,
-        description: data.description,
-        strategy: data.strategy,
+        title: data.title.trim(),
+        description: data.description.trim(),
+        strategy: data.strategy.trim(),
         chartImage,
         imageMetadata,
-        marketConditions: data.marketConditions || null,
-        entryRules: data.entryRules || null,
-        exitRules: data.exitRules || null,
-        riskManagement: data.riskManagement || null,
-        notes: data.notes || null,
+        marketConditions: data.marketConditions?.trim() || null,
+        entryRules: data.entryRules?.trim() || null,
+        exitRules: data.exitRules?.trim() || null,
+        riskManagement: data.riskManagement?.trim() || null,
+        notes: data.notes?.trim() || null,
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
         isPublic: data.isPublic
       };
@@ -208,18 +197,24 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 <input
                   type="text"
                   {...register('title', { 
-                    required: 'Title is required',
-                    validate: value => value.trim() !== '' || 'Title is required'
+                    required: 'Title is required'
                   })}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Breakout Strategy"
                   onChange={(e) => {
-                    if (e.target.value.trim() !== '') {
+                    if (e.target.value.trim()) {
                       clearErrors('title');
                     }
                   }}
-                  onBlur={() => trigger('title')}
+                  onBlur={() => {
+                    if (title?.trim()) {
+                      clearErrors('title');
+                    } else {
+                      setValue('title', '');
+                      trigger('title');
+                    }
+                  }}
                 />
                 {errors.title && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.title.message}</p>
@@ -233,17 +228,23 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 <input
                   type="text"
                   {...register('strategy', { 
-                    required: 'Strategy is required',
-                    validate: value => value.trim() !== '' || 'Strategy is required'
+                    required: 'Strategy is required'
                   })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Momentum, Reversal, Scalping"
                   onChange={(e) => {
-                    if (e.target.value.trim() !== '') {
+                    if (e.target.value.trim()) {
                       clearErrors('strategy');
                     }
                   }}
-                  onBlur={() => trigger('strategy')}
+                  onBlur={() => {
+                    if (strategy?.trim()) {
+                      clearErrors('strategy');
+                    } else {
+                      setValue('strategy', '');
+                      trigger('strategy');
+                    }
+                  }}
                 />
                 {errors.strategy && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.strategy.message}</p>
@@ -257,18 +258,24 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
               </label>
               <textarea
                 {...register('description', { 
-                  required: 'Description is required',
-                  validate: value => value.trim() !== '' || 'Description is required'
+                  required: 'Description is required'
                 })}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Brief description of this trading setup..."
                 onChange={(e) => {
-                  if (e.target.value.trim() !== '') {
+                  if (e.target.value.trim()) {
                     clearErrors('description');
                   }
                 }}
-                onBlur={() => trigger('description')}
+                onBlur={() => {
+                  if (description?.trim()) {
+                    clearErrors('description');
+                  } else {
+                    setValue('description', '');
+                    trigger('description');
+                  }
+                }}
               />
               {errors.description && (
                 <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.description.message}</p>
