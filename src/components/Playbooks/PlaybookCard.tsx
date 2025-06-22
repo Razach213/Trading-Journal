@@ -12,16 +12,10 @@ interface PlaybookCardProps {
 
 const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onView, onEdit, onDelete }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [animateOut, setAnimateOut] = useState(false);
 
   const handleDelete = () => {
     onDelete(playbook.id);
     setShowDeleteConfirm(false);
-  };
-
-  const handleCloseModal = () => {
-    setAnimateOut(true);
-    setTimeout(() => setShowDeleteConfirm(false), 300);
   };
 
   return (
@@ -136,17 +130,11 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onView, onEdit, o
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed-modal">
-          <div 
-            className={`modal-container ${animateOut ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
-            style={{ 
-              maxWidth: "28rem",
-              transition: 'all 0.3s ease-out'
-            }}
-          >
+          <div className="modal-container" style={{ maxWidth: "28rem" }}>
             <div className="modal-header">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Playbook</h3>
               <button
-                onClick={handleCloseModal}
+                onClick={() => setShowDeleteConfirm(false)}
                 className="modal-close-button"
                 aria-label="Close modal"
               >
@@ -162,7 +150,7 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onView, onEdit, o
             
             <div className="modal-footer">
               <button
-                onClick={handleCloseModal}
+                onClick={() => setShowDeleteConfirm(false)}
                 className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel
