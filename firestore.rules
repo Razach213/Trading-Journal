@@ -11,7 +11,7 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // CRITICAL: Admin email check function - Updated for admin panel access
+    // CRITICAL: Admin email check function - ONLY these emails have admin access
     function isAdmin() {
       return request.auth != null && 
              request.auth.token.email in [
@@ -20,9 +20,10 @@ service cloud.firestore {
              ];
     }
     
-    // CRITICAL: Allow admin panel to read data even without authentication for testing
-    function isAdminPanelAccess() {
-      return true; // Temporarily allow all reads for admin panel testing
+    // CRITICAL: Super admin check for highest level operations
+    function isSuperAdmin() {
+      return request.auth != null && 
+             request.auth.token.email == 'thealiraza22@gmail.com';
     }
     
     function isValidUser(data) {
@@ -72,9 +73,9 @@ service cloud.firestore {
              data.startingBalance > 0;
     }
     
-    // Users collection rules - UPDATED for admin panel access
+    // Users collection rules - Admins can read/modify all users
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
       allow create: if isAuthenticated() && 
                    isOwner(userId) && 
@@ -89,14 +90,14 @@ service cloud.firestore {
       
       // User's trading statistics (read-only for users, writable by functions and admins)
       match /stats/{statId} {
-        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
+        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
         allow write: if request.auth == null || isAdmin(); // Allow Admin SDK operations and admin users
       }
     }
     
-    // Account Balances collection - UPDATED for admin panel access
+    // Account Balances collection - Admins can read/modify all balances
     match /accountBalances/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
       allow create: if isAuthenticated() && 
                    (isOwner(userId) || isAdmin()) &&
@@ -110,10 +111,10 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // Trades collection rules - UPDATED for admin panel access
+    // Trades collection rules - Admins can read/modify all trades
     match /trades/{tradeId} {
       allow read: if isAuthenticated() && 
-                 (request.auth.uid == resource.data.userId || isAdmin()) || isAdminPanelAccess();
+                 (request.auth.uid == resource.data.userId || isAdmin());
       
       allow create: if isAuthenticated() && 
                    (isOwner(request.resource.data.userId) || isAdmin()) &&
@@ -128,10 +129,10 @@ service cloud.firestore {
                    (request.auth.uid == resource.data.userId || isAdmin());
     }
     
-    // Playbooks collection rules - UPDATED for admin panel access
+    // Playbooks collection rules - Admins can read/modify all playbooks
     match /playbooks/{playbookId} {
       allow read: if isAuthenticated() && 
-                 (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true) || isAdminPanelAccess();
+                 (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true);
       
       allow create: if isAuthenticated() && 
                    (isOwner(request.resource.data.userId) || isAdmin());
@@ -146,46 +147,128 @@ service cloud.firestore {
     // Subscriptions collection (managed by Stripe webhooks and admins)
     match /subscriptions/{subscriptionId} {
       allow read: if isAuthenticated() && 
-                 (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+                 (isOwner(resource.data.userId) || isAdmin());
       allow write: if isAdmin(); // Only admins and Cloud Functions can manage subscriptions
     }
     
-    // ADMIN COLLECTIONS - Only accessible by admin users or admin panel
+    // ========================================
+    // ADMIN-ONLY COLLECTIONS - STRICT ACCESS CONTROL
+    // ========================================
     
-    // Admin analytics data
+    // Admin analytics data - ONLY admins can access
     match /admin/analytics/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read, write: if isAdmin();
     }
     
-    // Admin system metrics
+    // Admin system metrics - ONLY admins can access
     match /admin/system/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read, write: if isAdmin();
     }
     
-    // Admin revenue data
+    // Admin revenue data - ONLY admins can access
     match /admin/revenue/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read, write: if isAdmin();
     }
     
-    // Admin security logs
+    // Admin security logs - ONLY admins can access
     match /admin/security/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read, write: if isAdmin();
     }
     
-    // Admin user management
+    // Admin user management logs - ONLY admins can access
     match /admin/users/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read, write: if isAdmin();
     }
     
-    // Admin configuration
+    // Admin configuration - ONLY super admin can modify
     match /admin/config/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
     }
     
-    // Admin audit logs
+    // Admin audit logs - ONLY admins can access
     match /admin/logs/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+      allow read, write: if isAdmin();
     }
+    
+    // Admin exports - ONLY admins can access
+    match /admin/exports/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin backups - ONLY super admin can access
+    match /admin/backups/{document=**} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    // ========================================
+    // ADMIN PANEL SPECIFIC COLLECTIONS
+    // ========================================
+    
+    // System health monitoring - ONLY admins can access
+    match /systemHealth/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Performance metrics - ONLY admins can access
+    match /performanceMetrics/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Security events - ONLY admins can access
+    match /securityEvents/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Revenue tracking - ONLY admins can access
+    match /revenueTracking/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // User activity logs - ONLY admins can access
+    match /userActivity/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin notifications - ONLY admins can access
+    match /adminNotifications/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // System configuration - ONLY super admin can modify
+    match /systemConfig/{document=**} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+    
+    // Backup and restore logs - ONLY super admin can access
+    match /backupLogs/{document=**} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    // Admin session tracking - ONLY admins can access
+    match /adminSessions/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Failed login attempts tracking - ONLY admins can access
+    match /failedLogins/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // System alerts - ONLY admins can access
+    match /systemAlerts/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Database statistics - ONLY admins can access
+    match /databaseStats/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // ========================================
+    // PUBLIC AND GENERAL COLLECTIONS
+    // ========================================
     
     // Public data (app configuration, pricing, etc.)
     match /public/{document=**} {
@@ -195,13 +278,13 @@ service cloud.firestore {
     
     // Analytics collection (aggregated data) - Admins can read all
     match /analytics/{document=**} {
-      allow read: if isAuthenticated() || isAdmin() || isAdminPanelAccess();
+      allow read: if isAuthenticated() || isAdmin();
       allow write: if isAdmin(); // Only admins and Cloud Functions can write analytics
     }
     
     // Feedback and support tickets - Admins can read all
     match /feedback/{feedbackId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && 
                    (isOwner(request.resource.data.userId) || isAdmin());
@@ -209,12 +292,12 @@ service cloud.firestore {
     
     // User preferences and settings
     match /userPreferences/{userId} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
     // Trading strategies (user-defined) - Admins can read all
     match /strategies/{strategyId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && 
                    (isOwner(request.resource.data.userId) || isAdmin());
@@ -222,52 +305,38 @@ service cloud.firestore {
     
     // Trading tags (user-defined) - Admins can read all
     match /tags/{tagId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && 
                    (isOwner(request.resource.data.userId) || isAdmin());
     }
     
-    // ADMIN PANEL SPECIFIC COLLECTIONS - Allow admin panel access
+    // ========================================
+    // SECURITY AUDIT COLLECTIONS
+    // ========================================
     
-    // System health monitoring
-    match /systemHealth/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+    // Security audit trail - ONLY admins can access
+    match /securityAudit/{document=**} {
+      allow read, write: if isAdmin();
     }
     
-    // Performance metrics
-    match /performanceMetrics/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+    // Data access logs - ONLY admins can access
+    match /dataAccessLogs/{document=**} {
+      allow read, write: if isAdmin();
     }
     
-    // Security events
-    match /securityEvents/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+    // Permission changes log - ONLY super admin can access
+    match /permissionChanges/{document=**} {
+      allow read, write: if isSuperAdmin();
     }
     
-    // Revenue tracking
-    match /revenueTracking/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
-    }
+    // ========================================
+    // DENY ALL OTHER PATHS
+    // ========================================
     
-    // User activity logs
-    match /userActivity/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
-    }
-    
-    // Admin notifications
-    match /adminNotifications/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
-    }
-    
-    // System configuration
-    match /systemConfig/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
-    }
-    
-    // Backup and restore logs
-    match /backupLogs/{document=**} {
-      allow read, write: if isAdmin() || isAdminPanelAccess();
+    // Explicitly deny access to any other paths not defined above
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

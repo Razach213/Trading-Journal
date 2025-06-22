@@ -11,7 +11,7 @@ service firebase.storage {
       return request.auth.uid == userId;
     }
     
-    // CRITICAL: Admin email check function
+    // CRITICAL: Admin email check function - ONLY these emails have admin access
     function isAdmin() {
       return request.auth != null && 
              request.auth.token.email in [
@@ -20,15 +20,41 @@ service firebase.storage {
              ];
     }
     
+    // CRITICAL: Super admin check for highest level operations
+    function isSuperAdmin() {
+      return request.auth != null && 
+             request.auth.token.email == 'thealiraza22@gmail.com';
+    }
+    
     function isValidImageFile() {
       return request.resource.contentType.matches('image/.*') &&
              request.resource.size < 5 * 1024 * 1024; // 5MB limit
     }
     
     function isValidDocumentFile() {
-      return request.resource.contentType in ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/json'] &&
+      return request.resource.contentType in [
+               'application/pdf', 
+               'text/csv', 
+               'application/vnd.ms-excel',
+               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+               'application/json',
+               'text/plain'
+             ] &&
              request.resource.size < 10 * 1024 * 1024; // 10MB limit
     }
+    
+    function isValidBackupFile() {
+      return request.resource.contentType in [
+               'application/json',
+               'application/gzip',
+               'application/zip'
+             ] &&
+             request.resource.size < 100 * 1024 * 1024; // 100MB limit for backups
+    }
+    
+    // ========================================
+    // USER DATA STORAGE
+    // ========================================
     
     // User profile images
     match /users/{userId}/profile/{fileName} {
@@ -60,53 +86,156 @@ service firebase.storage {
       allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // ADMIN STORAGE AREAS
+    // ========================================
+    // ADMIN STORAGE AREAS - STRICT ACCESS CONTROL
+    // ========================================
     
-    // Admin exports and reports
+    // Admin exports and reports - ONLY admins can access
     match /admin/exports/{fileName} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
     }
     
-    // Admin system backups
+    // Admin system backups - ONLY super admin can access
     match /admin/backups/{fileName} {
-      allow read, write: if isAdmin();
+      allow read, write: if isSuperAdmin() && isValidBackupFile();
+      allow delete: if isSuperAdmin();
     }
     
-    // Admin analytics data
+    // Admin analytics data files - ONLY admins can access
     match /admin/analytics/{fileName} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
     }
     
-    // Admin logs
+    // Admin logs - ONLY admins can access
     match /admin/logs/{fileName} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
     }
     
-    // Admin configuration files
+    // Admin configuration files - ONLY super admin can modify
     match /admin/config/{fileName} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin() && isValidDocumentFile();
+      allow delete: if isSuperAdmin();
     }
+    
+    // Admin security reports - ONLY admins can access
+    match /admin/security/{fileName} {
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
+    }
+    
+    // Admin user data exports - ONLY admins can access
+    match /admin/users/{fileName} {
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
+    }
+    
+    // Admin revenue reports - ONLY admins can access
+    match /admin/revenue/{fileName} {
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
+    }
+    
+    // Admin system health reports - ONLY admins can access
+    match /admin/system/{fileName} {
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
+    }
+    
+    // Admin audit trails - ONLY super admin can access
+    match /admin/audit/{fileName} {
+      allow read, write: if isSuperAdmin() && isValidDocumentFile();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // ========================================
+    // TEMPORARY AND WORKING STORAGE
+    // ========================================
     
     // Temporary uploads (auto-deleted after 24 hours)
     match /temp/{userId}/{fileName} {
       allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // Admin temporary files
+    // Admin temporary files - ONLY admins can access
     match /admin/temp/{fileName} {
       allow read, write: if isAdmin();
+      allow delete: if isAdmin();
     }
     
-    // Public assets (app logos, etc.)
+    // ========================================
+    // PUBLIC AND SYSTEM STORAGE
+    // ========================================
+    
+    // Public assets (app logos, etc.) - Everyone can read, only admins can write
     match /public/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin(); // Only admins can upload public assets
+      allow write: if isAdmin() && isValidImageFile();
+      allow delete: if isAdmin();
     }
     
-    // System assets
+    // System assets - Authenticated users can read, only admins can write
     match /system/{allPaths=**} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // ========================================
+    // SECURITY AND MONITORING STORAGE
+    // ========================================
+    
+    // Security event attachments - ONLY admins can access
+    match /security/events/{fileName} {
+      allow read, write: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Performance monitoring data - ONLY admins can access
+    match /monitoring/performance/{fileName} {
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
+    }
+    
+    // Error logs and crash reports - ONLY admins can access
+    match /logs/errors/{fileName} {
+      allow read, write: if isAdmin() && isValidDocumentFile();
+      allow delete: if isAdmin();
+    }
+    
+    // Database dumps and exports - ONLY super admin can access
+    match /database/exports/{fileName} {
+      allow read, write: if isSuperAdmin() && isValidBackupFile();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // ========================================
+    // COMPLIANCE AND LEGAL STORAGE
+    // ========================================
+    
+    // Legal documents and compliance reports - ONLY super admin can access
+    match /legal/{fileName} {
+      allow read, write: if isSuperAdmin() && isValidDocumentFile();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // GDPR and data protection files -  ONLY super admin can access
+    match /compliance/gdpr/{fileName} {
+      allow read, write: if isSuperAdmin() && isValidDocumentFile();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // ========================================
+    // DENY ALL OTHER PATHS
+    // ========================================
+    
+    // Explicitly deny access to any other paths not defined above
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

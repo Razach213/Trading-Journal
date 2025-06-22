@@ -1,10 +1,15 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-// Admin email check function
+// CRITICAL: Admin email check function - ONLY these emails have admin access
 const isAdminUser = (email: string): boolean => {
   const adminEmails = ['thealiraza22@gmail.com', 'ramdanmubarak10@gmail.com'];
   return adminEmails.includes(email);
+};
+
+// CRITICAL: Super admin check for highest level operations
+const isSuperAdmin = (email: string): boolean => {
+  return email === 'thealiraza22@gmail.com';
 };
 
 // Get all users for admin panel
@@ -19,6 +24,14 @@ export const getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Log admin access for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('access').add({
+      action: 'getAllUsers',
+      adminEmail: context.auth.token.email,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
     const usersSnapshot = await admin.firestore().collection('users').get();
     const users = usersSnapshot.docs.map(doc => ({
       id: doc.id,
@@ -43,6 +56,14 @@ export const getSystemAnalytics = functions.https.onCall(async (data, context) =
   }
 
   try {
+    // Log admin access for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('access').add({
+      action: 'getSystemAnalytics',
+      adminEmail: context.auth.token.email,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
     // Get total users
     const usersSnapshot = await admin.firestore().collection('users').get();
     const totalUsers = usersSnapshot.size;
@@ -61,18 +82,27 @@ export const getSystemAnalytics = functions.https.onCall(async (data, context) =
       .get();
     const activeUsers = activeUsersSnapshot.size;
 
-    // Calculate revenue (mock data for now)
-    const revenue = totalUsers * 19; // Assuming average $19 per user
+    // Calculate revenue (based on user plans)
+    const users = usersSnapshot.docs.map(doc => doc.data());
+    const proPlanUsers = users.filter(user => user.plan === 'pro').length;
+    const premiumPlanUsers = users.filter(user => user.plan === 'premium').length;
+    const revenue = (proPlanUsers * 19) + (premiumPlanUsers * 49);
+
+    // Calculate conversion rate
+    const conversionRate = totalUsers > 0 ? ((proPlanUsers + premiumPlanUsers) / totalUsers) * 100 : 0;
+
+    // Calculate churn rate (mock data for now)
+    const churnRate = 3.2;
 
     const analytics = {
       totalUsers,
       activeUsers,
       totalTrades,
       revenue,
-      conversionRate: 12.5,
-      churnRate: 3.2,
+      conversionRate,
+      churnRate,
       avgSessionTime: '24m 15s',
-      supportTickets: 45
+      supportTickets: Math.floor(totalUsers * 0.05) // 5% of users might need support
     };
 
     return { analytics };
@@ -93,6 +123,14 @@ export const getRevenueData = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Log admin access for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('access').add({
+      action: 'getRevenueData',
+      adminEmail: context.auth.token.email,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
     // Get users by plan
     const usersSnapshot = await admin.firestore().collection('users').get();
     const users = usersSnapshot.docs.map(doc => doc.data());
@@ -118,8 +156,8 @@ export const getRevenueData = functions.https.onCall(async (data, context) => {
 
     const revenueMetrics = {
       monthlyRecurringRevenue: totalRevenue,
-      averageRevenuePerUser: totalRevenue / (proPlanUsers + premiumPlanUsers),
-      customerLifetimeValue: totalRevenue * 18 / (proPlanUsers + premiumPlanUsers), // Assuming 18 months average subscription
+      averageRevenuePerUser: totalRevenue / (proPlanUsers + premiumPlanUsers || 1),
+      customerLifetimeValue: totalRevenue * 18 / (proPlanUsers + premiumPlanUsers || 1), // Assuming 18 months average subscription
       revenueByPlan: {
         free: 0,
         pro: proRevenue,
@@ -150,6 +188,14 @@ export const getSystemHealth = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Log admin access for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('access').add({
+      action: 'getSystemHealth',
+      adminEmail: context.auth.token.email,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
     // Get database stats
     const usersCount = (await admin.firestore().collection('users').count().get()).data().count;
     const tradesCount = (await admin.firestore().collection('trades').count().get()).data().count;
@@ -248,6 +294,14 @@ export const getSecurityData = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Log admin access for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('access').add({
+      action: 'getSecurityData',
+      adminEmail: context.auth.token.email,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
     // Get active users count
     const usersSnapshot = await admin.firestore().collection('users').get();
     const activeUsers = usersSnapshot.size;
@@ -336,6 +390,16 @@ export const updateUserData = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'User ID and updates are required');
     }
 
+    // Log admin action for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('userUpdates').add({
+      action: 'updateUser',
+      adminEmail: context.auth.token.email,
+      userId: userId,
+      updates: updates,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
     // Update user document
     await admin.firestore().collection('users').doc(userId).update({
       ...updates,
@@ -402,6 +466,19 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'User ID is required');
     }
 
+    // Log admin action for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('userDeletions').add({
+      action: 'deleteUser',
+      adminEmail: context.auth.token.email,
+      userId: userId,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
+
+    // Get user data before deletion for audit
+    const userDoc = await admin.firestore().collection('users').doc(userId).get();
+    const userData = userDoc.data();
+
     // Delete user from Authentication
     try {
       await admin.auth().deleteUser(userId);
@@ -444,6 +521,14 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
     
     await batch.commit();
 
+    // Store deleted user data in admin logs for recovery if needed
+    await admin.firestore().collection('admin').doc('logs').collection('deletedUsers').add({
+      userId: userId,
+      userData: userData,
+      deletedBy: context.auth.token.email,
+      deletedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
     return { success: true, message: 'User deleted successfully' };
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -463,6 +548,15 @@ export const exportData = functions.https.onCall(async (data, context) => {
 
   try {
     const { type } = data;
+    
+    // Log admin action for audit trail
+    await admin.firestore().collection('admin').doc('logs').collection('exports').add({
+      action: 'exportData',
+      adminEmail: context.auth.token.email,
+      exportType: type,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      ipAddress: context.rawRequest?.ip || 'unknown'
+    });
     
     let exportData: any = {};
     
@@ -582,6 +676,13 @@ export const exportData = functions.https.onCall(async (data, context) => {
       default:
         throw new functions.https.HttpsError('invalid-argument', 'Invalid export type');
     }
+
+    // Store export in admin exports collection
+    await admin.firestore().collection('admin').doc('exports').collection(type).add({
+      data: exportData,
+      exportedBy: context.auth.token.email,
+      exportedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
     return { data: exportData, type, exportDate: new Date() };
   } catch (error) {
