@@ -25,8 +25,9 @@ interface TradeFormData {
 }
 
 const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId }) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors }, clearErrors } = useForm<TradeFormData>({
-    mode: 'onChange'
+  const { register, handleSubmit, watch, setValue, formState: { errors }, clearErrors, trigger } = useForm<TradeFormData>({
+    mode: 'onChange',
+    reValidateMode: 'onChange'
   });
   const [useManualPnL, setUseManualPnL] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -181,6 +182,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       clearErrors('symbol');
                     }
                   }}
+                  onBlur={() => trigger('symbol')}
                 />
                 {errors.symbol && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.symbol.message}</p>
@@ -192,13 +194,17 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   Type *
                 </label>
                 <select
-                  {...register('type', { required: 'Type is required' })}
+                  {...register('type', { 
+                    required: 'Type is required',
+                    validate: value => value !== '' || 'Type is required'
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value !== '') {
                       clearErrors('type');
                     }
                   }}
+                  onBlur={() => trigger('type')}
                 >
                   <option value="">Select type</option>
                   <option value="long">Long</option>
@@ -221,7 +227,8 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   {...register('entryPrice', { 
                     required: 'Entry price is required',
                     min: { value: 0.01, message: 'Entry price must be greater than 0' },
-                    valueAsNumber: true
+                    valueAsNumber: true,
+                    validate: value => value > 0 || 'Entry price must be greater than 0'
                   })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="150.00"
@@ -230,6 +237,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       clearErrors('entryPrice');
                     }
                   }}
+                  onBlur={() => trigger('entryPrice')}
                 />
                 {errors.entryPrice && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
@@ -245,7 +253,8 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   {...register('quantity', { 
                     required: 'Quantity is required',
                     min: { value: 1, message: 'Quantity must be at least 1' },
-                    valueAsNumber: true
+                    valueAsNumber: true,
+                    validate: value => value > 0 || 'Quantity must be at least 1'
                   })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="100"
@@ -254,6 +263,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       clearErrors('quantity');
                     }
                   }}
+                  onBlur={() => trigger('quantity')}
                 />
                 {errors.quantity && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.quantity.message}</p>
@@ -268,13 +278,17 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 </label>
                 <input
                   type="datetime-local"
-                  {...register('entryDate', { required: 'Entry date is required' })}
+                  {...register('entryDate', { 
+                    required: 'Entry date is required',
+                    validate: value => value !== '' || 'Entry date is required'
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value !== '') {
                       clearErrors('entryDate');
                     }
                   }}
+                  onBlur={() => trigger('entryDate')}
                 />
                 {errors.entryDate && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
@@ -286,13 +300,17 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   Status *
                 </label>
                 <select
-                  {...register('status', { required: 'Status is required' })}
+                  {...register('status', { 
+                    required: 'Status is required',
+                    validate: value => value !== '' || 'Status is required'
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value !== '') {
                       clearErrors('status');
                     }
                   }}
+                  onBlur={() => trigger('status')}
                 >
                   <option value="">Select status</option>
                   <option value="open">Open</option>
@@ -317,7 +335,8 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       {...register('exitPrice', { 
                         required: status === 'closed' && !useManualPnL ? 'Exit price is required for closed trades' : false,
                         min: { value: 0.01, message: 'Exit price must be greater than 0' },
-                        valueAsNumber: true
+                        valueAsNumber: true,
+                        validate: value => !value || value > 0 || 'Exit price must be greater than 0'
                       })}
                       disabled={useManualPnL}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -327,6 +346,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                           clearErrors('exitPrice');
                         }
                       }}
+                      onBlur={() => trigger('exitPrice')}
                     />
                     {errors.exitPrice && (
                       <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.exitPrice.message}</p>
@@ -386,6 +406,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                               clearErrors('pnl');
                             }
                           }}
+                          onBlur={() => trigger('pnl')}
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Enter positive number for profit, negative for loss (e.g., 500 or -200)

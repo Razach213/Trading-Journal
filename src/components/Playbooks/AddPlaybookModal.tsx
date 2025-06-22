@@ -31,7 +31,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   userId, 
   initialData 
 }) => {
-  const { register, handleSubmit, formState: { errors }, clearErrors, watch } = useForm<PlaybookFormData>({
+  const { register, handleSubmit, formState: { errors }, clearErrors, watch, trigger } = useForm<PlaybookFormData>({
     defaultValues: initialData ? {
       title: initialData.title,
       description: initialData.description,
@@ -44,7 +44,8 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
       tags: initialData.tags.join(', '),
       isPublic: initialData.isPublic
     } : {},
-    mode: 'onChange'
+    mode: 'onChange',
+    reValidateMode: 'onChange'
   });
   
   const [chartImage, setChartImage] = useState<string | null>(initialData?.chartImage || null);
@@ -218,6 +219,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                       clearErrors('title');
                     }
                   }}
+                  onBlur={() => trigger('title')}
                 />
                 {errors.title && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.title.message}</p>
@@ -241,6 +243,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                       clearErrors('strategy');
                     }
                   }}
+                  onBlur={() => trigger('strategy')}
                 />
                 {errors.strategy && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.strategy.message}</p>
@@ -265,6 +268,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                     clearErrors('description');
                   }
                 }}
+                onBlur={() => trigger('description')}
               />
               {errors.description && (
                 <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.description.message}</p>
