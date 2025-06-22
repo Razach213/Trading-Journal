@@ -79,3 +79,31 @@ export interface Playbook {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface Payment {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  plan: 'pro' | 'premium';
+  amount: number;
+  currency: string;
+  paymentMethod: 'pakistan' | 'international';
+  accountDetails: {
+    // For Pakistan payments
+    accountTitle?: string;
+    accountName?: string;
+    accountNumber?: string;
+    // For International payments
+    binanceId?: string;
+    binanceName?: string;
+  };
+  transactionId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: Date;
+  reviewedAt?: Date | null;
+  reviewedBy?: string | null;
+  adminNotes?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

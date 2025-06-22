@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Star, Zap, ArrowRight, Shield, Headphones, Globe } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import PaymentModal from '../components/Payment/PaymentModal';
 
 const Pricing: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
   const { user } = useAuth();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'pro' | 'premium'>('pro');
+  const [selectedPrice, setSelectedPrice] = useState(0);
 
   const plans = [
     {
@@ -66,7 +70,7 @@ const Pricing: React.FC = () => {
         'Advanced security'
       ],
       popular: false,
-      buttonText: 'Contact Sales',
+      buttonText: 'Get Enterprise',
       buttonStyle: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700',
       icon: Shield,
       gradient: 'from-purple-500 to-pink-600'
@@ -84,11 +88,11 @@ const Pricing: React.FC = () => {
     },
     {
       question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards (Visa, MasterCard, American Express) and PayPal for your convenience.'
+      answer: 'For Pakistan: NayaPay and bank transfers. For international users: Binance and cryptocurrency payments.'
     },
     {
       question: 'Can I cancel anytime?',
-      answer: 'Absolutely. You can cancel your subscription at any time. Your account will remain active until the end of your billing period.'
+      answer: 'Absolutely. You can cancel your subscription at any time from your account settings. Your account will remain active until the end of your billing period.'
     },
     {
       question: 'Is my trading data secure?',
@@ -100,8 +104,23 @@ const Pricing: React.FC = () => {
     }
   ];
 
+  const handlePlanSelect = (plan: 'pro' | 'premium') => {
+    if (!user) {
+      // Redirect to signup if not logged in
+      return;
+    }
+    
+    const price = isYearly 
+      ? (plan === 'pro' ? plans[1].price.yearly * 12 : plans[2].price.yearly * 12)
+      : (plan === 'pro' ? plans[1].price.monthly : plans[2].price.monthly);
+    
+    setSelectedPlan(plan);
+    setSelectedPrice(price);
+    setShowPaymentModal(true);
+  };
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -147,8 +166,8 @@ const Pricing: React.FC = () => {
               key={index}
               className={`relative rounded-2xl border-2 p-8 transition-all duration-300 hover:shadow-xl ${
                 plan.popular
-                  ? 'border-blue-500 bg-blue-50 transform scale-105 shadow-lg'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 transform scale-105 shadow-lg'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               {plan.popular && (
@@ -164,36 +183,45 @@ const Pricing: React.FC = () => {
                 <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r ${plan.gradient} rounded-lg mb-4`}>
                   <plan.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                <p className="text-gray-600 mb-6">{plan.description}</p>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">{plan.description}</p>
                 
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
                     ${isYearly ? plan.price.yearly : plan.price.monthly}
                   </span>
-                  <span className="text-gray-600 ml-1">
+                  <span className="text-gray-600 dark:text-gray-400 ml-1">
                     {plan.price.monthly > 0 ? '/month' : ''}
                   </span>
                   {isYearly && plan.price.monthly > 0 && (
-                    <div className="text-sm text-green-600 mt-1">
+                    <div className="text-sm text-green-600 dark:text-green-400 mt-1">
                       Billed annually (${plan.price.yearly * 12}/year)
                     </div>
                   )}
                 </div>
 
-                <Link
-                  to={user ? '/dashboard' : '/signup'}
-                  className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mb-8 inline-block transform hover:scale-105 ${plan.buttonStyle}`}
-                >
-                  {plan.buttonText}
-                </Link>
+                {index === 0 ? (
+                  <Link
+                    to={user ? "/dashboard" : "/signup"}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mb-8 inline-block transform hover:scale-105 ${plan.buttonStyle}`}
+                  >
+                    {plan.buttonText}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => handlePlanSelect(index === 1 ? 'pro' : 'premium')}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mb-8 inline-block transform hover:scale-105 ${plan.buttonStyle}`}
+                  >
+                    {plan.buttonText}
+                  </button>
+                )}
               </div>
 
               <ul className="space-y-4">
                 {plan.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700">{feature}</span>
+                    <Check className="h-5 w-5 text-green-500 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -203,42 +231,42 @@ const Pricing: React.FC = () => {
       </div>
 
       {/* Features Comparison */}
-      <div className="bg-gray-50 py-16">
+      <div className="bg-gray-50 dark:bg-gray-800 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Why Choose ZellaX?
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-400">
               Built by traders, for traders
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="h-8 w-8 text-blue-600" />
+              <div className="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Globe className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Global Reach</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Global Reach</h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Trusted by traders in over 100 countries worldwide with 24/7 support.
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-green-600" />
+              <div className="bg-green-100 dark:bg-green-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Bank-Level Security</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Bank-Level Security</h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Your data is protected with enterprise-grade encryption and security measures.
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Headphones className="h-8 w-8 text-purple-600" />
+              <div className="bg-purple-100 dark:bg-purple-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Headphones className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Expert Support</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Expert Support</h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Get help from our team of trading experts and technical support specialists.
               </p>
             </div>
@@ -247,17 +275,17 @@ const Pricing: React.FC = () => {
       </div>
 
       {/* FAQ Section */}
-      <div className="py-16">
+      <div className="py-16 dark:bg-gray-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
             Frequently Asked Questions
           </h2>
           
           <div className="space-y-8">
             {faqs.map((faq, index) => (
-              <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
-                <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">{faq.question}</h3>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -290,6 +318,15 @@ const Pricing: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <PaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          selectedPlan={selectedPlan}
+          planPrice={selectedPrice}
+        />
+      )}
     </div>
   );
 };
