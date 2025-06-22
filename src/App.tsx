@@ -19,6 +19,7 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
+import AdminPanal from './pages/AdminPanal';
 
 function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -79,6 +80,10 @@ function App() {
               <Route path="/help" element={<Help />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              
+              {/* Separate Admin Panel Route - No Authentication Required */}
+              <Route path="/adminPanal" element={<AdminPanal />} />
+              
               <Route
                 path="/dashboard"
                 element={
