@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/Layout/Header';
 import Footer from './components/layout/Footer';
@@ -20,6 +20,17 @@ import Privacy from './pages/Privacy';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import AdminPanal from './pages/AdminPanal';
+
+// ScrollToTop component to reset scroll position on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -67,6 +78,7 @@ function App() {
     <ErrorBoundary>
       <Router>
         <div className="relative min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col transition-all duration-300">
+          <ScrollToTop />
           <Header toggleTheme={toggleTheme} />
           <main className="flex-1 animate-fade-in-scale">
             <Routes>

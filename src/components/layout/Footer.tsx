@@ -1,10 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Zap, Twitter, Linkedin, Mail, Github, Instagram } from 'lucide-react';
 
 const Footer: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    window.scrollTo(0, 0);
+  };
+
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-white">
+    <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -64,19 +71,28 @@ const Footer: React.FC = () => {
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/features" className="text-gray-400 hover:text-white transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/features')}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Features
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/pricing')}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Pricing
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/dashboard')}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Dashboard
-                </Link>
+                </button>
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -97,14 +113,20 @@ const Footer: React.FC = () => {
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/about" className="text-gray-400 hover:text-white transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/about')}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   About Us
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-400 hover:text-white transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/contact')}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Contact
-                </Link>
+                </button>
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -131,12 +153,18 @@ const Footer: React.FC = () => {
               © 2024 ZellaX. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
+              <button 
+                onClick={() => handleNavigation('/privacy')}
+                className="text-gray-400 hover:text-white text-sm transition-colors"
+              >
                 Privacy Policy
-              </Link>
-              <Link to="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
+              </button>
+              <button 
+                onClick={() => handleNavigation('/terms')}
+                className="text-gray-400 hover:text-white text-sm transition-colors"
+              >
                 Terms of Service
-              </Link>
+              </button>
               <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
                 Cookie Policy
               </a>
