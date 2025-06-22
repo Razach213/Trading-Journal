@@ -34,26 +34,31 @@ dist-ssr
 .firebase
 firebase-debug.log
 firestore-debug.log
-ui-debug.log
 
-# Functions
-functions/lib/
-functions/node_modules/
-functions/.env
-
-# Build
+# Build outputs
 build/
-dist/
+out/
 
-# Temporary files
-.tmp/
-temp/
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
 
-# OS generated files
+# Testing
+coverage/
+
+# Misc
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 Thumbs.db
