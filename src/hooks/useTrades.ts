@@ -16,6 +16,9 @@ import { Trade, TradingStats } from '../types';
 import { useAccountBalance } from './useAccountBalance';
 import toast from 'react-hot-toast';
 
+// Demo mode flag
+const isDemoMode = !db;
+
 export const useTrades = (userId: string | undefined) => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,22 @@ export const useTrades = (userId: string | undefined) => {
       setLoading(false);
       setError(null);
       setTrades([]);
+      return;
+    }
+
+    if (isDemoMode) {
+      // Demo mode - load from localStorage
+      try {
+        const demoTrades = localStorage.getItem(`demoTrades_${userId}`);
+        if (demoTrades) {
+          const parsedTrades = JSON.parse(demoTrades);
+          setTrades(parsedTrades);
+          calculateStats(parsedTrades);
+        }
+      } catch (error) {
+        console.error('Error loading demo trades:', error);
+      }
+      setLoading(false);
       return;
     }
 
@@ -203,7 +222,24 @@ export const useTrades = (userId: string | undefined) => {
         throw new Error('Missing required trade fields');
       }
 
-      if (!auth.currentUser) {
+      if (isDemoMode) {
+        // Demo mode - save to localStorage
+        const newTrade: Trade = {
+          ...tradeData,
+          id: 'demo-' + Date.now(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        const updatedTrades = [newTrade, ...trades];
+        setTrades(updatedTrades);
+        localStorage.setItem(`demoTrades_${userId}`, JSON.stringify(updatedTrades));
+        calculateStats(updatedTrades);
+        toast.success('Trade added successfully! (Demo Mode)');
+        return;
+      }
+
+      if (!auth?.currentUser) {
         throw new Error('User not authenticated');
       }
 
@@ -265,7 +301,19 @@ export const useTrades = (userId: string | undefined) => {
         throw new Error('Trade ID is required');
       }
 
-      if (!auth.currentUser) {
+      if (isDemoMode) {
+        // Demo mode - update in localStorage
+        const updatedTrades = trades.map(trade => 
+          trade.id === tradeId ? { ...trade, ...updates, updatedAt: new Date() } : trade
+        );
+        setTrades(updatedTrades);
+        localStorage.setItem(`demoTrades_${userId}`, JSON.stringify(updatedTrades));
+        calculateStats(updatedTrades);
+        toast.success('Trade updated successfully! (Demo Mode)');
+        return;
+      }
+
+      if (!auth?.currentUser) {
         throw new Error('User not authenticated');
       }
 
@@ -317,7 +365,17 @@ export const useTrades = (userId: string | undefined) => {
         throw new Error('Trade ID is required');
       }
 
-      if (!auth.currentUser) {
+      if (isDemoMode) {
+        // Demo mode - remove from localStorage
+        const updatedTrades = trades.filter(trade => trade.id !== tradeId);
+        setTrades(updatedTrades);
+        localStorage.setItem(`demoTrades_${userId}`, JSON.stringify(updatedTrades));
+        calculateStats(updatedTrades);
+        toast.success('Trade deleted successfully! (Demo Mode)');
+        return;
+      }
+
+      if (!auth?.currentUser) {
         throw new Error('User not authenticated');
       }
 

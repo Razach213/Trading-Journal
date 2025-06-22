@@ -16,11 +16,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase only if we have valid configuration
-let app;
-let auth;
-let db;
-let storage;
-let functions;
+let app = null;
+let auth = null;
+let db = null;
+let storage = null;
+let functions = null;
 
 try {
   // Check if we have a valid API key
@@ -42,16 +42,20 @@ try {
   // Create safe mock objects for demo mode
   auth = {
     currentUser: null,
-    onAuthStateChanged: () => () => {},
+    onAuthStateChanged: (callback) => {
+      // Call callback immediately with null user
+      setTimeout(() => callback(null), 0);
+      return () => {}; // Return unsubscribe function
+    },
     signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     signInWithPopup: () => Promise.reject(new Error("Demo mode")),
     signOut: () => Promise.reject(new Error("Demo mode"))
-  } as any;
+  };
 
-  db = null as any;
-  storage = null as any;
-  functions = null as any;
+  db = null;
+  storage = null;
+  functions = null;
 }
 
 export { auth, db, storage, functions };

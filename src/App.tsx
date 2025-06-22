@@ -52,7 +52,9 @@ function App() {
       setTimeout(() => {
         overlay.classList.remove('active');
         setTimeout(() => {
-          document.body.removeChild(overlay);
+          if (document.body.contains(overlay)) {
+            document.body.removeChild(overlay);
+          }
           setIsTransitioning(false);
         }, 300);
       }, 150);

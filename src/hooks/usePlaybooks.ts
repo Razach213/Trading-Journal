@@ -15,6 +15,9 @@ import { db, auth } from '../lib/firebase';
 import { Playbook } from '../types';
 import toast from 'react-hot-toast';
 
+// Demo mode flag
+const isDemoMode = !db;
+
 export const usePlaybooks = (userId: string | undefined) => {
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +28,21 @@ export const usePlaybooks = (userId: string | undefined) => {
       setLoading(false);
       setError(null);
       setPlaybooks([]);
+      return;
+    }
+
+    if (isDemoMode) {
+      // Demo mode - load from localStorage
+      try {
+        const demoPlaybooks = localStorage.getItem(`demoPlaybooks_${userId}`);
+        if (demoPlaybooks) {
+          const parsedPlaybooks = JSON.parse(demoPlaybooks);
+          setPlaybooks(parsedPlaybooks);
+        }
+      } catch (error) {
+        console.error('Error loading demo playbooks:', error);
+      }
+      setLoading(false);
       return;
     }
 
@@ -107,7 +125,23 @@ export const usePlaybooks = (userId: string | undefined) => {
         throw new Error('Title and strategy are required');
       }
 
-      if (!auth.currentUser) {
+      if (isDemoMode) {
+        // Demo mode - save to localStorage
+        const newPlaybook: Playbook = {
+          ...playbookData,
+          id: 'demo-' + Date.now(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        const updatedPlaybooks = [newPlaybook, ...playbooks];
+        setPlaybooks(updatedPlaybooks);
+        localStorage.setItem(`demoPlaybooks_${userId}`, JSON.stringify(updatedPlaybooks));
+        toast.success('Playbook added successfully! (Demo Mode)');
+        return;
+      }
+
+      if (!auth?.currentUser) {
         throw new Error('User not authenticated');
       }
 
@@ -157,7 +191,18 @@ export const usePlaybooks = (userId: string | undefined) => {
         throw new Error('Playbook ID is required');
       }
 
-      if (!auth.currentUser) {
+      if (isDemoMode) {
+        // Demo mode - update in localStorage
+        const updatedPlaybooks = playbooks.map(playbook => 
+          playbook.id === playbookId ? { ...playbook, ...updates, updatedAt: new Date() } : playbook
+        );
+        setPlaybooks(updatedPlaybooks);
+        localStorage.setItem(`demoPlaybooks_${userId}`, JSON.stringify(updatedPlaybooks));
+        toast.success('Playbook updated successfully! (Demo Mode)');
+        return;
+      }
+
+      if (!auth?.currentUser) {
         throw new Error('User not authenticated');
       }
 
@@ -200,7 +245,16 @@ export const usePlaybooks = (userId: string | undefined) => {
         throw new Error('Playbook ID is required');
       }
 
-      if (!auth.currentUser) {
+      if (isDemoMode) {
+        // Demo mode - remove from localStorage
+        const updatedPlaybooks = playbooks.filter(playbook => playbook.id !== playbookId);
+        setPlaybooks(updatedPlaybooks);
+        localStorage.setItem(`demoPlaybooks_${userId}`, JSON.stringify(updatedPlaybooks));
+        toast.success('Playbook deleted successfully! (Demo Mode)');
+        return;
+      }
+
+      if (!auth?.currentUser) {
         throw new Error('User not authenticated');
       }
 
