@@ -1,8 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
 
 // CRITICAL: Firebase configuration - Replace with your actual values
 const firebaseConfig = {
@@ -37,9 +37,14 @@ if (hasValidConfig) {
     db = getFirestore(app);
     storage = getStorage(app);
     functions = getFunctions(app);
-    console.log("✅ Firebase initialized successfully");
+    
+    if (typeof window !== 'undefined') {
+      console.log("✅ Firebase initialized successfully");
+    }
   } catch (error) {
-    console.warn("⚠️ Firebase initialization failed:", error);
+    if (typeof window !== 'undefined') {
+      console.warn("⚠️ Firebase initialization failed:", error);
+    }
     // Fall back to demo mode
     app = null;
     auth = null;
@@ -48,27 +53,27 @@ if (hasValidConfig) {
     functions = null;
   }
 } else {
-  console.warn("⚠️ Firebase not configured properly. Using demo mode.");
-  console.warn("📝 To fix this:");
-  console.warn("1. Go to Firebase Console → Project Settings");
-  console.warn("2. Copy your config values to .env file");
-  console.warn("3. Restart the development server");
+  if (typeof window !== 'undefined') {
+    console.warn("⚠️ Firebase not configured properly. Using demo mode.");
+  }
 }
 
 // Create safe mock objects for demo mode when Firebase is not configured
 if (!auth) {
   auth = {
     currentUser: null,
-    onAuthStateChanged: (callback) => {
+    onAuthStateChanged: (callback: (user: any) => void) => {
       // Call callback immediately with null user for demo mode
-      setTimeout(() => callback(null), 0);
+      if (typeof window !== 'undefined') {
+        setTimeout(() => callback(null), 0);
+      }
       return () => {}; // Return unsubscribe function
     },
     signInWithEmailAndPassword: () => Promise.reject(new Error("Firebase not configured - Demo mode active")),
     createUserWithEmailAndPassword: () => Promise.reject(new Error("Firebase not configured - Demo mode active")),
     signInWithPopup: () => Promise.reject(new Error("Firebase not configured - Demo mode active")),
     signOut: () => Promise.reject(new Error("Firebase not configured - Demo mode active"))
-  };
+  } as any;
 }
 
 // Export the configuration status for other components to check

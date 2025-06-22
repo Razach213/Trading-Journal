@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "firebase:build": "npm run build:prod",
     "firebase:serve": "firebase serve",
-    "firebase:deploy": "npm run build:prod && firebase deploy"
+    "firebase:deploy": "npm run build:prod && firebase deploy",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "react": "^18.3.1",
