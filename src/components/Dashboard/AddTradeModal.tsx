@@ -182,12 +182,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Type *
+                  Type
                 </label>
                 <select
-                  {...register('type', { 
-                    required: 'Type is required'
-                  })}
+                  {...register('type')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value) {
@@ -208,16 +206,12 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
             <div className="modal-equal-fields">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Entry Price *
+                  Entry Price
                 </label>
                 <input
                   type="number"
                   step="0.01"
-                  {...register('entryPrice', { 
-                    required: 'Entry price is required',
-                    min: { value: 0.01, message: 'Entry price must be greater than 0' },
-                    valueAsNumber: true
-                  })}
+                  {...register('entryPrice')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="150.00"
                   onChange={(e) => {
@@ -234,15 +228,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Quantity *
+                  Quantity
                 </label>
                 <input
                   type="number"
-                  {...register('quantity', { 
-                    required: 'Quantity is required',
-                    min: { value: 1, message: 'Quantity must be at least 1' },
-                    valueAsNumber: true
-                  })}
+                  {...register('quantity')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="100"
                   onChange={(e) => {
@@ -261,13 +251,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
             <div className="modal-equal-fields">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Entry Date *
+                  Entry Date
                 </label>
                 <input
                   type="datetime-local"
-                  {...register('entryDate', { 
-                    required: 'Entry date is required'
-                  })}
+                  {...register('entryDate')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value) {
@@ -282,12 +270,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Status *
+                  Status
                 </label>
                 <select
-                  {...register('status', { 
-                    required: 'Status is required'
-                  })}
+                  {...register('status')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value) {
@@ -315,11 +301,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                     <input
                       type="number"
                       step="0.01"
-                      {...register('exitPrice', { 
-                        required: status === 'closed' && !useManualPnL ? 'Exit price is required for closed trades' : false,
-                        min: { value: 0.01, message: 'Exit price must be greater than 0' },
-                        valueAsNumber: true
-                      })}
+                      {...register('exitPrice')}
                       disabled={useManualPnL}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="155.00"
@@ -372,15 +354,12 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <DollarSign className="h-4 w-4 inline mr-1" />
-                          Profit/Loss Amount *
+                          Profit/Loss Amount
                         </label>
                         <input
                           type="number"
                           step="0.01"
-                          {...register('pnl', { 
-                            required: useManualPnL ? 'P&L amount is required' : false,
-                            valueAsNumber: true
-                          })}
+                          {...register('pnl')}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="Enter profit (+) or loss (-) amount"
                           onChange={(e) => {

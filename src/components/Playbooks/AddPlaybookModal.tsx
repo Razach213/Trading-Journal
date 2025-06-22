@@ -191,13 +191,11 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
             <div className="modal-equal-fields">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title *
+                  Title
                 </label>
                 <input
                   type="text"
-                  {...register('title', { 
-                    required: 'Title is required'
-                  })}
+                  {...register('title')}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Breakout Strategy"
@@ -214,13 +212,11 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Strategy *
+                  Strategy
                 </label>
                 <input
                   type="text"
-                  {...register('strategy', { 
-                    required: 'Strategy is required'
-                  })}
+                  {...register('strategy')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Momentum, Reversal, Scalping"
                   onChange={(e) => {
@@ -237,12 +233,10 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description *
+                Description
               </label>
               <textarea
-                {...register('description', { 
-                  required: 'Description is required'
-                })}
+                {...register('description')}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Brief description of this trading setup..."
