@@ -11,6 +11,15 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
+    // CRITICAL: Admin email check function
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.email in [
+               'thealiraza22@gmail.com',
+               'ramdanmubarak10@gmail.com'
+             ];
+    }
+    
     function isValidUser(data) {
       return data.keys().hasAll(['email', 'displayName', 'plan', 'createdAt']) &&
              data.email is string &&
@@ -60,112 +69,200 @@ service cloud.firestore {
     
     // Users collection rules
     match /users/{userId} {
-      allow read: if isAuthenticated() && isOwner(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
       allow create: if isAuthenticated() && 
                    isOwner(userId) && 
                    isValidUser(request.resource.data);
       
       allow update: if isAuthenticated() && 
-                   isOwner(userId) && 
+                   (isOwner(userId) || isAdmin()) && 
                    isValidUser(request.resource.data) &&
                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt']);
       
-      allow delete: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
-      // User's trading statistics (read-only for users, writable by functions)
+      // User's trading statistics (read-only for users, writable by functions and admins)
       match /stats/{statId} {
-        allow read: if isAuthenticated() && isOwner(userId);
-        allow write: if request.auth == null; // Allow Admin SDK operations
+        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+        allow write: if request.auth == null || isAdmin(); // Allow Admin SDK operations and admin users
       }
     }
     
     // Account Balances collection
     match /accountBalances/{userId} {
-      allow read: if isAuthenticated() && isOwner(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
       allow create: if isAuthenticated() && 
-                   isOwner(userId) &&
+                   (isOwner(userId) || isAdmin()) &&
                    isValidAccountBalance(request.resource.data);
       
       allow update: if isAuthenticated() && 
-                   isOwner(userId) &&
+                   (isOwner(userId) || isAdmin()) &&
                    isValidAccountBalance(request.resource.data) &&
                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId']);
       
-      allow delete: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
     // Trades collection rules
     match /trades/{tradeId} {
       allow read: if isAuthenticated() && 
-                 request.auth.uid == resource.data.userId;
+                 (request.auth.uid == resource.data.userId || isAdmin());
       
       allow create: if isAuthenticated() && 
-                   isOwner(request.resource.data.userId) &&
+                   (isOwner(request.resource.data.userId) || isAdmin()) &&
                    isValidTrade(request.resource.data);
       
       allow update: if isAuthenticated() && 
-                   request.auth.uid == resource.data.userId &&
+                   (request.auth.uid == resource.data.userId || isAdmin()) &&
                    isValidTrade(request.resource.data) &&
                    isValidTradeUpdate(request.resource.data);
       
       allow delete: if isAuthenticated() && 
-                   request.auth.uid == resource.data.userId;
+                   (request.auth.uid == resource.data.userId || isAdmin());
     }
     
-    // Subscriptions collection (managed by Stripe webhooks)
+    // Playbooks collection rules
+    match /playbooks/{playbookId} {
+      allow read: if isAuthenticated() && 
+                 (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true);
+      
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin());
+      
+      allow update: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow delete: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
+    }
+    
+    // Subscriptions collection (managed by Stripe webhooks and admins)
     match /subscriptions/{subscriptionId} {
       allow read: if isAuthenticated() && 
-                 isOwner(resource.data.userId);
-      allow write: if false; // Only Cloud Functions can manage subscriptions
+                 (isOwner(resource.data.userId) || isAdmin());
+      allow write: if isAdmin(); // Only admins and Cloud Functions can manage subscriptions
+    }
+    
+    // ADMIN COLLECTIONS - Only accessible by admin users
+    
+    // Admin analytics data
+    match /admin/analytics/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin system metrics
+    match /admin/system/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin revenue data
+    match /admin/revenue/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin security logs
+    match /admin/security/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin user management
+    match /admin/users/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin configuration
+    match /admin/config/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin audit logs
+    match /admin/logs/{document=**} {
+      allow read, write: if isAdmin();
     }
     
     // Public data (app configuration, pricing, etc.)
     match /public/{document=**} {
       allow read: if true;
-      allow write: if false; // Only admins can write public data
+      allow write: if isAdmin(); // Only admins can write public data
     }
     
-    // Admin collection (only for admin users)
-    match /admin/{document=**} {
-      allow read, write: if isAuthenticated() && 
-                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    
-    // Analytics collection (aggregated data)
+    // Analytics collection (aggregated data) - Admins can read all
     match /analytics/{document=**} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Only Cloud Functions can write analytics
+      allow read: if isAuthenticated() || isAdmin();
+      allow write: if isAdmin(); // Only admins and Cloud Functions can write analytics
     }
     
-    // Feedback and support tickets
+    // Feedback and support tickets - Admins can read all
     match /feedback/{feedbackId} {
-      allow read, write: if isAuthenticated() && 
-                        isOwner(resource.data.userId);
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && 
-                   isOwner(request.resource.data.userId);
+                   (isOwner(request.resource.data.userId) || isAdmin());
     }
     
     // User preferences and settings
     match /userPreferences/{userId} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // Trading strategies (user-defined)
+    // Trading strategies (user-defined) - Admins can read all
     match /strategies/{strategyId} {
-      allow read, write: if isAuthenticated() && 
-                        isOwner(resource.data.userId);
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && 
-                   isOwner(request.resource.data.userId);
+                   (isOwner(request.resource.data.userId) || isAdmin());
     }
     
-    // Trading tags (user-defined)
+    // Trading tags (user-defined) - Admins can read all
     match /tags/{tagId} {
-      allow read, write: if isAuthenticated() && 
-                        isOwner(resource.data.userId);
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       allow create: if isAuthenticated() && 
-                   isOwner(request.resource.data.userId);
+                   (isOwner(request.resource.data.userId) || isAdmin());
+    }
+    
+    // ADMIN PANEL SPECIFIC COLLECTIONS
+    
+    // System health monitoring
+    match /systemHealth/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Performance metrics
+    match /performanceMetrics/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Security events
+    match /securityEvents/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Revenue tracking
+    match /revenueTracking/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // User activity logs
+    match /userActivity/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin notifications
+    match /adminNotifications/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // System configuration
+    match /systemConfig/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Backup and restore logs
+    match /backupLogs/{document=**} {
+      allow read, write: if isAdmin();
     }
   }
 }

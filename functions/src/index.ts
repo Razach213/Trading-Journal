@@ -2,11 +2,23 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 
+// Import admin functions
+import {
+  getAllUsers,
+  getSystemAnalytics,
+  getRevenueData,
+  getSystemHealth,
+  getSecurityData,
+  updateUserData,
+  deleteUser,
+  exportData
+} from './adminFunctions';
+
 // Initialize Firebase Admin
 admin.initializeApp();
 
 // Initialize Stripe
-const stripe = new Stripe(functions.config().stripe.secret_key, {
+const stripe = new Stripe(functions.config().stripe?.secret_key || '', {
   apiVersion: '2023-10-16',
 });
 
@@ -75,7 +87,7 @@ export const createCheckoutSession = functions.https.onCall(async (data, context
 // Handle successful payments
 export const handleSuccessfulPayment = functions.https.onRequest(async (req, res) => {
   const sig = req.headers['stripe-signature'] as string;
-  const endpointSecret = functions.config().stripe.webhook_secret;
+  const endpointSecret = functions.config().stripe?.webhook_secret;
 
   let event: Stripe.Event;
 
@@ -163,3 +175,15 @@ export const calculateTradingStats = functions.firestore
       console.error('Error calculating trading stats:', error);
     }
   });
+
+// Export admin functions
+export {
+  getAllUsers,
+  getSystemAnalytics,
+  getRevenueData,
+  getSystemHealth,
+  getSecurityData,
+  updateUserData,
+  deleteUser,
+  exportData
+};

@@ -11,55 +11,102 @@ service firebase.storage {
       return request.auth.uid == userId;
     }
     
+    // CRITICAL: Admin email check function
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.email in [
+               'thealiraza22@gmail.com',
+               'ramdanmubarak10@gmail.com'
+             ];
+    }
+    
     function isValidImageFile() {
       return request.resource.contentType.matches('image/.*') &&
              request.resource.size < 5 * 1024 * 1024; // 5MB limit
     }
     
     function isValidDocumentFile() {
-      return request.resource.contentType in ['application/pdf', 'text/csv', 'application/vnd.ms-excel'] &&
+      return request.resource.contentType in ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/json'] &&
              request.resource.size < 10 * 1024 * 1024; // 10MB limit
     }
     
     // User profile images
     match /users/{userId}/profile/{fileName} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() || isAdmin();
       allow write: if isAuthenticated() && 
-                  isOwner(userId) && 
+                  (isOwner(userId) || isAdmin()) && 
                   isValidImageFile();
-      allow delete: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
     // Trade screenshots and attachments
     match /users/{userId}/trades/{tradeId}/{fileName} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      allow delete: if isAuthenticated() && isOwner(userId);
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
     // User documents (exports, reports, etc.)
     match /users/{userId}/documents/{fileName} {
-      allow read, write: if isAuthenticated() && 
-                        isOwner(userId) && 
-                        isValidDocumentFile();
-      allow delete: if isAuthenticated() && isOwner(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && 
+                  (isOwner(userId) || isAdmin()) && 
+                  isValidDocumentFile();
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Playbook images
+    match /users/{userId}/playbooks/{playbookId}/{fileName} {
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // ADMIN STORAGE AREAS
+    
+    // Admin exports and reports
+    match /admin/exports/{fileName} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin system backups
+    match /admin/backups/{fileName} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin analytics data
+    match /admin/analytics/{fileName} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin logs
+    match /admin/logs/{fileName} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin configuration files
+    match /admin/config/{fileName} {
+      allow read, write: if isAdmin();
     }
     
     // Temporary uploads (auto-deleted after 24 hours)
     match /temp/{userId}/{fileName} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Admin temporary files
+    match /admin/temp/{fileName} {
+      allow read, write: if isAdmin();
     }
     
     // Public assets (app logos, etc.)
     match /public/{allPaths=**} {
       allow read: if true;
-      allow write: if false; // Only admins can upload public assets
+      allow write: if isAdmin(); // Only admins can upload public assets
     }
     
-    // Admin uploads
-    match /admin/{allPaths=**} {
+    // System assets
+    match /system/{allPaths=**} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                  get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if isAdmin();
     }
   }
 }
