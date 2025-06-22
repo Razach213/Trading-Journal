@@ -12,6 +12,31 @@
     --toast-bg: #1f2937;
     --toast-color: #f9fafb;
   }
+
+  /* Dark mode text colors */
+  .dark body {
+    @apply text-gray-100;
+  }
+
+  /* Ensure all headings have proper dark mode colors */
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-white;
+  }
+
+  /* Ensure all paragraphs have proper dark mode colors */
+  .dark p {
+    @apply text-gray-300;
+  }
+
+  /* Ensure all links have proper dark mode colors */
+  .dark a {
+    @apply text-blue-400 hover:text-blue-300;
+  }
+
+  /* Ensure all buttons have proper dark mode colors */
+  .dark button:not([class*="bg-"]):not([class*="text-"]) {
+    @apply text-gray-300 hover:text-white;
+  }
 }
 
 /* Custom scrollbar for dark mode */
@@ -1191,4 +1216,492 @@ body.modal-open {
     margin: auto; /* Center the modal */
     border-radius: 0.75rem; /* Keep rounded corners on all sides */
   }
+}
+
+/* Dark mode specific fixes for recharts */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #374151 !important;
+}
+
+.dark .recharts-text {
+  fill: #9ca3af !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label,
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  color: #e5e7eb !important;
+}
+
+/* Dark mode fixes for select dropdowns */
+.dark select option {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for date inputs */
+.dark input[type="date"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* Dark mode fixes for placeholders */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280;
+}
+
+/* Dark mode fixes for disabled inputs */
+.dark input:disabled,
+.dark textarea:disabled,
+.dark select:disabled {
+  background-color: #374151;
+  color: #9ca3af;
+}
+
+/* Dark mode fixes for tooltips */
+.dark [data-tooltip]:hover::after {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
+/* Dark mode fixes for toasts */
+.dark .Toastify__toast {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for modals */
+.dark .modal-container,
+.dark .modal-header,
+.dark .modal-body,
+.dark .modal-footer {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .modal-header {
+  border-bottom-color: #374151;
+}
+
+.dark .modal-footer {
+  border-top-color: #374151;
+}
+
+/* Dark mode fixes for tables */
+.dark table {
+  border-color: #374151;
+}
+
+.dark th,
+.dark td {
+  border-color: #374151;
+}
+
+.dark thead {
+  background-color: #111827;
+}
+
+.dark tbody tr:hover {
+  background-color: #1f2937;
+}
+
+/* Dark mode fixes for cards */
+.dark .card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+/* Dark mode fixes for buttons */
+.dark button.secondary {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark button.secondary:hover {
+  background-color: #4b5563;
+}
+
+/* Dark mode fixes for alerts */
+.dark .alert {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.dark .alert-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.dark .alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.dark .alert-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.dark .alert-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+/* Dark mode fixes for badges */
+.dark .badge {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for tooltips */
+.dark .tooltip {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for code blocks */
+.dark code {
+  background-color: #111827;
+  color: #e5e7eb;
+}
+
+.dark pre {
+  background-color: #111827;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for blockquotes */
+.dark blockquote {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for horizontal rules */
+.dark hr {
+  border-color: #374151;
+}
+
+/* Dark mode fixes for links */
+.dark a {
+  color: #60a5fa;
+}
+
+.dark a:hover {
+  color: #93c5fd;
+}
+
+/* Dark mode fixes for headings */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f9fafb;
+}
+
+/* Dark mode fixes for text */
+.dark p, .dark span, .dark div {
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for lists */
+.dark ul, .dark ol {
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for form labels */
+.dark label {
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for form inputs */
+.dark input, .dark textarea, .dark select {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.dark input:focus, .dark textarea:focus, .dark select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+/* Dark mode fixes for form placeholders */
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Dark mode fixes for form errors */
+.dark .error {
+  color: #f87171;
+}
+
+/* Dark mode fixes for form success */
+.dark .success {
+  color: #34d399;
+}
+
+/* Dark mode fixes for form warnings */
+.dark .warning {
+  color: #fbbf24;
+}
+
+/* Dark mode fixes for form info */
+.dark .info {
+  color: #60a5fa;
+}
+
+/* Dark mode fixes for form disabled */
+.dark input:disabled, .dark textarea:disabled, .dark select:disabled {
+  background-color: #1f2937;
+  color: #6b7280;
+  border-color: #374151;
+}
+
+/* Dark mode fixes for form readonly */
+.dark input:read-only, .dark textarea:read-only {
+  background-color: #1f2937;
+  color: #9ca3af;
+  border-color: #374151;
+}
+
+/* Dark mode fixes for form focus */
+.dark input:focus, .dark textarea:focus, .dark select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+/* Dark mode fixes for form invalid */
+.dark input:invalid, .dark textarea:invalid, .dark select:invalid {
+  border-color: #f87171;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+}
+
+/* Dark mode fixes for form valid */
+.dark input:valid, .dark textarea:valid, .dark select:valid {
+  border-color: #34d399;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.2);
+}
+
+/* Dark mode fixes for form required */
+.dark input:required, .dark textarea:required, .dark select:required {
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+}
+
+/* Dark mode fixes for form optional */
+.dark input:optional, .dark textarea:optional, .dark select:optional {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+/* Dark mode fixes for form checkbox */
+.dark input[type="checkbox"], .dark input[type="radio"] {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark input[type="checkbox"]:checked, .dark input[type="radio"]:checked {
+  background-color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+/* Dark mode fixes for form range */
+.dark input[type="range"] {
+  background-color: #374151;
+}
+
+.dark input[type="range"]::-webkit-slider-thumb {
+  background-color: #60a5fa;
+}
+
+.dark input[type="range"]::-moz-range-thumb {
+  background-color: #60a5fa;
+}
+
+.dark input[type="range"]::-ms-thumb {
+  background-color: #60a5fa;
+}
+
+/* Dark mode fixes for form file */
+.dark input[type="file"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.dark input[type="file"]::-webkit-file-upload-button {
+  background-color: #4b5563;
+  color: #e5e7eb;
+  border-color: #6b7280;
+}
+
+.dark input[type="file"]::file-selector-button {
+  background-color: #4b5563;
+  color: #e5e7eb;
+  border-color: #6b7280;
+}
+
+/* Dark mode fixes for form color */
+.dark input[type="color"] {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form date */
+.dark input[type="date"], .dark input[type="datetime-local"], .dark input[type="month"], .dark input[type="time"], .dark input[type="week"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form search */
+.dark input[type="search"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form number */
+.dark input[type="number"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form password */
+.dark input[type="password"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form tel */
+.dark input[type="tel"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form url */
+.dark input[type="url"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form email */
+.dark input[type="email"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form text */
+.dark input[type="text"] {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form textarea */
+.dark textarea {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form select */
+.dark select {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* Dark mode fixes for form button */
+.dark button {
+  background-color: #4b5563;
+  color: #e5e7eb;
+  border-color: #6b7280;
+}
+
+.dark button:hover {
+  background-color: #6b7280;
+}
+
+.dark button:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.dark button:active {
+  background-color: #374151;
+}
+
+.dark button:disabled {
+  background-color: #1f2937;
+  color: #6b7280;
+  border-color: #374151;
+}
+
+/* Dark mode fixes for form fieldset */
+.dark fieldset {
+  border-color: #4b5563;
+}
+
+.dark legend {
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for form progress */
+.dark progress {
+  background-color: #374151;
+  color: #60a5fa;
+}
+
+/* Dark mode fixes for form meter */
+.dark meter {
+  background-color: #374151;
+}
+
+/* Dark mode fixes for form output */
+.dark output {
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for form datalist */
+.dark datalist {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for form optgroup */
+.dark optgroup {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for form option */
+.dark option {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+/* Dark mode fixes for tooltips in recharts */
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgba(31, 41, 55, 0.9) !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label,
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item-list .recharts-tooltip-item {
+  color: #e5e7eb !important;
 }
