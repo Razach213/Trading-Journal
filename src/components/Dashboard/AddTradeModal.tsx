@@ -166,14 +166,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
             <div className="modal-equal-fields">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Symbol *
+                  Symbol
                 </label>
                 <input
                   type="text"
-                  {...register('symbol', { 
-                    required: 'Symbol is required',
-                    validate: value => value.trim() !== '' || 'Symbol is required'
-                  })}
+                  {...register('symbol')}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="AAPL"
