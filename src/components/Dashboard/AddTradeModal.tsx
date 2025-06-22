@@ -31,9 +31,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     watch, 
     setValue, 
     formState: { errors }, 
-    clearErrors, 
-    trigger,
-    setError
+    clearErrors 
   } = useForm<TradeFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange'
@@ -49,8 +47,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   const quantity = watch('quantity');
   const type = watch('type');
   const manualPnL = watch('pnl');
-  const symbol = watch('symbol');
-  const entryDate = watch('entryDate');
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -198,11 +194,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       clearErrors('type');
                     }
                   }}
-                  onBlur={() => {
-                    if (type) {
-                      clearErrors('type');
-                    }
-                  }}
                 >
                   <option value="">Select type</option>
                   <option value="long">Long</option>
@@ -235,11 +226,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       clearErrors('entryPrice');
                     }
                   }}
-                  onBlur={() => {
-                    if (entryPrice > 0) {
-                      clearErrors('entryPrice');
-                    }
-                  }}
                 />
                 {errors.entryPrice && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
@@ -262,11 +248,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
                     if (!isNaN(value) && value >= 1) {
-                      clearErrors('quantity');
-                    }
-                  }}
-                  onBlur={() => {
-                    if (quantity >= 1) {
                       clearErrors('quantity');
                     }
                   }}
@@ -293,11 +274,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       clearErrors('entryDate');
                     }
                   }}
-                  onBlur={() => {
-                    if (entryDate) {
-                      clearErrors('entryDate');
-                    }
-                  }}
                 />
                 {errors.entryDate && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
@@ -315,11 +291,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => {
                     if (e.target.value) {
-                      clearErrors('status');
-                    }
-                  }}
-                  onBlur={() => {
-                    if (status) {
                       clearErrors('status');
                     }
                   }}
@@ -355,11 +326,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
                         if (!isNaN(value) && value > 0) {
-                          clearErrors('exitPrice');
-                        }
-                      }}
-                      onBlur={() => {
-                        if (exitPrice && exitPrice > 0) {
                           clearErrors('exitPrice');
                         }
                       }}
@@ -419,11 +385,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                           placeholder="Enter profit (+) or loss (-) amount"
                           onChange={(e) => {
                             if (e.target.value) {
-                              clearErrors('pnl');
-                            }
-                          }}
-                          onBlur={() => {
-                            if (manualPnL !== undefined) {
                               clearErrors('pnl');
                             }
                           }}

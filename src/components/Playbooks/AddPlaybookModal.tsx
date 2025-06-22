@@ -37,7 +37,6 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
     formState: { errors }, 
     clearErrors, 
     watch, 
-    trigger,
     setValue
   } = useForm<PlaybookFormData>({
     defaultValues: initialData ? {
@@ -207,14 +206,6 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                       clearErrors('title');
                     }
                   }}
-                  onBlur={() => {
-                    if (title?.trim()) {
-                      clearErrors('title');
-                    } else {
-                      setValue('title', '');
-                      trigger('title');
-                    }
-                  }}
                 />
                 {errors.title && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.title.message}</p>
@@ -235,14 +226,6 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                   onChange={(e) => {
                     if (e.target.value.trim()) {
                       clearErrors('strategy');
-                    }
-                  }}
-                  onBlur={() => {
-                    if (strategy?.trim()) {
-                      clearErrors('strategy');
-                    } else {
-                      setValue('strategy', '');
-                      trigger('strategy');
                     }
                   }}
                 />
@@ -266,14 +249,6 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 onChange={(e) => {
                   if (e.target.value.trim()) {
                     clearErrors('description');
-                  }
-                }}
-                onBlur={() => {
-                  if (description?.trim()) {
-                    clearErrors('description');
-                  } else {
-                    setValue('description', '');
-                    trigger('description');
                   }
                 }}
               />
