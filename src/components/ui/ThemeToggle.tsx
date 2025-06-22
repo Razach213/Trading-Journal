@@ -11,23 +11,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ toggleTheme, className = '' }
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    // Check if dark mode is active
     setIsDark(document.documentElement.classList.contains('dark'));
-    
-    // Also listen for changes to the theme
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          setIsDark(document.documentElement.classList.contains('dark'));
-        }
-      });
-    });
-    
-    observer.observe(document.documentElement, { attributes: true });
-    
-    return () => {
-      observer.disconnect();
-    };
   }, []);
 
   const handleToggle = () => {
