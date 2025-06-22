@@ -28,9 +28,15 @@ import {
   Calendar,
   Target,
   Award,
-  Zap
+  Zap,
+  Lock,
+  EyeOff
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import toast from 'react-hot-toast';
+
+// Admin password - hardcoded as requested
+const ADMIN_PASSWORD = "Alibot@321";
 
 // Mock data for demo - in real app this would come from Firebase
 const mockUsers = [
@@ -76,24 +82,155 @@ const mockPlanDistribution = [
   { name: 'Premium', value: 10, color: '#8b5cf6' }
 ];
 
+// Password Authentication Component
+const AdminPasswordAuth: React.FC<{ onAuthenticated: () => void }> = ({ onAuthenticated }) => {
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Simulate authentication delay
+    setTimeout(() => {
+      if (password === ADMIN_PASSWORD) {
+        // Store authentication in sessionStorage (will be cleared when browser closes)
+        sessionStorage.setItem('adminAuthenticated', 'true');
+        sessionStorage.setItem('adminAuthTime', Date.now().toString());
+        onAuthenticated();
+        toast.success('🎉 Admin access granted!');
+      } else {
+        setError('Incorrect password. Please try again.');
+        toast.error('❌ Invalid admin password');
+      }
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-full mb-4">
+            <Shield className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Access</h1>
+          <p className="text-gray-600">Enter the admin password to continue</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Admin Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 pr-12"
+                placeholder="Enter admin password"
+                required
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {error && (
+              <p className="text-red-600 text-sm mt-2 flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-1" />
+                {error}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || !password}
+            className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-4 rounded-lg hover:from-red-700 hover:to-pink-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Authenticating...
+              </>
+            ) : (
+              <>
+                <Lock className="h-5 w-5 mr-2" />
+                Access Admin Panel
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-orange-800">Demo Mode</h3>
+                <p className="text-sm text-orange-700 mt-1">
+                  This is a demo admin panel. In production, use proper authentication with role-based access control.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Admin: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPlan, setFilterPlan] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user is admin
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const adminAuth = sessionStorage.getItem('adminAuthenticated');
+      const authTime = sessionStorage.getItem('adminAuthTime');
+      
+      if (adminAuth === 'true' && authTime) {
+        // Check if authentication is still valid (24 hours)
+        const authTimestamp = parseInt(authTime);
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        
+        if (now - authTimestamp < twentyFourHours) {
+          setIsAuthenticated(true);
+        } else {
+          // Authentication expired
+          sessionStorage.removeItem('adminAuthenticated');
+          sessionStorage.removeItem('adminAuthTime');
+          setIsAuthenticated(false);
+        }
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Check if user is signed in
   useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
-    
-    // In real app, check if user has admin role
-    // For demo, allow access to all authenticated users
   }, [user, navigate]);
 
   const tabs = [
@@ -118,6 +255,7 @@ const Admin: React.FC = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      toast.success('Data refreshed successfully!');
     }, 1000);
   };
 
@@ -130,6 +268,14 @@ const Admin: React.FC = () => {
     a.href = url;
     a.download = `${type}-export-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} data exported successfully!`);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('adminAuthenticated');
+    sessionStorage.removeItem('adminAuthTime');
+    setIsAuthenticated(false);
+    toast.success('Logged out from admin panel');
   };
 
   if (!user) {
@@ -141,6 +287,11 @@ const Admin: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Show password authentication if not authenticated
+  if (!isAuthenticated) {
+    return <AdminPasswordAuth onAuthenticated={() => setIsAuthenticated(true)} />;
   }
 
   return (
@@ -167,6 +318,14 @@ const Admin: React.FC = () => {
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                 <span>Refresh</span>
+              </button>
+              
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <Lock className="h-4 w-4" />
+                <span>Logout</span>
               </button>
               
               <div className="flex items-center space-x-2">
