@@ -171,10 +171,6 @@ export const usePlaybooks = (userId: string | undefined) => {
 
   const addPlaybook = async (playbookData: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      if (!playbookData.title || !playbookData.strategy) {
-        throw new Error('Title and strategy are required');
-      }
-
       if (isDemoMode) {
         // Demo mode - save to localStorage
         const newPlaybook: Playbook = {
@@ -205,9 +201,9 @@ export const usePlaybooks = (userId: string | undefined) => {
 
       const playbook = {
         userId: auth.currentUser.uid,
-        title: playbookData.title.trim(),
-        description: playbookData.description.trim(),
-        strategy: playbookData.strategy.trim(),
+        title: playbookData.title || '',
+        description: playbookData.description || '',
+        strategy: playbookData.strategy || '',
         chartImage: playbookData.chartImage || null,
         imageMetadata: playbookData.imageMetadata || null,
         tags: Array.isArray(playbookData.tags) ? playbookData.tags.filter(tag => tag.trim().length > 0) : [],

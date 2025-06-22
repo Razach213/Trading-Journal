@@ -218,10 +218,6 @@ export const useTrades = (userId: string | undefined) => {
 
   const addTrade = async (tradeData: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      if (!tradeData.symbol || !tradeData.type || !tradeData.entryPrice || !tradeData.quantity) {
-        throw new Error('Missing required trade fields');
-      }
-
       if (isDemoMode) {
         // Demo mode - save to localStorage
         const newTrade: Trade = {
@@ -251,14 +247,14 @@ export const useTrades = (userId: string | undefined) => {
 
       const trade = {
         userId: auth.currentUser.uid,
-        symbol: tradeData.symbol.toUpperCase().trim(),
-        type: tradeData.type,
-        entryPrice: Number(tradeData.entryPrice),
+        symbol: tradeData.symbol || '',
+        type: tradeData.type || 'long',
+        entryPrice: Number(tradeData.entryPrice) || 0,
         exitPrice: tradeData.exitPrice ? Number(tradeData.exitPrice) : null,
-        quantity: Number(tradeData.quantity),
-        entryDate: tradeData.entryDate instanceof Date ? tradeData.entryDate : new Date(tradeData.entryDate),
+        quantity: Number(tradeData.quantity) || 0,
+        entryDate: tradeData.entryDate instanceof Date ? tradeData.entryDate : new Date(tradeData.entryDate || new Date()),
         exitDate: tradeData.exitDate ? (tradeData.exitDate instanceof Date ? tradeData.exitDate : new Date(tradeData.exitDate)) : null,
-        status: tradeData.status,
+        status: tradeData.status || 'open',
         pnl: tradeData.pnl ? Number(tradeData.pnl) : null,
         pnlPercent: tradeData.pnlPercent ? Number(tradeData.pnlPercent) : null,
         notes: tradeData.notes || null,
@@ -268,16 +264,6 @@ export const useTrades = (userId: string | undefined) => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
-
-      if (trade.entryPrice <= 0) {
-        throw new Error('Entry price must be greater than 0');
-      }
-      if (trade.quantity <= 0) {
-        throw new Error('Quantity must be greater than 0');
-      }
-      if (trade.exitPrice !== null && trade.exitPrice <= 0) {
-        throw new Error('Exit price must be greater than 0');
-      }
 
       await addDoc(collection(db, 'trades'), trade);
       toast.success('Trade added successfully!');
