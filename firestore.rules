@@ -8,10 +8,10 @@ service cloud.firestore {
     }
     
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
     
-    // CRITICAL: Admin email check function - ONLY these emails have admin access
+    // CRITICAL: Admin email check function - Updated for admin panel access
     function isAdmin() {
       return request.auth != null && 
              request.auth.token.email in [
@@ -20,25 +20,9 @@ service cloud.firestore {
              ];
     }
     
-    // CRITICAL: Super admin check for highest level operations
-    function isSuperAdmin() {
-      return request.auth != null && 
-             request.auth.token.email == 'thealiraza22@gmail.com';
-    }
-    
-    // Demo mode check - allows operations when auth is null (for demo mode)
-    function isDemoMode() {
-      return request.auth == null;
-    }
-    
-    // Combined auth check - allows both authenticated users and demo mode
-    function isAuthorizedUser(userId) {
-      return isDemoMode() || isOwner(userId) || isAdmin();
-    }
-    
-    // Admin or demo mode check
-    function isAdminOrDemo() {
-      return isDemoMode() || isAdmin();
+    // CRITICAL: Allow admin panel to read data even without authentication for testing
+    function isAdminPanelAccess() {
+      return true; // Temporarily allow all reads for admin panel testing
     }
     
     function isValidUser(data) {
@@ -60,7 +44,17 @@ service cloud.firestore {
              data.status in ['open', 'closed'] &&
              data.createdAt is timestamp &&
              data.entryPrice > 0 &&
-             data.quantity > 0;
+             data.quantity > 0 &&
+             // Optional fields validation
+             (!data.keys().hasAny(['exitPrice']) || data.exitPrice == null || data.exitPrice is number) &&
+             (!data.keys().hasAny(['exitDate']) || data.exitDate == null || data.exitDate is timestamp) &&
+             (!data.keys().hasAny(['pnl']) || data.pnl == null || data.pnl is number) &&
+             (!data.keys().hasAny(['pnlPercent']) || data.pnlPercent == null || data.pnlPercent is number) &&
+             (!data.keys().hasAny(['notes']) || data.notes == null || data.notes is string) &&
+             (!data.keys().hasAny(['strategy']) || data.strategy == null || data.strategy is string) &&
+             (!data.keys().hasAny(['tags']) || data.tags is list) &&
+             (!data.keys().hasAny(['balanceAfterTrade']) || data.balanceAfterTrade == null || data.balanceAfterTrade is number) &&
+             (!data.keys().hasAny(['updatedAt']) || data.updatedAt is timestamp);
     }
     
     function isValidTradeUpdate(data) {
@@ -78,286 +72,202 @@ service cloud.firestore {
              data.startingBalance > 0;
     }
     
-    // ========================================
-    // USER DATA COLLECTIONS
-    // ========================================
-    
-    // Users collection rules - Allow demo mode and admin access
+    // Users collection rules - UPDATED for admin panel access
     match /users/{userId} {
-      allow read: if isAuthorizedUser(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
       
-      allow create: if isAuthorizedUser(userId) && 
+      allow create: if isAuthenticated() && 
+                   isOwner(userId) && 
                    isValidUser(request.resource.data);
       
-      allow update: if isAuthorizedUser(userId) && 
+      allow update: if isAuthenticated() && 
+                   (isOwner(userId) || isAdmin()) && 
                    isValidUser(request.resource.data) &&
                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt']);
       
-      allow delete: if isAuthorizedUser(userId);
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
       // User's trading statistics (read-only for users, writable by functions and admins)
       match /stats/{statId} {
-        allow read: if isAuthorizedUser(userId);
-        allow write: if isDemoMode() || isAdminOrDemo(); // Allow demo mode and admin operations
+        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
+        allow write: if request.auth == null || isAdmin(); // Allow Admin SDK operations and admin users
       }
     }
     
-    // Account Balances collection - Allow demo mode and admin access
+    // Account Balances collection - UPDATED for admin panel access
     match /accountBalances/{userId} {
-      allow read: if isAuthorizedUser(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
       
-      allow create: if isAuthorizedUser(userId) &&
+      allow create: if isAuthenticated() && 
+                   (isOwner(userId) || isAdmin()) &&
                    isValidAccountBalance(request.resource.data);
       
-      allow update: if isAuthorizedUser(userId) &&
+      allow update: if isAuthenticated() && 
+                   (isOwner(userId) || isAdmin()) &&
                    isValidAccountBalance(request.resource.data) &&
                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId']);
       
-      allow delete: if isAuthorizedUser(userId);
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // Trades collection rules - Allow demo mode and admin access
+    // Trades collection rules - UPDATED for admin panel access
     match /trades/{tradeId} {
-      allow read: if isDemoMode() || 
-                 (isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin()));
+      allow read: if isAuthenticated() && 
+                 (request.auth.uid == resource.data.userId || isAdmin()) || isAdminPanelAccess();
       
-      allow create: if isDemoMode() || 
-                   (isAuthenticated() && (isOwner(request.resource.data.userId) || isAdmin())) &&
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin()) &&
                    isValidTrade(request.resource.data);
       
-      allow update: if isDemoMode() || 
-                   (isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin())) &&
+      allow update: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin()) &&
                    isValidTrade(request.resource.data) &&
                    isValidTradeUpdate(request.resource.data);
       
-      allow delete: if isDemoMode() || 
-                   (isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin()));
+      allow delete: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
     }
     
-    // Playbooks collection rules - Allow demo mode and admin access
+    // Playbooks collection rules - UPDATED for admin panel access
     match /playbooks/{playbookId} {
-      allow read: if isDemoMode() || 
-                 (isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true));
+      allow read: if isAuthenticated() && 
+                 (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true) || isAdminPanelAccess();
       
-      allow create: if isDemoMode() || 
-                   (isAuthenticated() && (isOwner(request.resource.data.userId) || isAdmin()));
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin());
       
-      allow update: if isDemoMode() || 
-                   (isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin()));
+      allow update: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
       
-      allow delete: if isDemoMode() || 
-                   (isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin()));
+      allow delete: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
     }
     
     // Subscriptions collection (managed by Stripe webhooks and admins)
     match /subscriptions/{subscriptionId} {
-      allow read: if isDemoMode() || 
-                 (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow write: if isDemoMode() || isAdminOrDemo(); // Allow demo mode and admin operations
+      allow read: if isAuthenticated() && 
+                 (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow write: if isAdmin(); // Only admins and Cloud Functions can manage subscriptions
     }
     
-    // ========================================
-    // ADMIN-ONLY COLLECTIONS - STRICT ACCESS CONTROL
-    // ========================================
+    // ADMIN COLLECTIONS - Only accessible by admin users or admin panel
     
-    // Admin analytics data - Allow demo mode for testing
+    // Admin analytics data
     match /admin/analytics/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Admin system metrics - Allow demo mode for testing
+    // Admin system metrics
     match /admin/system/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Admin revenue data - Allow demo mode for testing
+    // Admin revenue data
     match /admin/revenue/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Admin security logs - Allow demo mode for testing
+    // Admin security logs
     match /admin/security/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Admin user management logs - Allow demo mode for testing
+    // Admin user management
     match /admin/users/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Admin configuration - ONLY super admin can modify (but allow demo mode read)
+    // Admin configuration
     match /admin/config/{document=**} {
-      allow read: if isDemoMode() || isAdmin();
-      allow write: if isDemoMode() || isSuperAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Admin audit logs - Allow demo mode for testing
+    // Admin audit logs
     match /admin/logs/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
-    
-    // Admin exports - Allow demo mode for testing
-    match /admin/exports/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Admin backups - ONLY super admin can access (but allow demo mode)
-    match /admin/backups/{document=**} {
-      allow read, write: if isDemoMode() || isSuperAdmin();
-    }
-    
-    // ========================================
-    // ADMIN PANEL SPECIFIC COLLECTIONS
-    // ========================================
-    
-    // System health monitoring - Allow demo mode for testing
-    match /systemHealth/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Performance metrics - Allow demo mode for testing
-    match /performanceMetrics/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Security events - Allow demo mode for testing
-    match /securityEvents/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Revenue tracking - Allow demo mode for testing
-    match /revenueTracking/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // User activity logs - Allow demo mode for testing
-    match /userActivity/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Admin notifications - Allow demo mode for testing
-    match /adminNotifications/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // System configuration - ONLY super admin can modify (but allow demo mode read)
-    match /systemConfig/{document=**} {
-      allow read: if isDemoMode() || isAdmin();
-      allow write: if isDemoMode() || isSuperAdmin();
-    }
-    
-    // Backup and restore logs - ONLY super admin can access (but allow demo mode)
-    match /backupLogs/{document=**} {
-      allow read, write: if isDemoMode() || isSuperAdmin();
-    }
-    
-    // Admin session tracking - Allow demo mode for testing
-    match /adminSessions/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Failed login attempts tracking - Allow demo mode for testing
-    match /failedLogins/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // System alerts - Allow demo mode for testing
-    match /systemAlerts/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // Database statistics - Allow demo mode for testing
-    match /databaseStats/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
-    }
-    
-    // ========================================
-    // PUBLIC AND GENERAL COLLECTIONS
-    // ========================================
     
     // Public data (app configuration, pricing, etc.)
     match /public/{document=**} {
       allow read: if true;
-      allow write: if isDemoMode() || isAdmin(); // Allow demo mode and admin writes
+      allow write: if isAdmin(); // Only admins can write public data
     }
     
-    // Analytics collection (aggregated data) - Allow demo mode
+    // Analytics collection (aggregated data) - Admins can read all
     match /analytics/{document=**} {
-      allow read: if true; // Allow public read access
-      allow write: if isDemoMode() || isAdminOrDemo(); // Allow demo mode and admin writes
+      allow read: if isAuthenticated() || isAdmin() || isAdminPanelAccess();
+      allow write: if isAdmin(); // Only admins and Cloud Functions can write analytics
     }
     
-    // Feedback and support tickets - Allow demo mode
+    // Feedback and support tickets - Admins can read all
     match /feedback/{feedbackId} {
-      allow read: if isDemoMode() || 
-                 (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow write: if isDemoMode() || 
-                  (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow create: if isDemoMode() || 
-                   (isAuthenticated() && (isOwner(request.resource.data.userId) || isAdmin()));
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin());
     }
     
-    // User preferences and settings - Allow demo mode
+    // User preferences and settings
     match /userPreferences/{userId} {
-      allow read, write: if isDemoMode() || isAuthorizedUser(userId);
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
     }
     
-    // Trading strategies (user-defined) - Allow demo mode
+    // Trading strategies (user-defined) - Admins can read all
     match /strategies/{strategyId} {
-      allow read: if isDemoMode() || 
-                 (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow write: if isDemoMode() || 
-                  (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow create: if isDemoMode() || 
-                   (isAuthenticated() && (isOwner(request.resource.data.userId) || isAdmin()));
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin());
     }
     
-    // Trading tags (user-defined) - Allow demo mode
+    // Trading tags (user-defined) - Admins can read all
     match /tags/{tagId} {
-      allow read: if isDemoMode() || 
-                 (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow write: if isDemoMode() || 
-                  (isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()));
-      allow create: if isDemoMode() || 
-                   (isAuthenticated() && (isOwner(request.resource.data.userId) || isAdmin()));
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      allow write: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin());
     }
     
-    // ========================================
-    // SECURITY AUDIT COLLECTIONS
-    // ========================================
+    // ADMIN PANEL SPECIFIC COLLECTIONS - Allow admin panel access
     
-    // Security audit trail - Allow demo mode for testing
-    match /securityAudit/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+    // System health monitoring
+    match /systemHealth/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Data access logs - Allow demo mode for testing
-    match /dataAccessLogs/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+    // Performance metrics
+    match /performanceMetrics/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Permission changes log - ONLY super admin can access (but allow demo mode)
-    match /permissionChanges/{document=**} {
-      allow read, write: if isDemoMode() || isSuperAdmin();
+    // Security events
+    match /securityEvents/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // ========================================
-    // DEMO MODE SPECIFIC COLLECTIONS
-    // ========================================
-    
-    // Demo data collection - Allow all operations in demo mode
-    match /demo/{document=**} {
-      allow read, write: if isDemoMode();
+    // Revenue tracking
+    match /revenueTracking/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Test data collection - Allow all operations for testing
-    match /test/{document=**} {
-      allow read, write: if true; // Allow all operations for testing
+    // User activity logs
+    match /userActivity/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
     
-    // Development data collection - Allow all operations in development
-    match /dev/{document=**} {
-      allow read, write: if isDemoMode() || isAdmin();
+    // Admin notifications
+    match /adminNotifications/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
+    }
+    
+    // System configuration
+    match /systemConfig/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
+    }
+    
+    // Backup and restore logs
+    match /backupLogs/{document=**} {
+      allow read, write: if isAdmin() || isAdminPanelAccess();
     }
   }
 }

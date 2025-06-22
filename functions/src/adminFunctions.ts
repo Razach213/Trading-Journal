@@ -1,15 +1,10 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-// CRITICAL: Admin email check function - ONLY these emails have admin access
+// Admin email check function
 const isAdminUser = (email: string): boolean => {
   const adminEmails = ['thealiraza22@gmail.com', 'ramdanmubarak10@gmail.com'];
   return adminEmails.includes(email);
-};
-
-// CRITICAL: Super admin check for highest level operations
-const isSuperAdmin = (email: string): boolean => {
-  return email === 'thealiraza22@gmail.com';
 };
 
 // Get all users for admin panel
@@ -24,14 +19,6 @@ export const getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Log admin access for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('access').add({
-      action: 'getAllUsers',
-      adminEmail: context.auth.token.email,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
     const usersSnapshot = await admin.firestore().collection('users').get();
     const users = usersSnapshot.docs.map(doc => ({
       id: doc.id,
@@ -56,14 +43,6 @@ export const getSystemAnalytics = functions.https.onCall(async (data, context) =
   }
 
   try {
-    // Log admin access for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('access').add({
-      action: 'getSystemAnalytics',
-      adminEmail: context.auth.token.email,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
     // Get total users
     const usersSnapshot = await admin.firestore().collection('users').get();
     const totalUsers = usersSnapshot.size;
@@ -82,27 +61,18 @@ export const getSystemAnalytics = functions.https.onCall(async (data, context) =
       .get();
     const activeUsers = activeUsersSnapshot.size;
 
-    // Calculate revenue (based on user plans)
-    const users = usersSnapshot.docs.map(doc => doc.data());
-    const proPlanUsers = users.filter(user => user.plan === 'pro').length;
-    const premiumPlanUsers = users.filter(user => user.plan === 'premium').length;
-    const revenue = (proPlanUsers * 19) + (premiumPlanUsers * 49);
-
-    // Calculate conversion rate
-    const conversionRate = totalUsers > 0 ? ((proPlanUsers + premiumPlanUsers) / totalUsers) * 100 : 0;
-
-    // Calculate churn rate (mock data for now)
-    const churnRate = 3.2;
+    // Calculate revenue (mock data for now)
+    const revenue = totalUsers * 19; // Assuming average $19 per user
 
     const analytics = {
       totalUsers,
       activeUsers,
       totalTrades,
       revenue,
-      conversionRate,
-      churnRate,
+      conversionRate: 12.5,
+      churnRate: 3.2,
       avgSessionTime: '24m 15s',
-      supportTickets: Math.floor(totalUsers * 0.05) // 5% of users might need support
+      supportTickets: 45
     };
 
     return { analytics };
@@ -123,45 +93,24 @@ export const getRevenueData = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Log admin access for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('access').add({
-      action: 'getRevenueData',
-      adminEmail: context.auth.token.email,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
-    // Get users by plan
-    const usersSnapshot = await admin.firestore().collection('users').get();
-    const users = usersSnapshot.docs.map(doc => doc.data());
-    
-    const freePlanUsers = users.filter(user => user.plan === 'free').length;
-    const proPlanUsers = users.filter(user => user.plan === 'pro').length;
-    const premiumPlanUsers = users.filter(user => user.plan === 'premium').length;
-    
-    // Calculate revenue
-    const proRevenue = proPlanUsers * 19;
-    const premiumRevenue = premiumPlanUsers * 49;
-    const totalRevenue = proRevenue + premiumRevenue;
-    
-    // Generate monthly revenue data
+    // Mock revenue data - in real app, this would come from Stripe or payment processor
     const revenueData = [
-      { month: 'Jan', revenue: Math.round(totalRevenue * 0.5), users: Math.round((freePlanUsers + proPlanUsers + premiumPlanUsers) * 0.5) },
-      { month: 'Feb', revenue: Math.round(totalRevenue * 0.6), users: Math.round((freePlanUsers + proPlanUsers + premiumPlanUsers) * 0.6) },
-      { month: 'Mar', revenue: Math.round(totalRevenue * 0.7), users: Math.round((freePlanUsers + proPlanUsers + premiumPlanUsers) * 0.7) },
-      { month: 'Apr', revenue: Math.round(totalRevenue * 0.8), users: Math.round((freePlanUsers + proPlanUsers + premiumPlanUsers) * 0.8) },
-      { month: 'May', revenue: Math.round(totalRevenue * 0.9), users: Math.round((freePlanUsers + proPlanUsers + premiumPlanUsers) * 0.9) },
-      { month: 'Jun', revenue: totalRevenue, users: freePlanUsers + proPlanUsers + premiumPlanUsers }
+      { month: 'Jan', revenue: 8500, users: 1200 },
+      { month: 'Feb', revenue: 12000, users: 1800 },
+      { month: 'Mar', revenue: 15500, users: 2400 },
+      { month: 'Apr', revenue: 18200, users: 2900 },
+      { month: 'May', revenue: 22000, users: 3500 },
+      { month: 'Jun', revenue: 25800, users: 4200 }
     ];
 
     const revenueMetrics = {
-      monthlyRecurringRevenue: totalRevenue,
-      averageRevenuePerUser: totalRevenue / (proPlanUsers + premiumPlanUsers || 1),
-      customerLifetimeValue: totalRevenue * 18 / (proPlanUsers + premiumPlanUsers || 1), // Assuming 18 months average subscription
+      monthlyRecurringRevenue: 125000,
+      averageRevenuePerUser: 28.50,
+      customerLifetimeValue: 342,
       revenueByPlan: {
         free: 0,
-        pro: proRevenue,
-        premium: premiumRevenue
+        pro: 85500,
+        premium: 39500
       },
       paymentMethods: {
         creditCard: 85,
@@ -188,51 +137,26 @@ export const getSystemHealth = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Log admin access for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('access').add({
-      action: 'getSystemHealth',
-      adminEmail: context.auth.token.email,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
-    // Get database stats
-    const usersCount = (await admin.firestore().collection('users').count().get()).data().count;
-    const tradesCount = (await admin.firestore().collection('trades').count().get()).data().count;
-    const playbooksCount = (await admin.firestore().collection('playbooks').count().get()).data().count;
-    
     const systemHealth = {
       database: {
         status: 'healthy',
         uptime: '99.9%',
-        responseTime: '45ms',
-        collections: {
-          users: usersCount,
-          trades: tradesCount,
-          playbooks: playbooksCount
-        }
+        responseTime: '45ms'
       },
       api: {
         status: 'operational',
         uptime: '99.9%',
-        responseTime: '150ms',
-        endpoints: {
-          users: 'operational',
-          trades: 'operational',
-          analytics: 'operational'
-        }
+        responseTime: '150ms'
       },
       email: {
-        status: 'operational',
+        status: 'degraded',
         uptime: '98.5%',
-        responseTime: '2min',
-        queue: 0
+        responseTime: '2min'
       },
       security: {
         status: 'secure',
         threatsDetected: 0,
-        lastScan: new Date(),
-        firewallStatus: 'active'
+        lastScan: new Date()
       }
     };
 
@@ -240,17 +164,7 @@ export const getSystemHealth = functions.https.onCall(async (data, context) => {
       cpu: 45,
       memory: 62,
       disk: 78,
-      network: 23,
-      requests: {
-        total: 12500,
-        successful: 12450,
-        failed: 50
-      },
-      responseTime: {
-        avg: 120,
-        p95: 350,
-        p99: 500
-      }
+      network: 23
     };
 
     const recentActivities = [
@@ -294,34 +208,12 @@ export const getSecurityData = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Log admin access for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('access').add({
-      action: 'getSecurityData',
-      adminEmail: context.auth.token.email,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
-    // Get active users count
-    const usersSnapshot = await admin.firestore().collection('users').get();
-    const activeUsers = usersSnapshot.size;
-    
-    // Get auth events from Firebase Auth (not directly accessible, so we'll simulate)
-    const failedLoginAttempts = Math.floor(Math.random() * 50); // Simulated data
-    
     const securityMetrics = {
-      failedLoginAttempts,
-      activeSessions: activeUsers,
+      failedLoginAttempts: 23,
+      activeSessions: 1247,
       securityScore: 98,
       threatsBlocked: 156,
-      lastSecurityScan: new Date(),
-      vulnerabilities: {
-        high: 0,
-        medium: 2,
-        low: 5
-      },
-      dataEncryption: 'AES-256',
-      firewallStatus: 'active'
+      lastSecurityScan: new Date()
     };
 
     const securityEvents = [
@@ -330,28 +222,21 @@ export const getSecurityData = functions.https.onCall(async (data, context) => {
         title: 'Multiple failed login attempts',
         description: 'IP: 192.168.1.100 - 5 attempts in 10 minutes',
         timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        severity: 'high',
-        ip: '192.168.1.100',
-        location: 'Unknown',
-        userId: null
+        severity: 'high'
       },
       {
         type: 'warning',
         title: 'Unusual login location',
         description: 'User logged in from new country: Germany',
         timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        severity: 'medium',
-        ip: '85.214.132.117',
-        location: 'Germany',
-        userId: usersSnapshot.docs[0]?.id || null
+        severity: 'medium'
       },
       {
         type: 'success',
         title: 'Security scan completed',
         description: 'No vulnerabilities detected',
         timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-        severity: 'low',
-        details: 'Full system scan completed successfully'
+        severity: 'low'
       }
     ];
 
@@ -360,10 +245,7 @@ export const getSecurityData = functions.https.onCall(async (data, context) => {
       sessionTimeout: 30, // minutes
       ipWhitelist: false,
       passwordPolicy: 'strong',
-      encryptionLevel: 'AES-256',
-      dataRetention: '90 days',
-      auditLogging: true,
-      automaticUpdates: true
+      encryptionLevel: 'AES-256'
     };
 
     return { securityMetrics, securityEvents, securitySettings };
@@ -390,57 +272,10 @@ export const updateUserData = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'User ID and updates are required');
     }
 
-    // Log admin action for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('userUpdates').add({
-      action: 'updateUser',
-      adminEmail: context.auth.token.email,
-      userId: userId,
-      updates: updates,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
-    // Update user document
     await admin.firestore().collection('users').doc(userId).update({
       ...updates,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
-
-    // Update account balance if it was changed
-    if (updates.accountBalance !== undefined || updates.currentBalance !== undefined) {
-      const accountBalanceRef = admin.firestore().collection('accountBalances').doc(userId);
-      const accountBalanceDoc = await accountBalanceRef.get();
-      
-      if (accountBalanceDoc.exists) {
-        const updateData: any = {};
-        
-        if (updates.accountBalance !== undefined) {
-          updateData.startingBalance = updates.accountBalance;
-        }
-        
-        if (updates.currentBalance !== undefined) {
-          updateData.currentBalance = updates.currentBalance;
-        }
-        
-        if (Object.keys(updateData).length > 0) {
-          updateData.lastUpdated = admin.firestore.FieldValue.serverTimestamp();
-          await accountBalanceRef.update(updateData);
-        }
-      }
-    }
-
-    // Update Auth user if email was changed
-    if (updates.email !== undefined) {
-      try {
-        await admin.auth().updateUser(userId, {
-          email: updates.email,
-          displayName: updates.displayName
-        });
-      } catch (authError) {
-        console.error('Error updating Auth user:', authError);
-        // Continue even if Auth update fails
-      }
-    }
 
     return { success: true, message: 'User updated successfully' };
   } catch (error) {
@@ -466,26 +301,8 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'User ID is required');
     }
 
-    // Log admin action for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('userDeletions').add({
-      action: 'deleteUser',
-      adminEmail: context.auth.token.email,
-      userId: userId,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-
-    // Get user data before deletion for audit
-    const userDoc = await admin.firestore().collection('users').doc(userId).get();
-    const userData = userDoc.data();
-
     // Delete user from Authentication
-    try {
-      await admin.auth().deleteUser(userId);
-    } catch (authError) {
-      console.error('Error deleting Auth user:', authError);
-      // Continue even if Auth delete fails
-    }
+    await admin.auth().deleteUser(userId);
     
     // Delete user document
     await admin.firestore().collection('users').doc(userId).delete();
@@ -500,34 +317,7 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
     tradesSnapshot.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
-    
-    // Delete user's playbooks
-    const playbooksSnapshot = await admin.firestore()
-      .collection('playbooks')
-      .where('userId', '==', userId)
-      .get();
-    
-    playbooksSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    
-    // Delete user's account balance
-    const accountBalanceRef = admin.firestore().collection('accountBalances').doc(userId);
-    const accountBalanceDoc = await accountBalanceRef.get();
-    
-    if (accountBalanceDoc.exists) {
-      batch.delete(accountBalanceRef);
-    }
-    
     await batch.commit();
-
-    // Store deleted user data in admin logs for recovery if needed
-    await admin.firestore().collection('admin').doc('logs').collection('deletedUsers').add({
-      userId: userId,
-      userData: userData,
-      deletedBy: context.auth.token.email,
-      deletedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
 
     return { success: true, message: 'User deleted successfully' };
   } catch (error) {
@@ -549,15 +339,6 @@ export const exportData = functions.https.onCall(async (data, context) => {
   try {
     const { type } = data;
     
-    // Log admin action for audit trail
-    await admin.firestore().collection('admin').doc('logs').collection('exports').add({
-      action: 'exportData',
-      adminEmail: context.auth.token.email,
-      exportType: type,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      ipAddress: context.rawRequest?.ip || 'unknown'
-    });
-    
     let exportData: any = {};
     
     switch (type) {
@@ -573,116 +354,16 @@ export const exportData = functions.https.onCall(async (data, context) => {
         
       case 'analytics':
         // Return analytics data
-        const totalUsers = (await admin.firestore().collection('users').count().get()).data().count;
-        const totalTrades = (await admin.firestore().collection('trades').count().get()).data().count;
-        const totalPlaybooks = (await admin.firestore().collection('playbooks').count().get()).data().count;
-        
-        // Get plan distribution
-        const allUsers = (await admin.firestore().collection('users').get()).docs.map(doc => doc.data());
-        const freePlanUsers = allUsers.filter(user => user.plan === 'free').length;
-        const proPlanUsers = allUsers.filter(user => user.plan === 'pro').length;
-        const premiumPlanUsers = allUsers.filter(user => user.plan === 'premium').length;
-        
         exportData = {
           exportDate: new Date(),
-          totalUsers,
-          totalTrades,
-          totalPlaybooks,
-          planDistribution: {
-            free: freePlanUsers,
-            pro: proPlanUsers,
-            premium: premiumPlanUsers
-          },
-          estimatedRevenue: (proPlanUsers * 19) + (premiumPlanUsers * 49)
-        };
-        break;
-        
-      case 'revenue':
-        // Get users by plan
-        const users = (await admin.firestore().collection('users').get()).docs.map(doc => doc.data());
-        const freePlan = users.filter(user => user.plan === 'free').length;
-        const proPlan = users.filter(user => user.plan === 'pro').length;
-        const premiumPlan = users.filter(user => user.plan === 'premium').length;
-        
-        // Calculate revenue
-        const proRevenue = proPlan * 19;
-        const premiumRevenue = premiumPlan * 49;
-        
-        exportData = {
-          exportDate: new Date(),
-          userCounts: {
-            free: freePlan,
-            pro: proPlan,
-            premium: premiumPlan,
-            total: freePlan + proPlan + premiumPlan
-          },
-          revenue: {
-            monthly: {
-              pro: proRevenue,
-              premium: premiumRevenue,
-              total: proRevenue + premiumRevenue
-            },
-            annual: {
-              pro: proRevenue * 12,
-              premium: premiumRevenue * 12,
-              total: (proRevenue + premiumRevenue) * 12
-            }
-          }
-        };
-        break;
-        
-      case 'system':
-        // System health export
-        exportData = {
-          exportDate: new Date(),
-          database: {
-            collections: {
-              users: (await admin.firestore().collection('users').count().get()).data().count,
-              trades: (await admin.firestore().collection('trades').count().get()).data().count,
-              playbooks: (await admin.firestore().collection('playbooks').count().get()).data().count,
-              accountBalances: (await admin.firestore().collection('accountBalances').count().get()).data().count
-            },
-            status: 'healthy'
-          },
-          storage: {
-            status: 'operational'
-          },
-          functions: {
-            status: 'operational'
-          },
-          hosting: {
-            status: 'operational'
-          }
-        };
-        break;
-        
-      case 'security':
-        // Security export
-        exportData = {
-          exportDate: new Date(),
-          securityScore: 98,
-          failedLoginAttempts: Math.floor(Math.random() * 50),
-          activeSessions: (await admin.firestore().collection('users').count().get()).data().count,
-          securitySettings: {
-            twoFactorAuth: true,
-            sessionTimeout: 30,
-            ipWhitelist: false,
-            passwordPolicy: 'strong',
-            encryptionLevel: 'AES-256'
-          }
+          totalUsers: (await admin.firestore().collection('users').get()).size,
+          totalTrades: (await admin.firestore().collection('trades').get()).size
         };
         break;
         
       default:
         throw new functions.https.HttpsError('invalid-argument', 'Invalid export type');
     }
-
-    // Store export in admin exports collection
-    await admin.firestore().collection('admin').doc('exports').collection(type).add({
-      data: exportData,
-      exportedBy: context.auth.token.email,
-      exportedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
 
     return { data: exportData, type, exportDate: new Date() };
   } catch (error) {

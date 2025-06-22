@@ -1,14 +1,5 @@
 {
   "projects": {
     "default": "zellax-trading-journal"
-  },
-  "targets": {
-    "zellax-trading-journal": {
-      "hosting": {
-        "main": [
-          "zellax-trading-journal"
-        ]
-      }
-    }
   }
 }
