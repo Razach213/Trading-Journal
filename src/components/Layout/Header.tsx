@@ -10,26 +10,62 @@ const featuresMenu = [
   {
     name: 'Analytics',
     description: 'Advanced trading analytics and insights',
-    href: '/features#analytics',
-    icon: BarChart3
+    href: '/features',
+    icon: BarChart3,
+    onClick: () => {
+      // Scroll to analytics section on features page
+      setTimeout(() => {
+        const element = document.getElementById('analytics');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   },
   {
     name: 'Trade Tracking',
     description: 'Comprehensive trade journaling',
-    href: '/features#tracking',
-    icon: TrendingUp
+    href: '/features',
+    icon: TrendingUp,
+    onClick: () => {
+      // Scroll to tracking section on features page
+      setTimeout(() => {
+        const element = document.getElementById('tracking');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   },
   {
     name: 'Security',
     description: 'Bank-level data protection',
-    href: '/features#security',
-    icon: Shield
+    href: '/features',
+    icon: Shield,
+    onClick: () => {
+      // Scroll to security section on features page
+      setTimeout(() => {
+        const element = document.getElementById('security');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   },
   {
     name: 'Community',
     description: 'Connect with other traders',
-    href: '/features#community',
-    icon: Users
+    href: '/features',
+    icon: Users,
+    onClick: () => {
+      // Scroll to community section on features page
+      setTimeout(() => {
+        const element = document.getElementById('community');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   }
 ];
 
@@ -68,6 +104,13 @@ export default function Header({ toggleTheme }: HeaderProps) {
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const handleFeatureClick = (item: typeof featuresMenu[0]) => {
+    navigate(item.href);
+    if (item.onClick) {
+      item.onClick();
     }
   };
 
@@ -113,11 +156,11 @@ export default function Header({ toggleTheme }: HeaderProps) {
                   {featuresMenu.map((item) => (
                     <Menu.Item key={item.name}>
                       {({ active }) => (
-                        <Link
-                          to={item.href}
+                        <button
+                          onClick={() => handleFeatureClick(item)}
                           className={`${
                             active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                          } flex items-start px-4 py-3 text-sm transition-colors`}
+                          } flex items-start px-4 py-3 text-sm transition-colors w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700`}
                         >
                           <div className="flex-shrink-0">
                             <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
@@ -126,7 +169,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                             <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
                           </div>
-                        </Link>
+                        </button>
                       )}
                     </Menu.Item>
                   ))}
@@ -186,7 +229,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                           to={item.href}
                           className={`${
                             active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                          } flex items-start px-4 py-3 text-sm transition-colors`}
+                          } flex items-start px-4 py-3 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700`}
                         >
                           <div className="flex-shrink-0">
                             <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-400 mt-0.5" />
@@ -363,15 +406,17 @@ export default function Header({ toggleTheme }: HeaderProps) {
                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Features</h3>
                             <div className="grid gap-y-2 pl-4">
                               {featuresMenu.map((item) => (
-                                <Link
+                                <button
                                   key={item.name}
-                                  to={item.href}
-                                  onClick={() => close()}
-                                  className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                  onClick={() => {
+                                    handleFeatureClick(item);
+                                    close();
+                                  }}
+                                  className="flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left"
                                 >
                                   <item.icon className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-3" />
                                   <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
-                                </Link>
+                                </button>
                               ))}
                             </div>
                           </div>

@@ -29,6 +29,7 @@ const Features: React.FC = () => {
 
   const mainFeatures = [
     {
+      id: 'analytics',
       icon: BarChart3,
       title: 'Advanced Analytics',
       description: 'Deep insights into your trading performance with comprehensive statistics, profit/loss analysis, and performance metrics.',
@@ -42,6 +43,7 @@ const Features: React.FC = () => {
       gradient: 'from-blue-500 to-cyan-500'
     },
     {
+      id: 'tracking',
       icon: TrendingUp,
       title: 'Performance Tracking',
       description: 'Monitor your trading progress with detailed charts, win rates, and performance trends over time.',
@@ -55,38 +57,40 @@ const Features: React.FC = () => {
       gradient: 'from-green-500 to-emerald-500'
     },
     {
-      icon: Brain,
-      title: 'Smart Insights',
-      description: 'AI-powered analysis helps identify patterns and suggests improvements to your trading strategy.',
+      id: 'security',
+      icon: Shield,
+      title: 'Bank-Level Security',
+      description: 'Your trading data is protected with enterprise-grade encryption and security measures.',
       features: [
-        'Pattern recognition',
-        'Strategy optimization',
-        'Risk assessment',
-        'Market correlation analysis',
-        'Personalized recommendations'
+        'AES-256 encryption',
+        'Secure data centers',
+        'Regular security audits',
+        'Privacy compliance',
+        'Data backup & recovery'
       ],
-      gradient: 'from-purple-500 to-violet-500'
+      gradient: 'from-red-500 to-pink-500'
     },
     {
-      icon: Target,
-      title: 'Trade Management',
-      description: 'Comprehensive trade journaling with detailed entry and exit tracking.',
+      id: 'community',
+      icon: Users,
+      title: 'Trading Community',
+      description: 'Connect with other traders, share insights, and learn from the trading community.',
       features: [
-        'Unlimited trade entries',
-        'Custom tags and categories',
-        'Screenshot attachments',
-        'Trade notes and analysis',
-        'Strategy classification'
+        'Share trading ideas',
+        'Community discussions',
+        'Learn from experts',
+        'Trading challenges',
+        'Peer feedback'
       ],
-      gradient: 'from-orange-500 to-red-500'
+      gradient: 'from-purple-500 to-violet-500'
     }
   ];
 
   const additionalFeatures = [
     {
-      icon: Shield,
-      title: 'Bank-Level Security',
-      description: 'Your trading data is protected with enterprise-grade encryption and security measures.'
+      icon: Brain,
+      title: 'Smart Insights',
+      description: 'AI-powered analysis helps identify patterns and suggests improvements to your trading strategy.'
     },
     {
       icon: Smartphone,
@@ -114,11 +118,6 @@ const Features: React.FC = () => {
       description: 'Get notified about important trading milestones, performance updates, and market insights.'
     },
     {
-      icon: Users,
-      title: 'Community Features',
-      description: 'Connect with other traders, share insights, and learn from the trading community.'
-    },
-    {
       icon: Calendar,
       title: 'Trading Calendar',
       description: 'Track important market events, earnings dates, and economic announcements.'
@@ -127,6 +126,11 @@ const Features: React.FC = () => {
       icon: PieChart,
       title: 'Portfolio Analysis',
       description: 'Comprehensive portfolio tracking with sector allocation and risk distribution analysis.'
+    },
+    {
+      icon: Activity,
+      title: 'Performance Metrics',
+      description: 'Detailed performance metrics including Sharpe ratio, maximum drawdown, and more.'
     }
   ];
 
@@ -204,7 +208,11 @@ const Features: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {mainFeatures.map((feature, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div 
+                key={feature.id} 
+                id={feature.id}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 scroll-mt-20"
+              >
                 <div className="p-8">
                   <div className={`bg-gradient-to-r ${feature.gradient} w-16 h-16 rounded-xl flex items-center justify-center mb-6`}>
                     <feature.icon className="h-8 w-8 text-white" />
