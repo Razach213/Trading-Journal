@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Upload, Image as ImageIcon, Loader2, ArrowRight, BookOpen, TrendingUp, Target, Shield, FileText } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Playbook } from '../../types';
 import { compressImage, validateImageFile, getImageMetadata, formatFileSize } from '../../utils/imageUtils';
 import toast from 'react-hot-toast';
@@ -52,12 +52,9 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLInputElement>(null);
-  const [animateIn, setAnimateIn] = useState(false);
 
-  // Focus first input when modal opens and trigger animation
+  // Focus first input when modal opens
   useEffect(() => {
-    setTimeout(() => setAnimateIn(true), 50);
-    
     if (initialFocusRef.current) {
       initialFocusRef.current.focus();
     }
@@ -70,17 +67,11 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
     };
   }, []);
 
-  // Handle modal close with animation
-  const handleClose = () => {
-    setAnimateIn(false);
-    setTimeout(() => onClose(), 300);
-  };
-
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        handleClose();
+        onClose();
       }
     };
     
@@ -88,13 +79,13 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, []);
+  }, [onClose]);
 
   // Close on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        handleClose();
+        onClose();
       }
     };
     
@@ -102,7 +93,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, []);
+  }, [onClose]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -155,7 +146,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
       };
 
       await onSubmit(playbook);
-      handleClose();
+      onClose();
     } catch (error) {
       console.error('Error submitting playbook:', error);
       toast.error('Failed to save playbook. Please try again.');
@@ -165,25 +156,14 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
   };
 
   return (
-    <div className="fixed-modal backdrop-blur-sm">
-      <div 
-        ref={modalRef} 
-        className={`modal-container ${animateIn ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-        style={{ 
-          transition: 'all 0.3s ease-out',
-          maxWidth: '750px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-        }}
-      >
-        <div className="modal-header bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-750">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-            <div className="mr-3 bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
-              <BookOpen className="h-5 w-5 text-white" />
-            </div>
+    <div className="fixed-modal">
+      <div ref={modalRef} className="modal-container">
+        <div className="modal-header">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {initialData ? 'Edit Playbook' : 'Create New Playbook'}
           </h2>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             className="modal-close-button"
             aria-label="Close modal"
           >
@@ -195,7 +175,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
           <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="modal-equal-fields">
-              <div className="form-group">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Title *
                 </label>
@@ -203,7 +183,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                   type="text"
                   {...register('title', { required: 'Title is required' })}
                   ref={initialFocusRef}
-                  className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Breakout Strategy"
                 />
                 {errors.title && (
@@ -211,14 +191,14 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 )}
               </div>
 
-              <div className="form-group">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Strategy *
                 </label>
                 <input
                   type="text"
                   {...register('strategy', { required: 'Strategy is required' })}
-                  className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="e.g., Momentum, Reversal, Scalping"
                 />
                 {errors.strategy && (
@@ -227,14 +207,14 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
               </div>
             </div>
 
-            <div className="form-group">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description *
               </label>
               <textarea
                 {...register('description', { required: 'Description is required' })}
                 rows={3}
-                className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Brief description of this trading setup..."
               />
               {errors.description && (
@@ -243,13 +223,13 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
             </div>
 
             {/* Chart Image Upload */}
-            <div className="form-group">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Chart Screenshot
               </label>
               
               {!chartImage ? (
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors bg-gray-50 dark:bg-gray-800/50">
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
                   <input
                     type="file"
                     accept="image/*"
@@ -260,50 +240,39 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                   />
                   <label
                     htmlFor="chart-upload"
-                    className="cursor-pointer flex flex-col items-center space-y-3"
+                    className="cursor-pointer flex flex-col items-center space-y-2"
                   >
                     {isCompressing ? (
-                      <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin" />
-                      </div>
+                      <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <Upload className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                      </div>
+                      <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                     )}
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
                       {isCompressing ? 'Compressing image...' : 'Click to upload chart screenshot'}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       PNG, JPG, WebP up to 10MB (will be compressed)
                     </span>
-                    <span className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center">
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      Browse Files
-                    </span>
                   </label>
                 </div>
               ) : (
-                <div className="relative rounded-lg overflow-hidden shadow-md">
+                <div className="relative">
                   <img
                     src={chartImage}
                     alt="Chart preview"
-                    className="w-full h-64 object-cover"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <button
                     type="button"
                     onClick={removeImage}
-                    className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
                   {imageMetadata && (
-                    <div className="absolute bottom-0 left-0 right-0 p-3 text-xs text-white bg-black/50 backdrop-blur-sm">
-                      <div className="flex justify-between">
-                        <span>Original: {formatFileSize(imageMetadata.size)}</span>
-                        <span>Compressed: {formatFileSize(imageMetadata.compressedSize)}</span>
-                      </div>
+                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      Compressed to {formatFileSize(imageMetadata.compressedSize)} 
+                      (original: {formatFileSize(imageMetadata.size)})
                     </div>
                   )}
                 </div>
@@ -311,82 +280,78 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
             </div>
 
             {/* Trading Rules */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-group">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                  <TrendingUp className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Entry Rules
                 </label>
                 <textarea
                   {...register('entryRules')}
-                  rows={4}
-                  className="w-full px-3 py-3 border border-green-200 dark:border-green-800 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 dark:bg-green-900/20 text-gray-900 dark:text-white"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="When to enter the trade..."
                 />
               </div>
 
-              <div className="form-group">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                  <Target className="h-4 w-4 mr-2 text-red-600 dark:text-red-400" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Exit Rules
                 </label>
                 <textarea
                   {...register('exitRules')}
-                  rows={4}
-                  className="w-full px-3 py-3 border border-red-200 dark:border-red-800 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-red-50 dark:bg-red-900/20 text-gray-900 dark:text-white"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="When to exit the trade..."
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="form-group">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                  <FileText className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Market Conditions
                 </label>
                 <textarea
                   {...register('marketConditions')}
-                  rows={4}
-                  className="w-full px-3 py-3 border border-purple-200 dark:border-purple-800 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-purple-50 dark:bg-purple-900/20 text-gray-900 dark:text-white"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Best market conditions for this setup..."
                 />
               </div>
 
-              <div className="form-group">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Risk Management
                 </label>
                 <textarea
                   {...register('riskManagement')}
-                  rows={4}
-                  className="w-full px-3 py-3 border border-blue-200 dark:border-blue-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Stop loss, position sizing, etc..."
                 />
               </div>
             </div>
 
-            <div className="form-group">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Tags
               </label>
               <input
                 type="text"
                 {...register('tags')}
-                className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="momentum, breakout, high-volume (comma separated)"
               />
             </div>
 
-            <div className="form-group">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Additional Notes
               </label>
               <textarea
                 {...register('notes')}
                 rows={3}
-                className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Any additional observations or notes..."
               />
             </div>
@@ -410,11 +375,11 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
           </form>
         </div>
 
-        <div className="modal-footer bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750">
+        <div className="modal-footer">
           <button
             type="button"
-            onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             Cancel
           </button>
@@ -422,7 +387,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
             type="button"
             onClick={handleSubmit(onFormSubmit)}
             disabled={isSubmitting}
-            className="px-5 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 flex items-center shadow-md"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isSubmitting ? (
               <>
@@ -430,10 +395,7 @@ const AddPlaybookModal: React.FC<AddPlaybookModalProps> = ({
                 {initialData ? 'Updating...' : 'Creating...'}
               </>
             ) : (
-              <>
-                {initialData ? 'Update Playbook' : 'Create Playbook'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
+              initialData ? 'Update Playbook' : 'Create Playbook'
             )}
           </button>
         </div>
