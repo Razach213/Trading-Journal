@@ -230,7 +230,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       valueAsNumber: true
                     })}
                     disabled={useManualPnL}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="155.00"
                   />
                   {errors.exitPrice && (
@@ -255,23 +255,18 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white">P&L Calculation</h3>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Manual Input</span>
-                        <button
-                          type="button"
-                          onClick={() => setUseManualPnL(!useManualPnL)}
-                          className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          style={{ backgroundColor: useManualPnL ? '#3b82f6' : '#d1d5db' }}
-                          aria-pressed={useManualPnL}
-                          aria-labelledby="manual-pnl-label"
-                        >
-                          <span className="sr-only">Use manual P&L input</span>
-                          <span
-                            aria-hidden="true"
-                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              useManualPnL ? 'translate-x-5' : 'translate-x-0'
-                            }`}
+                        <span id="manual-pnl-label" className="text-sm text-gray-600 dark:text-gray-400">Manual Input</span>
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={useManualPnL}
+                            onChange={() => setUseManualPnL(!useManualPnL)}
+                            aria-labelledby="manual-pnl-label"
                           />
-                        </button>
+                          <span className="toggle-track">
+                            <span className="toggle-thumb"></span>
+                          </span>
+                        </label>
                       </div>
                     </div>
 

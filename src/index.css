@@ -57,6 +57,38 @@
   }
 }
 
+/* 3D Chart animations */
+@keyframes chartRise {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes chartGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+}
+
+@keyframes chartDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.7;
+  }
+}
+
 /* Custom animations */
 @keyframes twinkle {
   0%, 100% { 
@@ -182,38 +214,6 @@
   100% {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* 3D Chart animations */
-@keyframes chartRise {
-  0% {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes chartGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.3));
-  }
-  50% {
-    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
-  }
-}
-
-@keyframes chartDotPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.5);
-    opacity: 0.7;
   }
 }
 
@@ -353,99 +353,6 @@
   transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
-/* 3D Chart Styles */
-.chart-3d-container {
-  position: relative;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-.chart-3d-element {
-  transform: rotateX(10deg) rotateY(5deg);
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease;
-}
-
-.chart-3d-element:hover {
-  transform: rotateX(5deg) rotateY(10deg);
-}
-
-.chart-3d-shadow {
-  position: absolute;
-  bottom: -10px;
-  left: 5%;
-  right: 5%;
-  height: 20px;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%);
-  transform: rotateX(90deg);
-  filter: blur(5px);
-  opacity: 0.5;
-}
-
-/* Custom toggle switch styles */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d1d5db;
-  transition: .4s;
-  border-radius: 24px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-input:checked + .toggle-slider {
-  background-color: #3b82f6;
-}
-
-input:focus + .toggle-slider {
-  box-shadow: 0 0 1px #3b82f6;
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(20px);
-}
-
-.dark input:checked + .toggle-slider {
-  background-color: #3b82f6;
-}
-
-.dark .toggle-slider {
-  background-color: #4b5563;
-}
-
-.dark .toggle-slider:before {
-  background-color: #e5e7eb;
-}
-
 /* Chart specific styles */
 .recharts-wrapper {
   animation: chartFadeIn 0.8s ease-out;
@@ -514,6 +421,221 @@ input:checked + .toggle-slider:before {
   100% {
     background-position: 200% 0;
   }
+}
+
+/* 3D Chart Styles */
+.chart-3d-container {
+  position: relative;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.chart-3d-element {
+  transform: rotateX(10deg) rotateY(5deg);
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.chart-3d-element:hover {
+  transform: rotateX(5deg) rotateY(10deg);
+}
+
+.chart-3d-shadow {
+  position: absolute;
+  bottom: -10px;
+  left: 5%;
+  right: 5%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%);
+  transform: rotateX(90deg);
+  filter: blur(5px);
+  opacity: 0.5;
+}
+
+/* Custom form controls - Consistent styling */
+/* ------------------------------------------ */
+
+/* Custom checkbox styling */
+.custom-checkbox {
+  @apply relative flex items-center;
+}
+
+.custom-checkbox input[type="checkbox"] {
+  @apply absolute opacity-0 w-0 h-0;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-checkbox .checkbox-icon {
+  @apply flex-shrink-0 w-5 h-5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 mr-2 flex items-center justify-center transition-colors;
+}
+
+.custom-checkbox input[type="checkbox"]:checked + .checkbox-icon {
+  @apply bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500;
+}
+
+.custom-checkbox input[type="checkbox"]:focus + .checkbox-icon {
+  @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800;
+}
+
+.custom-checkbox input[type="checkbox"]:disabled + .checkbox-icon {
+  @apply bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed;
+}
+
+.custom-checkbox .checkbox-label {
+  @apply text-gray-700 dark:text-gray-300 select-none;
+}
+
+/* Custom radio button styling */
+.custom-radio {
+  @apply relative flex items-center;
+}
+
+.custom-radio input[type="radio"] {
+  @apply absolute opacity-0 w-0 h-0;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-radio .radio-icon {
+  @apply flex-shrink-0 w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 mr-2 transition-colors;
+  position: relative;
+}
+
+.custom-radio input[type="radio"]:checked + .radio-icon::after {
+  content: "";
+  @apply absolute top-1 left-1 w-3 h-3 rounded-full bg-blue-600 dark:bg-blue-500;
+}
+
+.custom-radio input[type="radio"]:checked + .radio-icon {
+  @apply border-blue-600 dark:border-blue-500;
+}
+
+.custom-radio input[type="radio"]:focus + .radio-icon {
+  @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800;
+}
+
+.custom-radio input[type="radio"]:disabled + .radio-icon {
+  @apply bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed;
+}
+
+.custom-radio .radio-label {
+  @apply text-gray-700 dark:text-gray-300 select-none;
+}
+
+/* Custom toggle switch styles */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .toggle-track {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #d1d5db;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dark .toggle-track {
+  background-color: #4b5563;
+}
+
+.toggle-switch input:checked ~ .toggle-track {
+  background-color: #3b82f6;
+}
+
+.dark .toggle-switch input:checked ~ .toggle-track {
+  background-color: #3b82f6;
+}
+
+.toggle-switch .toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.dark .toggle-thumb {
+  background-color: #e5e7eb;
+}
+
+.toggle-switch input:checked ~ .toggle-track .toggle-thumb {
+  transform: translateX(20px);
+}
+
+.toggle-switch input:focus ~ .toggle-track {
+  @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800;
+}
+
+.toggle-switch input:disabled ~ .toggle-track {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.toggle-switch .toggle-label {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #4b5563;
+  user-select: none;
+}
+
+.dark .toggle-label {
+  color: #9ca3af;
+}
+
+/* Form field styles */
+.form-field {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
+}
+
+.form-select {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white pr-10 appearance-none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.dark .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+.form-error {
+  @apply mt-1 text-sm text-red-600 dark:text-red-400;
+}
+
+.form-hint {
+  @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
 }
 
 /* CRITICAL: Modal positioning and scrolling fixes */

@@ -190,22 +190,28 @@ const Signup: React.FC = () => {
             </div>
 
             <div className="flex items-center">
-              <input
-                id="agree-terms"
-                name="agree-terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                I agree to the{' '}
-                <Link to="/terms" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link to="/privacy" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                  Privacy Policy
-                </Link>
+              <label className="custom-checkbox">
+                <input
+                  id="agree-terms"
+                  name="agree-terms"
+                  type="checkbox"
+                  required
+                />
+                <span className="checkbox-icon">
+                  <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" style={{ display: 'none' }}>
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+                <span className="checkbox-label ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                  I agree to the{' '}
+                  <Link to="/terms" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                    Privacy Policy
+                  </Link>
+                </span>
               </label>
             </div>
 
