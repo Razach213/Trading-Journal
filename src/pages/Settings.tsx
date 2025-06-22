@@ -123,11 +123,6 @@ const Settings: React.FC = () => {
     }
   };
 
-  // Safe access to user properties
-  const userDisplayName = user?.displayName || '';
-  const userEmail = user?.email || '';
-  const userPlan = user?.plan || 'free';
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -170,7 +165,7 @@ const Settings: React.FC = () => {
                     <div className="flex items-center space-x-6">
                       <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                         <span className="text-white text-2xl font-bold">
-                          {userDisplayName?.charAt(0).toUpperCase() || 'U'}
+                          {user?.displayName?.charAt(0).toUpperCase() || 'U'}
                         </span>
                       </div>
                       <div>
@@ -227,9 +222,9 @@ const Settings: React.FC = () => {
                       <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-gray-900 dark:text-white capitalize">{userPlan} Plan</p>
+                            <p className="font-medium text-gray-900 dark:text-white capitalize">{user?.plan || 'Free'} Plan</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {userPlan === 'free' ? 'Up to 50 trades per month' : 'Unlimited trades and advanced features'}
+                              {user?.plan === 'free' ? 'Up to 50 trades per month' : 'Unlimited trades and advanced features'}
                             </p>
                           </div>
                           <button
@@ -469,17 +464,17 @@ const Settings: React.FC = () => {
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Current Plan</h3>
-                          <p className="text-gray-600 dark:text-gray-400 capitalize">{userPlan} Plan</p>
+                          <p className="text-gray-600 dark:text-gray-400 capitalize">{user?.plan || 'Free'} Plan</p>
                         </div>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {userPlan === 'free' ? '$0' : userPlan === 'pro' ? '$19' : '$49'}
+                            {user?.plan === 'free' ? '$0' : user?.plan === 'pro' ? '$19' : '$49'}
                           </p>
                           <p className="text-gray-600 dark:text-gray-400">/month</p>
                         </div>
                       </div>
                       
-                      {userPlan !== 'free' && (
+                      {user?.plan !== 'free' && (
                         <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600 dark:text-gray-400">Next billing date:</span>
@@ -491,16 +486,16 @@ const Settings: React.FC = () => {
 
                     <div className="flex space-x-4">
                       <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        {userPlan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
+                        {user?.plan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
                       </button>
-                      {userPlan !== 'free' && (
+                      {user?.plan !== 'free' && (
                         <button className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                           Cancel Subscription
                         </button>
                       )}
                     </div>
 
-                    {userPlan !== 'free' && (
+                    {user?.plan !== 'free' && (
                       <div className="mt-8">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Payment Method</h3>
                         <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
