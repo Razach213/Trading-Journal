@@ -129,13 +129,26 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onView, onEdit, o
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delete Playbook</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete "{playbook.title}"? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-4">
+        <div className="fixed-modal">
+          <div className="modal-container" style={{ maxWidth: "28rem" }}>
+            <div className="modal-header">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Playbook</h3>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="modal-close-button"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p className="text-gray-600 dark:text-gray-400">
+                Are you sure you want to delete "{playbook.title}"? This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="modal-footer">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"

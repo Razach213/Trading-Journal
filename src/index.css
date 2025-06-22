@@ -330,99 +330,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Smooth page transitions */
-.page-transition-enter {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.page-transition-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
-
-.page-transition-exit {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.page-transition-exit-active {
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
-
-/* Chart specific styles */
-.recharts-wrapper {
-  animation: chartFadeIn 0.8s ease-out;
-}
-
-.recharts-line-curve {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.recharts-area-curve {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-/* Custom tooltip styles */
-.recharts-tooltip-wrapper {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Performance optimized animations */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* GPU acceleration for smooth animations */
-.animate-fade-in,
-.animate-fade-in-scale,
-.animate-slide-in-top,
-.animate-slide-in-bottom,
-.animate-chart-fade {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
-
-/* Hover effects for interactive elements */
-.hover-lift {
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Loading states */
-.loading-shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.dark .loading-shimmer {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-  background-size: 200% 100%;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
 /* 3D Chart Styles */
 .chart-3d-container {
   position: relative;
@@ -474,6 +381,10 @@
 
 .custom-checkbox input[type="checkbox"]:checked + .checkbox-icon {
   @apply bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500;
+}
+
+.custom-checkbox input[type="checkbox"]:checked + .checkbox-icon svg {
+  display: block !important;
 }
 
 .custom-checkbox input[type="checkbox"]:focus + .checkbox-icon {
@@ -1091,5 +1002,193 @@ select:focus {
     max-height: 90vh;
     overflow-y: auto;
     border-radius: 0.5rem;
+  }
+}
+
+/* ===== MODAL FIXES ===== */
+/* Fixed modal positioning */
+.fixed-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+/* Modal container */
+.modal-container {
+  position: relative;
+  width: 100%;
+  max-width: 90%;
+  max-height: 90vh;
+  margin: auto;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.dark .modal-container {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+}
+
+@media (min-width: 640px) {
+  .modal-container {
+    max-width: 32rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-container {
+    max-width: 42rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-container {
+    max-width: 56rem;
+  }
+}
+
+/* Modal header */
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dark .modal-header {
+  background-color: #1f2937;
+  border-bottom-color: #374151;
+}
+
+/* Modal body */
+.modal-body {
+  flex: 1;
+  padding: 1.25rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 4.5rem);
+}
+
+/* Modal footer */
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  padding: 1.25rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: white;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.dark .modal-footer {
+  background-color: #1f2937;
+  border-top-color: #374151;
+}
+
+/* Modal grid layout */
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .modal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* Modal form group */
+.modal-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.modal-form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+}
+
+/* Modal close button */
+.modal-close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.modal-close-button:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.dark .modal-close-button:hover {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Ensure equal width form fields in modals */
+.modal-equal-fields {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .modal-equal-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Ensure modal is centered on all screen sizes */
+@media (max-width: 640px) {
+  .fixed-modal {
+    align-items: flex-end;
+  }
+  
+  .modal-container {
+    max-height: 85vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 }

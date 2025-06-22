@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { X, Calendar, Tag, Globe, Lock, TrendingUp, Target, Shield, FileText } from 'lucide-react';
 import { Playbook } from '../../types';
@@ -10,10 +10,49 @@ interface PlaybookDetailModalProps {
 }
 
 const PlaybookDetailModal: React.FC<PlaybookDetailModalProps> = ({ playbook, onClose, onEdit }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+
+  // Close on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed-modal">
+      <div ref={modalRef} className="modal-container">
+        <div className="modal-header">
           <div className="flex items-center space-x-3">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{playbook.title}</h2>
             {playbook.isPublic ? (
@@ -37,16 +76,17 @@ const PlaybookDetailModal: React.FC<PlaybookDetailModalProps> = ({ playbook, onC
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="modal-close-button"
+              aria-label="Close modal"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="modal-body modal-scrollbar">
           {/* Header Info */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6">
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
               Created {format(playbook.createdAt, 'MMM dd, yyyy')}
@@ -58,7 +98,7 @@ const PlaybookDetailModal: React.FC<PlaybookDetailModalProps> = ({ playbook, onC
 
           {/* Chart Image */}
           {playbook.chartImage && (
-            <div className="space-y-2">
+            <div className="space-y-2 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Chart Analysis</h3>
               <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
                 <img
@@ -76,13 +116,13 @@ const PlaybookDetailModal: React.FC<PlaybookDetailModalProps> = ({ playbook, onC
           )}
 
           {/* Description */}
-          <div className="space-y-2">
+          <div className="space-y-2 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Description</h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{playbook.description}</p>
           </div>
 
           {/* Trading Rules Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {playbook.entryRules && (
               <div className="space-y-2">
                 <h4 className="text-md font-semibold text-gray-900 dark:text-white flex items-center">
@@ -134,7 +174,7 @@ const PlaybookDetailModal: React.FC<PlaybookDetailModalProps> = ({ playbook, onC
 
           {/* Tags */}
           {playbook.tags.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {playbook.tags.map((tag, index) => (
@@ -152,7 +192,7 @@ const PlaybookDetailModal: React.FC<PlaybookDetailModalProps> = ({ playbook, onC
 
           {/* Additional Notes */}
           {playbook.notes && (
-            <div className="space-y-2">
+            <div className="space-y-2 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Additional Notes</h3>
               <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{playbook.notes}</p>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Calculator, DollarSign } from 'lucide-react';
 import { Trade } from '../../types';
@@ -27,6 +27,8 @@ interface TradeFormData {
 const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId }) => {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<TradeFormData>();
   const [useManualPnL, setUseManualPnL] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const initialFocusRef = useRef<HTMLInputElement>(null);
   
   const status = watch('status');
   const entryPrice = watch('entryPrice');
@@ -34,6 +36,48 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   const quantity = watch('quantity');
   const type = watch('type');
   const manualPnL = watch('pnl');
+
+  // Focus first input when modal opens
+  useEffect(() => {
+    if (initialFocusRef.current) {
+      initialFocusRef.current.focus();
+    }
+    
+    // Prevent body scroll
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+
+  // Close on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [onClose]);
 
   // Auto-calculate P&L when prices change (if not using manual)
   React.useEffect(() => {
@@ -93,160 +137,170 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed-modal">
+      <div ref={modalRef} className="modal-container">
+        <div className="modal-header">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Trade</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="modal-close-button"
+            aria-label="Close modal"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Symbol *
-              </label>
-              <input
-                type="text"
-                {...register('symbol', { 
-                  required: 'Symbol is required',
-                  pattern: {
-                    value: /^[A-Za-z0-9]+$/,
-                    message: 'Symbol must contain only letters and numbers'
-                  }
-                })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="AAPL"
-              />
-              {errors.symbol && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.symbol.message}</p>
-              )}
+        <div className="modal-body modal-scrollbar">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Symbol *
+                </label>
+                <input
+                  type="text"
+                  {...register('symbol', { 
+                    required: 'Symbol is required',
+                    pattern: {
+                      value: /^[A-Za-z0-9]+$/,
+                      message: 'Symbol must contain only letters and numbers'
+                    }
+                  })}
+                  ref={initialFocusRef}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="AAPL"
+                />
+                {errors.symbol && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.symbol.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Type *
+                </label>
+                <select
+                  {...register('type', { required: 'Type is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select type</option>
+                  <option value="long">Long</option>
+                  <option value="short">Short</option>
+                </select>
+                {errors.type && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.type.message}</p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Type *
-              </label>
-              <select
-                {...register('type', { required: 'Type is required' })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Select type</option>
-                <option value="long">Long</option>
-                <option value="short">Short</option>
-              </select>
-              {errors.type && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.type.message}</p>
-              )}
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Entry Price *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('entryPrice', { 
+                    required: 'Entry price is required',
+                    min: { value: 0.01, message: 'Entry price must be greater than 0' },
+                    valueAsNumber: true
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="150.00"
+                />
+                {errors.entryPrice && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quantity *
+                </label>
+                <input
+                  type="number"
+                  {...register('quantity', { 
+                    required: 'Quantity is required',
+                    min: { value: 1, message: 'Quantity must be at least 1' },
+                    valueAsNumber: true
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="100"
+                />
+                {errors.quantity && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.quantity.message}</p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Entry Price *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                {...register('entryPrice', { 
-                  required: 'Entry price is required',
-                  min: { value: 0.01, message: 'Entry price must be greater than 0' },
-                  valueAsNumber: true
-                })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="150.00"
-              />
-              {errors.entryPrice && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
-              )}
-            </div>
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Entry Date *
+                </label>
+                <input
+                  type="datetime-local"
+                  {...register('entryDate', { required: 'Entry date is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                {errors.entryDate && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Quantity *
-              </label>
-              <input
-                type="number"
-                {...register('quantity', { 
-                  required: 'Quantity is required',
-                  min: { value: 1, message: 'Quantity must be at least 1' },
-                  valueAsNumber: true
-                })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="100"
-              />
-              {errors.quantity && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.quantity.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Entry Date *
-              </label>
-              <input
-                type="datetime-local"
-                {...register('entryDate', { required: 'Entry date is required' })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              {errors.entryDate && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Status *
-              </label>
-              <select
-                {...register('status', { required: 'Status is required' })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Select status</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-              </select>
-              {errors.status && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.status.message}</p>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Status *
+                </label>
+                <select
+                  {...register('status', { required: 'Status is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select status</option>
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                </select>
+                {errors.status && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.status.message}</p>
+                )}
+              </div>
             </div>
 
             {status === 'closed' && (
               <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Exit Price {!useManualPnL && '*'}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register('exitPrice', { 
-                      required: status === 'closed' && !useManualPnL ? 'Exit price is required for closed trades' : false,
-                      min: { value: 0.01, message: 'Exit price must be greater than 0' },
-                      valueAsNumber: true
-                    })}
-                    disabled={useManualPnL}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="155.00"
-                  />
-                  {errors.exitPrice && (
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.exitPrice.message}</p>
-                  )}
-                </div>
+                <div className="modal-equal-fields">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Exit Price {!useManualPnL && '*'}
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      {...register('exitPrice', { 
+                        required: status === 'closed' && !useManualPnL ? 'Exit price is required for closed trades' : false,
+                        min: { value: 0.01, message: 'Exit price must be greater than 0' },
+                        valueAsNumber: true
+                      })}
+                      disabled={useManualPnL}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="155.00"
+                    />
+                    {errors.exitPrice && (
+                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.exitPrice.message}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Exit Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    {...register('exitDate')}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Exit Date
+                    </label>
+                    <input
+                      type="datetime-local"
+                      {...register('exitDate')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
                 </div>
 
                 {/* P&L Calculation Options */}
@@ -323,59 +377,62 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
               </>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Strategy
-              </label>
-              <input
-                type="text"
-                {...register('strategy')}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Breakout, Reversal, etc."
-              />
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Strategy
+                </label>
+                <input
+                  type="text"
+                  {...register('strategy')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Breakout, Reversal, etc."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  {...register('tags')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="earnings, breakout (comma separated)"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tags
+                Notes
               </label>
-              <input
-                type="text"
-                {...register('tags')}
+              <textarea
+                {...register('notes')}
+                rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="earnings, breakout (comma separated)"
+                placeholder="Trade notes and observations..."
               />
             </div>
-          </div>
+          </form>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Notes
-            </label>
-            <textarea
-              {...register('notes')}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Trade notes and observations..."
-            />
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Add Trade
-            </button>
-          </div>
-        </form>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit(onFormSubmit)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Add Trade
+          </button>
+        </div>
       </div>
     </div>
   );
