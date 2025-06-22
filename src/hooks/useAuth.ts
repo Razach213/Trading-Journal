@@ -228,6 +228,11 @@ export const useAuth = () => {
     }
   };
 
+  // Check if user is authenticated
+  const isAuthenticated = (): boolean => {
+    return user !== null;
+  };
+
   return {
     user,
     loading,
@@ -235,6 +240,7 @@ export const useAuth = () => {
     signUp,
     signInWithGoogle,
     logout,
-    isDemoMode
+    isDemoMode,
+    isAuthenticated
   };
 };

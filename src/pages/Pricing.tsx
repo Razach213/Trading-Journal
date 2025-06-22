@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Check, Star, Zap, ArrowRight, Shield, Headphones, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Check, Star, Zap, ArrowRight, Shield, Headphones, Globe, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import PaymentModal from '../components/Payment/PaymentModal';
 
@@ -10,6 +10,13 @@ const Pricing: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'pro' | 'premium'>('pro');
   const [selectedPrice, setSelectedPrice] = useState(0);
+  const [showAuthAlert, setShowAuthAlert] = useState(false);
+  const navigate = useNavigate();
+
+  // Reset auth alert when component mounts or user changes
+  useEffect(() => {
+    setShowAuthAlert(false);
+  }, [user]);
 
   const plans = [
     {
@@ -26,7 +33,7 @@ const Pricing: React.FC = () => {
       ],
       popular: false,
       buttonText: 'Get Started Free',
-      buttonStyle: 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300',
+      buttonStyle: 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:border-gray-600',
       icon: Zap,
       gradient: 'from-gray-400 to-gray-600'
     },
@@ -105,8 +112,13 @@ const Pricing: React.FC = () => {
   ];
 
   const handlePlanSelect = (plan: 'pro' | 'premium') => {
+    // Check if user is logged in
     if (!user) {
-      // Redirect to signup if not logged in
+      // Show alert and redirect to login after a short delay
+      setShowAuthAlert(true);
+      setTimeout(() => {
+        navigate('/login', { state: { from: 'pricing', plan } });
+      }, 1500);
       return;
     }
     
@@ -138,15 +150,18 @@ const Pricing: React.FC = () => {
             </span>
             <button
               onClick={() => setIsYearly(!isYearly)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                isYearly ? 'bg-blue-500' : 'bg-blue-400'
-              }`}
+              className="toggle-switch"
+              aria-label={isYearly ? "Switch to monthly billing" : "Switch to yearly billing"}
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isYearly ? 'translate-x-6' : 'translate-x-1'
-                }`}
+              <input 
+                type="checkbox" 
+                checked={isYearly} 
+                onChange={() => {}} 
+                aria-label="Yearly billing toggle"
               />
+              <span className="toggle-track">
+                <span className="toggle-thumb"></span>
+              </span>
             </button>
             <span className={`text-sm font-medium ${isYearly ? 'text-white' : 'text-blue-200'}`}>
               Yearly
@@ -157,6 +172,23 @@ const Pricing: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Authentication Alert */}
+      {showAuthAlert && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-scale">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 shadow-lg max-w-md">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Authentication Required</h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  Please sign in to continue with your plan selection. Redirecting you to login...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -319,8 +351,8 @@ const Pricing: React.FC = () => {
         </div>
       </div>
 
-      {/* Payment Modal */}
-      {showPaymentModal && (
+      {/* Payment Modal - Only shown if user is authenticated */}
+      {user && showPaymentModal && (
         <PaymentModal
           onClose={() => setShowPaymentModal(false)}
           selectedPlan={selectedPlan}

@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Zap, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
+
+interface LocationState {
+  from?: string;
+  plan?: 'pro' | 'premium';
+}
 
 interface LoginFormData {
   email: string;
@@ -16,12 +21,35 @@ const Login: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const { signIn, signInWithGoogle, isDemoMode } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as LocationState;
+  
+  // Check if user was redirected from pricing page
+  const [fromPricing, setFromPricing] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'pro' | 'premium' | null>(null);
+
+  useEffect(() => {
+    if (state?.from === 'pricing') {
+      setFromPricing(true);
+      if (state.plan) {
+        setSelectedPlan(state.plan);
+      }
+    }
+  }, [state]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
       await signIn(data.email, data.password);
-      navigate('/dashboard');
+      
+      // If user came from pricing page, redirect back to pricing
+      if (fromPricing) {
+        navigate('/pricing');
+        // Show success message
+        toast.success('Successfully signed in! You can now select your plan.');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -33,7 +61,15 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      navigate('/dashboard');
+      
+      // If user came from pricing page, redirect back to pricing
+      if (fromPricing) {
+        navigate('/pricing');
+        // Show success message
+        toast.success('Successfully signed in! You can now select your plan.');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Google sign in error:', error);
     } finally {
@@ -68,6 +104,23 @@ const Login: React.FC = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Pricing Redirect Notice */}
+        {fromPricing && (
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Sign in to continue</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  {selectedPlan 
+                    ? `Please sign in to continue with your ${selectedPlan.toUpperCase()} plan selection.` 
+                    : 'Please sign in to continue with your plan selection.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Demo Mode Warning */}
         {isDemoMode && (
           <div className="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">

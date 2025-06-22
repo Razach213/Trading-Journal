@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, MapPin, Globe, Copy, Check, CreditCard, Building, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface PaymentModalProps {
   onClose: () => void;
@@ -19,7 +20,8 @@ interface PaymentFormData {
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, planPrice }) => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState<'location' | 'payment' | 'confirmation'>('location');
   const [selectedLocation, setSelectedLocation] = useState<'pakistan' | 'international' | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -28,6 +30,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
   const { register, handleSubmit, watch, formState: { errors } } = useForm<PaymentFormData>();
   
   const transactionId = watch('transactionId');
+
+  // Check authentication on mount
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      toast.error('You must be logged in to make a payment');
+      onClose();
+      navigate('/login', { state: { from: 'pricing', plan: selectedPlan } });
+    }
+  }, [isAuthenticated, navigate, onClose, selectedPlan]);
 
   // Pakistan account details
   const pakistanAccount = {
@@ -102,6 +113,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
     setStep('location');
     setSelectedLocation(null);
   };
+
+  // If not authenticated, don't render the modal
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -330,13 +346,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <input
-                    {...register('confirmTerms', { required: 'You must agree to the terms' })}
-                    type="checkbox"
-                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
-                  />
-                  <label className="text-sm text-gray-700 dark:text-gray-300">
-                    I confirm that I have made the payment and the transaction ID provided is accurate. I understand that providing false information may result in account suspension.
+                  <label className="custom-checkbox">
+                    <input
+                      {...register('confirmTerms', { required: 'You must agree to the terms' })}
+                      type="checkbox"
+                    />
+                    <span className="checkbox-icon">
+                      <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" style={{ display: 'none' }}>
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    <span className="checkbox-label">
+                      I confirm that I have made the payment and the transaction ID provided is accurate. I understand that providing false information may result in account suspension.
+                    </span>
                   </label>
                 </div>
                 {errors.confirmTerms && (
