@@ -81,6 +81,12 @@ export default function Header({ toggleTheme }: HeaderProps) {
                 >
                   Playbooks
                 </Link>
+                <Link
+                  to="/settings"
+                  className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                >
+                  Settings
+                </Link>
                 <div className="flex items-center space-x-2 lg:space-x-3">
                   <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
                     <span className="text-white text-xs lg:text-sm font-semibold">
@@ -89,7 +95,7 @@ export default function Header({ toggleTheme }: HeaderProps) {
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-105"
+                    className="text-sm lg:text-base font-medium text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 hover:scale-105"
                   >
                     Sign out
                   </button>
@@ -181,12 +187,19 @@ export default function Header({ toggleTheme }: HeaderProps) {
                     >
                       Playbooks
                     </Link>
+                    <Link
+                      to="/settings"
+                      onClick={() => close()}
+                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Settings
+                    </Link>
                     <button
                       onClick={() => {
                         handleLogout();
                         close();
                       }}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-3 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-base font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                     >
                       Sign out
                     </button>
