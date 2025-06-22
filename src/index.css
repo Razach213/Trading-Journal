@@ -185,6 +185,38 @@
   }
 }
 
+/* 3D Chart animations */
+@keyframes chartRise {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes chartGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+}
+
+@keyframes chartDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.7;
+  }
+}
+
 .animate-twinkle {
   animation: twinkle 2s ease-in-out infinite;
 }
@@ -235,6 +267,18 @@
 
 .animate-chart-fade {
   animation: chartFadeIn 0.8s ease-out;
+}
+
+.animate-chart-rise {
+  animation: chartRise 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.animate-chart-glow {
+  animation: chartGlow 3s ease-in-out infinite;
+}
+
+.animate-chart-dot-pulse {
+  animation: chartDotPulse 2s ease-in-out infinite;
 }
 
 /* Theme transition overlay */
@@ -320,6 +364,35 @@
 
 .recharts-area-curve {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* 3D Chart Styles */
+.chart-3d-container {
+  position: relative;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.chart-3d-element {
+  transform: rotateX(10deg) rotateY(5deg);
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.chart-3d-element:hover {
+  transform: rotateX(5deg) rotateY(10deg);
+}
+
+.chart-3d-shadow {
+  position: absolute;
+  bottom: -10px;
+  left: 5%;
+  right: 5%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%);
+  transform: rotateX(90deg);
+  filter: blur(5px);
+  opacity: 0.5;
 }
 
 /* Custom tooltip styles */
