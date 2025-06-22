@@ -9,7 +9,8 @@ import {
   where, 
   orderBy, 
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  getDocs
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { Playbook } from '../types';
@@ -57,74 +58,115 @@ export const usePlaybooks = (userId: string | undefined) => {
     setLoading(true);
     setError(null);
 
-    try {
-      const playbooksQuery = query(
-        collection(db, 'playbooks'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
+    // Try simple query first, then fall back to complex query
+    const trySimpleQuery = async () => {
+      try {
+        // First try a simple query without orderBy
+        const simpleQuery = query(
+          collection(db, 'playbooks'),
+          where('userId', '==', userId)
+        );
 
-      const unsubscribe = onSnapshot(
-        playbooksQuery, 
-        (snapshot) => {
-          try {
-            const playbooksData: Playbook[] = [];
-            snapshot.forEach((doc) => {
-              const data = doc.data();
-              
-              const playbook: Playbook = {
-                id: doc.id,
-                userId: data.userId || '',
-                title: data.title || '',
-                description: data.description || '',
-                strategy: data.strategy || '',
-                chartImage: data.chartImage || null,
-                imageMetadata: data.imageMetadata || null,
-                tags: Array.isArray(data.tags) ? data.tags : [],
-                marketConditions: data.marketConditions || null,
-                entryRules: data.entryRules || null,
-                exitRules: data.exitRules || null,
-                riskManagement: data.riskManagement || null,
-                notes: data.notes || null,
-                isPublic: Boolean(data.isPublic),
-                createdAt: data.createdAt?.toDate() || new Date(),
-                updatedAt: data.updatedAt?.toDate() || new Date()
-              };
-              
-              playbooksData.push(playbook);
-            });
-            
-            setPlaybooks(playbooksData);
-            setError(null);
-          } catch (err) {
-            console.error('Error processing playbooks data:', err);
-            setError('Failed to process playbooks data');
-          } finally {
-            setLoading(false);
-          }
-        },
-        (err) => {
-          console.error('Error fetching playbooks:', err);
-          setLoading(false);
+        const snapshot = await getDocs(simpleQuery);
+        const playbooksData: Playbook[] = [];
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
           
-          if (err.code === 'permission-denied') {
-            setError('You don\'t have permission to access this data. Please sign in again.');
-          } else if (err.code === 'failed-precondition') {
-            setError('Database index is being created. Please try again in a few minutes.');
-          } else if (err.code === 'unavailable') {
-            setError('Service is temporarily unavailable. Please check your internet connection.');
-          } else {
-            setError('Failed to load playbooks. Please try refreshing the page.');
-          }
-        }
-      );
+          const playbook: Playbook = {
+            id: doc.id,
+            userId: data.userId || '',
+            title: data.title || '',
+            description: data.description || '',
+            strategy: data.strategy || '',
+            chartImage: data.chartImage || null,
+            imageMetadata: data.imageMetadata || null,
+            tags: Array.isArray(data.tags) ? data.tags : [],
+            marketConditions: data.marketConditions || null,
+            entryRules: data.entryRules || null,
+            exitRules: data.exitRules || null,
+            riskManagement: data.riskManagement || null,
+            notes: data.notes || null,
+            isPublic: Boolean(data.isPublic),
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date()
+          };
+          
+          playbooksData.push(playbook);
+        });
 
-      return unsubscribe;
-    } catch (err) {
-      console.error('Error setting up playbooks listener:', err);
-      setLoading(false);
-      setError('Failed to initialize playbooks. Please refresh the page.');
-    }
+        // Sort manually by createdAt
+        playbooksData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        
+        setPlaybooks(playbooksData);
+        setError(null);
+        setLoading(false);
+
+        // Now set up real-time listener with simple query
+        const unsubscribe = onSnapshot(
+          simpleQuery,
+          (snapshot) => {
+            try {
+              const updatedPlaybooks: Playbook[] = [];
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                
+                const playbook: Playbook = {
+                  id: doc.id,
+                  userId: data.userId || '',
+                  title: data.title || '',
+                  description: data.description || '',
+                  strategy: data.strategy || '',
+                  chartImage: data.chartImage || null,
+                  imageMetadata: data.imageMetadata || null,
+                  tags: Array.isArray(data.tags) ? data.tags : [],
+                  marketConditions: data.marketConditions || null,
+                  entryRules: data.entryRules || null,
+                  exitRules: data.exitRules || null,
+                  riskManagement: data.riskManagement || null,
+                  notes: data.notes || null,
+                  isPublic: Boolean(data.isPublic),
+                  createdAt: data.createdAt?.toDate() || new Date(),
+                  updatedAt: data.updatedAt?.toDate() || new Date()
+                };
+                
+                updatedPlaybooks.push(playbook);
+              });
+              
+              // Sort manually by createdAt
+              updatedPlaybooks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+              setPlaybooks(updatedPlaybooks);
+              setError(null);
+            } catch (err) {
+              console.error('Error processing playbooks data:', err);
+              setError('Failed to process playbooks data');
+            }
+          },
+          (err) => {
+            console.error('Error in playbooks listener:', err);
+            setError('Failed to sync playbooks. Please refresh the page.');
+          }
+        );
+
+        return unsubscribe;
+
+      } catch (err: any) {
+        console.error('Error with simple query:', err);
+        
+        if (err.code === 'failed-precondition') {
+          setError('Database is being set up. This usually takes a few minutes for new Firebase projects.');
+        } else if (err.code === 'permission-denied') {
+          setError('You don\'t have permission to access this data. Please sign in again.');
+        } else if (err.code === 'unavailable') {
+          setError('Service is temporarily unavailable. Please check your internet connection.');
+        } else {
+          setError('Failed to load playbooks. Please try refreshing the page.');
+        }
+        setLoading(false);
+      }
+    };
+
+    trySimpleQuery();
   }, [userId]);
 
   const addPlaybook = async (playbookData: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -205,7 +247,13 @@ export const usePlaybooks = (userId: string | undefined) => {
           playbook.id === playbookId ? { ...playbook, ...updates, updatedAt: new Date() } : playbook
         );
         setPlaybooks(updatedPlaybooks);
-        localStorage.setItem(`demoPlaybooks_${updates.userId}`, JSON.stringify(updatedPlaybooks));
+        
+        // Get userId from the updated playbook
+        const updatedPlaybook = updatedPlaybooks.find(p => p.id === playbookId);
+        if (updatedPlaybook) {
+          localStorage.setItem(`demoPlaybooks_${updatedPlaybook.userId}`, JSON.stringify(updatedPlaybooks));
+        }
+        
         toast.success('Playbook updated successfully! (Demo Mode)');
         return;
       }

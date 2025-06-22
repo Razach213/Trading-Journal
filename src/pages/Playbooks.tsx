@@ -88,9 +88,10 @@ const Playbooks: React.FC = () => {
   const handleAddPlaybook = async (playbookData: Omit<Playbook, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       await addPlaybook(playbookData);
+      setShowAddModal(false);
     } catch (error) {
       console.error('Error adding playbook:', error);
-      throw error;
+      // Don't close modal on error so user can retry
     }
   };
 
@@ -102,7 +103,7 @@ const Playbooks: React.FC = () => {
       setEditingPlaybook(null);
     } catch (error) {
       console.error('Error updating playbook:', error);
-      throw error;
+      // Don't close modal on error so user can retry
     }
   };
 
@@ -227,7 +228,7 @@ const Playbooks: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Failed to load playbooks</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                {error === 'Database index is being created. Please try again in a few minutes.' 
+                {error.includes('Database is being set up') 
                   ? 'Database is being set up. This usually takes a few minutes for new Firebase projects.'
                   : error || 'We encountered an error while loading your playbooks. Please try refreshing the page.'
                 }
@@ -239,7 +240,7 @@ const Playbooks: React.FC = () => {
                 >
                   Retry
                 </button>
-                {error === 'Database index is being created. Please try again in a few minutes.' && (
+                {error.includes('Database is being set up') && (
                   <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     <p>💡 This is normal for new Firebase projects</p>
                     <p>Database indexes are being created automatically</p>
