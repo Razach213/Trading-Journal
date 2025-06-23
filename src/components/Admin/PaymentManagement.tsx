@@ -17,7 +17,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore, runTransaction } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore, runTransaction, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Payment } from '../../types';
 import { format } from 'date-fns';
@@ -40,35 +40,39 @@ const PaymentManagement: React.FC = () => {
       orderBy('submittedAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
-      try {
-        const paymentsData: Payment[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
+    const unsubscribe = onSnapshot(
+      paymentsQuery, 
+      (snapshot) => {
+        try {
+          const paymentsData: Payment[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            
+            paymentsData.push({
+              id: doc.id,
+              ...data,
+              submittedAt: data.submittedAt?.toDate() || new Date(),
+              reviewedAt: data.reviewedAt?.toDate() || null,
+              createdAt: data.createdAt?.toDate() || new Date(),
+              updatedAt: data.updatedAt?.toDate() || new Date()
+            } as Payment);
+          });
           
-          paymentsData.push({
-            id: doc.id,
-            ...data,
-            submittedAt: data.submittedAt?.toDate() || new Date(),
-            reviewedAt: data.reviewedAt?.toDate() || null,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date()
-          } as Payment);
-        });
-        
-        setPayments(paymentsData);
-        setError(null);
-      } catch (err) {
-        console.error('Error processing payments data:', err);
-        setError('Failed to process payments data');
-      } finally {
+          setPayments(paymentsData);
+          setError(null);
+        } catch (err) {
+          console.error('Error processing payments data:', err);
+          setError('Failed to process payments data');
+        } finally {
+          setLoading(false);
+        }
+      },
+      (err) => {
+        console.error('Error fetching payments:', err);
         setLoading(false);
+        setError('Failed to load payments data: ' + err.message);
       }
-    }, (err) => {
-      console.error('Error fetching payments:', err);
-      setLoading(false);
-      setError('Failed to load payments data: ' + err.message);
-    });
+    );
 
     return unsubscribe;
   }, []);
@@ -383,7 +387,7 @@ const PaymentManagement: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{payment.userName || 'Unknown'}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{payment.userEmail || 'No email'}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{payment.userEmail}</div>
                   </div>
                 </div>
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
@@ -589,24 +593,24 @@ const PaymentManagement: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Plan</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedPayment.plan.charAt(0).toUpperCase() + selectedPayment.plan.slice(1)}
+                      {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Amount</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
+                      {formatCurrency(payment.amount, payment.currency)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Payment Method</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedPayment.paymentMethod === 'pakistan' ? 'Pakistan (NayaPay)' : 'International (Binance)'}
+                      {payment.paymentMethod === 'pakistan' ? 'Pakistan (NayaPay)' : 'International (Binance)'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Transaction ID</p>
-                    <p className="font-mono text-sm text-gray-900 dark:text-white">{selectedPayment.transactionId}</p>
+                    <p className="font-mono text-sm text-gray-900 dark:text-white">{payment.transactionId}</p>
                   </div>
                 </div>
               </div>

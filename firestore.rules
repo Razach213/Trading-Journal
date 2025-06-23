@@ -116,12 +116,10 @@ service cloud.firestore {
                  (request.auth.uid == resource.data.userId || isAdmin()) || isAdminPanelAccess();
       
       allow create: if isAuthenticated() && 
-                   (isOwner(request.resource.data.userId) || isAdmin()) &&
-                   isValidTrade(request.resource.data);
+                   (isOwner(request.resource.data.userId) || isAdmin());
       
       allow update: if isAuthenticated() && 
                    (request.auth.uid == resource.data.userId || isAdmin()) &&
-                   isValidTrade(request.resource.data) &&
                    isValidTradeUpdate(request.resource.data);
       
       allow delete: if isAuthenticated() && 
@@ -141,6 +139,29 @@ service cloud.firestore {
       
       allow delete: if isAuthenticated() && 
                    (request.auth.uid == resource.data.userId || isAdmin());
+    }
+    
+    // Payments collection - UPDATED with explicit admin permissions
+    match /payments/{paymentId} {
+      // Allow users to read their own payments and admins to read all
+      allow read: if isAuthenticated() && 
+                 (isOwner(resource.data.userId) || isAdmin()) || isAdminPanelAccess();
+      
+      // Allow users to create payments
+      allow create: if isAuthenticated() && 
+                   isOwner(request.resource.data.userId);
+      
+      // CRITICAL: Allow admins to update payment status
+      allow update: if isAuthenticated() && (
+                     // User can update their own payment if not changing status
+                     (isOwner(resource.data.userId) && 
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'reviewedAt', 'reviewedBy'])) ||
+                     // Admins can update any payment including status changes
+                     isAdmin()
+                   );
+      
+      // Only admins can delete payments
+      allow delete: if isAuthenticated() && isAdmin();
     }
     
     // Subscriptions collection (managed by Stripe webhooks and admins)
