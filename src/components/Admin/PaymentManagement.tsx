@@ -103,14 +103,13 @@ const PaymentManagement: React.FC = () => {
     
     try {
       const firestore = db || getFirestore();
+      const paymentRef = doc(firestore, 'payments', payment.id);
       
       // Use a transaction to ensure both operations succeed or fail together
       await runTransaction(firestore, async (transaction) => {
-        // Update payment status
-        const paymentRef = doc(firestore, 'payments', payment.id);
-        
-        // First check if the payment exists and is still pending
+        // First get the payment document
         const paymentDoc = await transaction.get(paymentRef);
+        
         if (!paymentDoc.exists()) {
           throw new Error('Payment not found');
         }
@@ -119,6 +118,19 @@ const PaymentManagement: React.FC = () => {
         if (paymentData.status !== 'pending') {
           throw new Error('Payment is no longer pending');
         }
+        
+        // If user exists, get the user document
+        let userDoc = null;
+        if (payment.userId) {
+          const userRef = doc(firestore, 'users', payment.userId);
+          userDoc = await transaction.get(userRef);
+          
+          if (!userDoc.exists()) {
+            console.warn(`User ${payment.userId} not found, but payment will still be approved`);
+          }
+        }
+        
+        // Now perform all writes after all reads are complete
         
         // Update the payment document
         transaction.update(paymentRef, {
@@ -129,20 +141,13 @@ const PaymentManagement: React.FC = () => {
           updatedAt: new Date()
         });
         
-        // Update user's plan if userId exists
-        if (payment.userId) {
+        // Update user's plan if user exists
+        if (payment.userId && userDoc && userDoc.exists()) {
           const userRef = doc(firestore, 'users', payment.userId);
-          
-          // Check if user exists
-          const userDoc = await transaction.get(userRef);
-          if (userDoc.exists()) {
-            transaction.update(userRef, {
-              plan: payment.plan,
-              updatedAt: new Date()
-            });
-          } else {
-            console.warn(`User ${payment.userId} not found, but payment was approved`);
-          }
+          transaction.update(userRef, {
+            plan: payment.plan,
+            updatedAt: new Date()
+          });
         }
       });
 
@@ -193,19 +198,21 @@ const PaymentManagement: React.FC = () => {
       const firestore = db || getFirestore();
       const paymentRef = doc(firestore, 'payments', payment.id);
       
-      // First check if the payment exists and is still pending
-      const paymentDoc = await firestore.runTransaction(async (transaction) => {
-        const doc = await transaction.get(paymentRef);
-        if (!doc.exists()) {
+      // Use a transaction to ensure consistency
+      await runTransaction(firestore, async (transaction) => {
+        // First read the document
+        const paymentDoc = await transaction.get(paymentRef);
+        
+        if (!paymentDoc.exists()) {
           throw new Error('Payment not found');
         }
         
-        const paymentData = doc.data();
+        const paymentData = paymentDoc.data();
         if (paymentData.status !== 'pending') {
           throw new Error('Payment is no longer pending');
         }
         
-        // Update the payment document
+        // Then update it
         transaction.update(paymentRef, {
           status: 'rejected',
           reviewedAt: new Date(),
@@ -213,8 +220,6 @@ const PaymentManagement: React.FC = () => {
           adminNotes: adminNotes,
           updatedAt: new Date()
         });
-        
-        return doc;
       });
 
       // Update toast to success
