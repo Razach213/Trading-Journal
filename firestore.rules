@@ -126,21 +126,6 @@ service cloud.firestore {
                    (request.auth.uid == resource.data.userId || isAdmin());
     }
     
-    // Playbooks collection rules - UPDATED for admin panel access
-    match /playbooks/{playbookId} {
-      allow read: if isAuthenticated() && 
-                 (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true) || isAdminPanelAccess();
-      
-      allow create: if isAuthenticated() && 
-                   (isOwner(request.resource.data.userId) || isAdmin());
-      
-      allow update: if isAuthenticated() && 
-                   (request.auth.uid == resource.data.userId || isAdmin());
-      
-      allow delete: if isAuthenticated() && 
-                   (request.auth.uid == resource.data.userId || isAdmin());
-    }
-    
     // Payments collection - UPDATED with explicit admin permissions
     match /payments/{paymentId} {
       // Allow users to read their own payments and admins to read all
@@ -162,6 +147,21 @@ service cloud.firestore {
       
       // Only admins can delete payments
       allow delete: if isAuthenticated() && isAdmin();
+    }
+    
+    // Playbooks collection rules - UPDATED for admin panel access
+    match /playbooks/{playbookId} {
+      allow read: if isAuthenticated() && 
+                 (request.auth.uid == resource.data.userId || isAdmin() || resource.data.isPublic == true) || isAdminPanelAccess();
+      
+      allow create: if isAuthenticated() && 
+                   (isOwner(request.resource.data.userId) || isAdmin());
+      
+      allow update: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow delete: if isAuthenticated() && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
     }
     
     // Subscriptions collection (managed by Stripe webhooks and admins)
