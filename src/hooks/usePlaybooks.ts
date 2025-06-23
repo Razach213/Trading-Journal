@@ -58,6 +58,14 @@ export const usePlaybooks = (userId: string | undefined) => {
     setLoading(true);
     setError(null);
 
+    // Get auth token from localStorage
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      setError('No authentication token found. Please sign in again.');
+      setLoading(false);
+      return;
+    }
+
     // Try simple query first, then fall back to complex query
     const trySimpleQuery = async () => {
       try {
@@ -191,6 +199,12 @@ export const usePlaybooks = (userId: string | undefined) => {
         throw new Error('User not authenticated');
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
       // Validate image size if present
       if (playbookData.chartImage) {
         const imageSizeKB = (playbookData.chartImage.length * 3) / 4 / 1024; // Rough Base64 size calculation
@@ -258,6 +272,12 @@ export const usePlaybooks = (userId: string | undefined) => {
         throw new Error('User not authenticated');
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
       // Validate image size if present
       if (updates.chartImage) {
         const imageSizeKB = (updates.chartImage.length * 3) / 4 / 1024;
@@ -314,6 +334,12 @@ export const usePlaybooks = (userId: string | undefined) => {
 
       if (!auth?.currentUser) {
         throw new Error('User not authenticated');
+      }
+
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
       }
 
       await deleteDoc(doc(db, 'playbooks', playbookId));

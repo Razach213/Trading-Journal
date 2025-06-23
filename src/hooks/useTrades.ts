@@ -67,6 +67,14 @@ export const useTrades = (userId: string | undefined) => {
     setLoading(true);
     setError(null);
 
+    // Get auth token from localStorage
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      setError('No authentication token found. Please sign in again.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const tradesQuery = query(
         collection(db, 'trades'),
@@ -245,6 +253,12 @@ export const useTrades = (userId: string | undefined) => {
         throw new Error('User not authenticated');
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
       // Calculate balance after trade if it's a closed trade
       let balanceAfterTrade = null;
       if (tradeData.status === 'closed' && tradeData.pnl !== null && tradeData.pnl !== undefined) {
@@ -326,6 +340,12 @@ export const useTrades = (userId: string | undefined) => {
         throw new Error('User not authenticated');
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
       // Find the original trade to calculate P&L difference
       const originalTrade = trades.find(t => t.id === tradeId);
       if (!originalTrade) {
@@ -395,6 +415,12 @@ export const useTrades = (userId: string | undefined) => {
 
       if (!auth?.currentUser) {
         throw new Error('User not authenticated');
+      }
+
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
       }
 
       // Find the trade to reverse its P&L effect

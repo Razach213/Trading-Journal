@@ -35,6 +35,21 @@ try {
   storage = getStorage(app);
   functions = getFunctions(app);
 
+  // Set persistence to LOCAL to keep user logged in
+  auth.setPersistence('LOCAL');
+
+  // Enable offline persistence for Firestore
+  db.enablePersistence({ synchronizeTabs: true })
+    .catch((err) => {
+      if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab at a time
+        console.warn('Multiple tabs open, persistence only enabled in one tab');
+      } else if (err.code === 'unimplemented') {
+        // The current browser does not support all of the features required to enable persistence
+        console.warn('Persistence not supported in this browser');
+      }
+    });
+
   console.log("✅ Firebase initialized successfully");
 } catch (error) {
   console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
@@ -50,7 +65,8 @@ try {
     signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     signInWithPopup: () => Promise.reject(new Error("Demo mode")),
-    signOut: () => Promise.reject(new Error("Demo mode"))
+    signOut: () => Promise.reject(new Error("Demo mode")),
+    setPersistence: () => {}
   };
 
   db = null;

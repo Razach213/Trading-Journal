@@ -6,7 +6,9 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -19,6 +21,7 @@ const isDemoMode = !auth || !db || typeof auth.onAuthStateChanged !== 'function'
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDemoMode) {
@@ -42,6 +45,10 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
+          // Get fresh ID token with each auth state change
+          const token = await firebaseUser.getIdToken(true);
+          localStorage.setItem('authToken', token);
+          
           const userData = await getUserData(firebaseUser);
           
           // Check if subscription has expired
@@ -69,12 +76,16 @@ export const useAuth = () => {
           }
           
           setUser(userData);
+          setAuthError(null);
         } else {
           setUser(null);
+          localStorage.removeItem('authToken');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Auth state change error:", error);
         setUser(null);
+        setAuthError(error.message || "Authentication error");
+        localStorage.removeItem('authToken');
       } finally {
         setLoading(false);
       }
@@ -167,7 +178,15 @@ export const useAuth = () => {
         return;
       }
       
-      await signInWithEmailAndPassword(auth, email, password);
+      // Set persistence to LOCAL to keep user logged in
+      await setPersistence(auth, browserLocalPersistence);
+      
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Get fresh token and store it
+      const token = await result.user.getIdToken(true);
+      localStorage.setItem('authToken', token);
+      
       toast.success('Successfully signed in!');
     } catch (error: any) {
       console.error("Sign in error:", error);
@@ -192,7 +211,15 @@ export const useAuth = () => {
         return;
       }
 
+      // Set persistence to LOCAL to keep user logged in
+      await setPersistence(auth, browserLocalPersistence);
+      
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Get fresh token and store it
+      const token = await result.user.getIdToken(true);
+      localStorage.setItem('authToken', token);
+      
       const newUser: User = {
         id: result.user.uid,
         email: result.user.email!,
@@ -235,8 +262,16 @@ export const useAuth = () => {
         return;
       }
 
+      // Set persistence to LOCAL to keep user logged in
+      await setPersistence(auth, browserLocalPersistence);
+      
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // Get fresh token and store it
+      const token = await result.user.getIdToken(true);
+      localStorage.setItem('authToken', token);
+      
       toast.success('Successfully signed in with Google!');
     } catch (error: any) {
       console.error("Google sign in error:", error);
@@ -261,6 +296,7 @@ export const useAuth = () => {
       }
 
       await signOut(auth);
+      localStorage.removeItem('authToken');
       toast.success('Successfully signed out!');
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -271,6 +307,7 @@ export const useAuth = () => {
   return {
     user,
     loading,
+    authError,
     signIn,
     signUp,
     signInWithGoogle,

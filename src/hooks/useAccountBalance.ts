@@ -43,7 +43,9 @@ export const useAccountBalance = (userId: string | undefined) => {
               currentBalance: 0,
               totalPnL: 0,
               totalReturnPercent: 0,
-              lastUpdated: new Date()
+              lastUpdated: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date()
             };
             setAccountBalance(defaultBalance);
             localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
@@ -58,7 +60,9 @@ export const useAccountBalance = (userId: string | undefined) => {
           currentBalance: 0,
           totalPnL: 0,
           totalReturnPercent: 0,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
         };
         setAccountBalance(defaultBalance);
         localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
@@ -69,6 +73,14 @@ export const useAccountBalance = (userId: string | undefined) => {
 
     setLoading(true);
     setError(null);
+
+    // Get auth token from localStorage
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      setError('No authentication token found. Please sign in again.');
+      setLoading(false);
+      return;
+    }
 
     // Set up real-time listener for account balance
     const unsubscribe = onSnapshot(
@@ -84,7 +96,9 @@ export const useAccountBalance = (userId: string | undefined) => {
               currentBalance: data.currentBalance || data.startingBalance || 0,
               totalPnL: data.totalPnL || 0,
               totalReturnPercent: data.totalReturnPercent || 0,
-              lastUpdated: data.lastUpdated?.toDate() || new Date()
+              lastUpdated: data.lastUpdated?.toDate() || new Date(),
+              createdAt: data.createdAt?.toDate() || new Date(),
+              updatedAt: data.updatedAt?.toDate() || new Date()
             };
             setAccountBalance(balance);
             setHasSetupBalance(balance.startingBalance > 0);
@@ -96,7 +110,9 @@ export const useAccountBalance = (userId: string | undefined) => {
               currentBalance: 0,
               totalPnL: 0,
               totalReturnPercent: 0,
-              lastUpdated: new Date()
+              lastUpdated: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date()
             };
             
             try {
@@ -197,6 +213,12 @@ export const useAccountBalance = (userId: string | undefined) => {
         return;
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
       // Real Firebase mode
       await updateDoc(doc(db, 'accountBalances', userId), {
         ...updatedBalance,
@@ -266,6 +288,12 @@ export const useAccountBalance = (userId: string | undefined) => {
         return newCurrentBalance;
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+
       await updateDoc(doc(db, 'accountBalances', userId), {
         ...updatedBalance,
         updatedAt: serverTimestamp()
@@ -303,6 +331,12 @@ export const useAccountBalance = (userId: string | undefined) => {
         setAccountBalance(newBalance);
         localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(newBalance));
         return;
+      }
+
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
       }
 
       await updateDoc(doc(db, 'accountBalances', userId), {
