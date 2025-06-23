@@ -17,7 +17,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore, runTransaction, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Payment } from '../../types';
 import { format } from 'date-fns';
@@ -33,6 +33,7 @@ const PaymentManagement: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const toastIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const paymentsQuery = query(
@@ -50,9 +51,20 @@ const PaymentManagement: React.FC = () => {
             
             paymentsData.push({
               id: doc.id,
-              ...data,
+              userId: data.userId || '',
+              userEmail: data.userEmail || '',
+              userName: data.userName || '',
+              plan: data.plan || 'pro',
+              amount: data.amount || 0,
+              currency: data.currency || 'USD',
+              paymentMethod: data.paymentMethod || 'international',
+              accountDetails: data.accountDetails || {},
+              transactionId: data.transactionId || '',
+              status: data.status || 'pending',
               submittedAt: data.submittedAt?.toDate() || new Date(),
               reviewedAt: data.reviewedAt?.toDate() || null,
+              reviewedBy: data.reviewedBy || null,
+              adminNotes: data.adminNotes || null,
               createdAt: data.createdAt?.toDate() || new Date(),
               updatedAt: data.updatedAt?.toDate() || new Date()
             } as Payment);
@@ -86,6 +98,9 @@ const PaymentManagement: React.FC = () => {
     setIsProcessing(true);
     setError(null);
     
+    // Show loading toast
+    toastIdRef.current = toast.loading('Approving payment...');
+    
     try {
       const firestore = db || getFirestore();
       
@@ -93,6 +108,19 @@ const PaymentManagement: React.FC = () => {
       await runTransaction(firestore, async (transaction) => {
         // Update payment status
         const paymentRef = doc(firestore, 'payments', payment.id);
+        
+        // First check if the payment exists and is still pending
+        const paymentDoc = await transaction.get(paymentRef);
+        if (!paymentDoc.exists()) {
+          throw new Error('Payment not found');
+        }
+        
+        const paymentData = paymentDoc.data();
+        if (paymentData.status !== 'pending') {
+          throw new Error('Payment is no longer pending');
+        }
+        
+        // Update the payment document
         transaction.update(paymentRef, {
           status: 'approved',
           reviewedAt: new Date(),
@@ -104,20 +132,41 @@ const PaymentManagement: React.FC = () => {
         // Update user's plan if userId exists
         if (payment.userId) {
           const userRef = doc(firestore, 'users', payment.userId);
-          transaction.update(userRef, {
-            plan: payment.plan,
-            updatedAt: new Date()
-          });
+          
+          // Check if user exists
+          const userDoc = await transaction.get(userRef);
+          if (userDoc.exists()) {
+            transaction.update(userRef, {
+              plan: payment.plan,
+              updatedAt: new Date()
+            });
+          } else {
+            console.warn(`User ${payment.userId} not found, but payment was approved`);
+          }
         }
       });
 
-      toast.success('Payment approved successfully!');
+      // Update toast to success
+      if (toastIdRef.current) {
+        toast.success('Payment approved successfully!', { id: toastIdRef.current });
+        toastIdRef.current = null;
+      } else {
+        toast.success('Payment approved successfully!');
+      }
+      
       setSelectedPayment(null);
       setAdminNotes('');
     } catch (error: any) {
       console.error('Error approving payment:', error);
       setError(error.message || 'Failed to approve payment');
-      toast.error('Failed to approve payment: ' + (error.message || 'Unknown error'));
+      
+      // Update toast to error
+      if (toastIdRef.current) {
+        toast.error(`Failed to approve payment: ${error.message || 'Unknown error'}`, { id: toastIdRef.current });
+        toastIdRef.current = null;
+      } else {
+        toast.error(`Failed to approve payment: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -137,25 +186,58 @@ const PaymentManagement: React.FC = () => {
     setIsProcessing(true);
     setError(null);
     
+    // Show loading toast
+    toastIdRef.current = toast.loading('Rejecting payment...');
+    
     try {
       const firestore = db || getFirestore();
       const paymentRef = doc(firestore, 'payments', payment.id);
       
-      await updateDoc(paymentRef, {
-        status: 'rejected',
-        reviewedAt: new Date(),
-        reviewedBy: 'admin', // In real app, use actual admin user
-        adminNotes: adminNotes,
-        updatedAt: new Date()
+      // First check if the payment exists and is still pending
+      const paymentDoc = await firestore.runTransaction(async (transaction) => {
+        const doc = await transaction.get(paymentRef);
+        if (!doc.exists()) {
+          throw new Error('Payment not found');
+        }
+        
+        const paymentData = doc.data();
+        if (paymentData.status !== 'pending') {
+          throw new Error('Payment is no longer pending');
+        }
+        
+        // Update the payment document
+        transaction.update(paymentRef, {
+          status: 'rejected',
+          reviewedAt: new Date(),
+          reviewedBy: 'admin', // In real app, use actual admin user
+          adminNotes: adminNotes,
+          updatedAt: new Date()
+        });
+        
+        return doc;
       });
 
-      toast.success('Payment rejected');
+      // Update toast to success
+      if (toastIdRef.current) {
+        toast.success('Payment rejected successfully', { id: toastIdRef.current });
+        toastIdRef.current = null;
+      } else {
+        toast.success('Payment rejected successfully');
+      }
+      
       setSelectedPayment(null);
       setAdminNotes('');
     } catch (error: any) {
       console.error('Error rejecting payment:', error);
       setError(error.message || 'Failed to reject payment');
-      toast.error('Failed to reject payment: ' + (error.message || 'Unknown error'));
+      
+      // Update toast to error
+      if (toastIdRef.current) {
+        toast.error(`Failed to reject payment: ${error.message || 'Unknown error'}`, { id: toastIdRef.current });
+        toastIdRef.current = null;
+      } else {
+        toast.error(`Failed to reject payment: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -197,9 +279,9 @@ const PaymentManagement: React.FC = () => {
     const matchesStatus = !filterStatus || payment.status === filterStatus;
     const matchesMethod = !filterMethod || payment.paymentMethod === filterMethod;
     const matchesSearch = !searchTerm || 
-      payment.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.transactionId?.toLowerCase().includes(searchTerm.toLowerCase());
+      (payment.userName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (payment.userEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (payment.transactionId?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     return matchesStatus && matchesMethod && matchesSearch;
   });
@@ -209,8 +291,8 @@ const PaymentManagement: React.FC = () => {
       ['Date', 'User', 'Email', 'Plan', 'Amount', 'Currency', 'Method', 'Transaction ID', 'Status', 'Reviewed At', 'Admin Notes'].join(','),
       ...filteredPayments.map(payment => [
         format(payment.submittedAt, 'yyyy-MM-dd HH:mm'),
-        payment.userName,
-        payment.userEmail,
+        payment.userName || 'Unknown',
+        payment.userEmail || 'No email',
         payment.plan,
         payment.amount,
         payment.currency,
@@ -382,12 +464,12 @@ const PaymentManagement: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-xs font-semibold">
-                      {payment.userName?.charAt(0).toUpperCase() || 'U'}
+                      {(payment.userName || 'U').charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{payment.userName || 'Unknown'}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{payment.userEmail}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{payment.userEmail || 'No email'}</div>
                   </div>
                 </div>
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
@@ -480,7 +562,7 @@ const PaymentManagement: React.FC = () => {
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-semibold">
-                            {payment.userName?.charAt(0).toUpperCase() || 'U'}
+                            {(payment.userName || 'U').charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="ml-3">
@@ -593,24 +675,24 @@ const PaymentManagement: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Plan</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)}
+                      {selectedPayment.plan.charAt(0).toUpperCase() + selectedPayment.plan.slice(1)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Amount</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(payment.amount, payment.currency)}
+                      {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Payment Method</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {payment.paymentMethod === 'pakistan' ? 'Pakistan (NayaPay)' : 'International (Binance)'}
+                      {selectedPayment.paymentMethod === 'pakistan' ? 'Pakistan (NayaPay)' : 'International (Binance)'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Transaction ID</p>
-                    <p className="font-mono text-sm text-gray-900 dark:text-white">{payment.transactionId}</p>
+                    <p className="font-mono text-sm text-gray-900 dark:text-white">{selectedPayment.transactionId}</p>
                   </div>
                 </div>
               </div>
