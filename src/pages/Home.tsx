@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart, ChevronLeft } from "lucide-react";
+import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -24,6 +24,11 @@ const slideshowImages = [
     url: "https://images.pexels.com/photos/6781341/pexels-photo-6781341.jpeg?auto=compress&cs=tinysrgb&w=1200",
     alt: "Mobile Trading",
     caption: "Trade Anywhere, Anytime"
+  },
+  {
+    url: "https://images.pexels.com/photos/7567444/pexels-photo-7567444.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "Financial Analysis",
+    caption: "Master Your Trading Strategy"
   }
 ];
 
@@ -369,6 +374,7 @@ const Home: React.FC = () => {
                       src="https://images.pexels.com/photos/6770610/pexels-photo-6770610.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Trading Performance Chart" 
                       className="w-full h-auto rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 animate-chart-rise"
+                      loading="lazy"
                     />
                     <div className="chart-3d-shadow"></div>
                   </div>
