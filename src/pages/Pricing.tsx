@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Check, Star, Zap, ArrowRight, Shield, Headphones, Globe, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import PaymentModal from '../components/Payment/PaymentModal';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 const Pricing: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'pro'>('pro');
   const [selectedPrice, setSelectedPrice] = useState(0);
@@ -177,7 +178,8 @@ const Pricing: React.FC = () => {
 
   const handlePlanSelect = (plan: 'pro') => {
     if (!user) {
-      // Redirect to signup if not logged in
+      // Redirect to login if not logged in
+      navigate('/login');
       return;
     }
     
@@ -327,7 +329,7 @@ const Pricing: React.FC = () => {
 
                 {index === 0 ? (
                   <Link
-                    to={user ? "/dashboard" : "/signup"}
+                    to={user ? "/dashboard" : "/login"}
                     className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mb-8 inline-block transform hover:scale-105 ${plan.buttonStyle}`}
                   >
                     {plan.buttonText}
@@ -475,14 +477,14 @@ const Pricing: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to={user ? "/dashboard" : "/signup"}
+              to={user ? "/dashboard" : "/login"}
               className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 inline-flex items-center justify-center group"
             >
               {user ? "Go to Dashboard" : "Start Free Trial"}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              to="/contact"
+              to={user ? "/contact" : "/login"}
               className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-200"
             >
               Contact Sales

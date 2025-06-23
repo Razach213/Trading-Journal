@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, DollarSign, Target, Award } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrades } from '../hooks/useTrades';
@@ -25,6 +25,13 @@ const Dashboard: React.FC = () => {
   } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   const handleUpdateBalance = async (field: 'startingBalance' | 'currentBalance', newValue: number) => {
     if (field === 'startingBalance') {
       await updateStartingBalance(newValue);
@@ -35,7 +42,6 @@ const Dashboard: React.FC = () => {
 
   // Redirect to login if not authenticated
   if (!user) {
-    navigate('/login');
     return null;
   }
 

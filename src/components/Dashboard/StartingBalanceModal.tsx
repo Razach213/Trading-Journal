@@ -4,6 +4,7 @@ import { DollarSign, X, TrendingUp, Calculator, PiggyBank, BarChart3 } from 'luc
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import PricingButton from '../ui/PricingButton';
 
 interface StartingBalanceModalProps {
   onClose: () => void;
@@ -72,7 +73,7 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
           onClose();
         }
       };
-
+      
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
@@ -269,13 +270,13 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
 
               {/* Upgrade Button */}
               <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={handleUpgradeClick}
-                  className="w-full bg-blue-600 dark:bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors text-sm font-medium"
+                <PricingButton 
+                  variant="primary" 
+                  size="md"
+                  className="w-full"
                 >
                   Upgrade to Pro for Advanced Features
-                </button>
+                </PricingButton>
               </div>
             </div>
           )}
