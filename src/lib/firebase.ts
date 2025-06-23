@@ -29,30 +29,44 @@ try {
     throw new Error("Firebase configuration missing");
   }
 
+  // Initialize Firebase app first
   app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  functions = getFunctions(app);
+  
+  // Only initialize services if app was successfully created
+  if (app) {
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    functions = getFunctions(app);
 
-  // Set persistence to LOCAL to keep user logged in
-  auth.setPersistence('LOCAL');
+    // Set persistence to LOCAL to keep user logged in
+    if (auth) {
+      auth.setPersistence('LOCAL');
+    }
 
-  // Enable offline persistence for Firestore
-  db.enablePersistence({ synchronizeTabs: true })
-    .catch((err) => {
-      if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time
-        console.warn('Multiple tabs open, persistence only enabled in one tab');
-      } else if (err.code === 'unimplemented') {
-        // The current browser does not support all of the features required to enable persistence
-        console.warn('Persistence not supported in this browser');
-      }
-    });
+    // Enable offline persistence for Firestore
+    if (db) {
+      db.enablePersistence({ synchronizeTabs: true })
+        .catch((err) => {
+          if (err.code === 'failed-precondition') {
+            // Multiple tabs open, persistence can only be enabled in one tab at a time
+            console.warn('Multiple tabs open, persistence only enabled in one tab');
+          } else if (err.code === 'unimplemented') {
+            // The current browser does not support all of the features required to enable persistence
+            console.warn('Persistence not supported in this browser');
+          }
+        });
+    }
 
-  console.log("✅ Firebase initialized successfully");
+    console.log("✅ Firebase initialized successfully");
+  } else {
+    throw new Error("Failed to initialize Firebase app");
+  }
 } catch (error) {
   console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
+  
+  // Reset app to null to ensure clean state
+  app = null;
   
   // Create safe mock objects for demo mode
   auth = {
