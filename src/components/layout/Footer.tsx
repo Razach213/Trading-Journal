@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Twitter, Linkedin, Mail, Github, Instagram } from 'lucide-react';
+import { Zap, Twitter, Linkedin, Mail, Github, Instagram } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import Logo from '../ui/Logo';
 

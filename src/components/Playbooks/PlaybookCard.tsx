@@ -4,7 +4,6 @@ import { Eye, Edit2, Trash2, Share2, Lock, Globe, Calendar, Tag } from 'lucide-r
 import { Playbook } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import PricingButton from '../ui/PricingButton';
 
 interface PlaybookCardProps {
   playbook: Playbook;

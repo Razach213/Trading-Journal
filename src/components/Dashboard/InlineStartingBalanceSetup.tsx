@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import PricingButton from '../ui/PricingButton';
 
 interface InlineStartingBalanceSetupProps {
   onSubmit: (balance: number) => Promise<void>;
@@ -200,13 +199,13 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
               </div>
               
               {/* Upgrade Button */}
-              <PricingButton 
-                variant="outline" 
-                size="md"
-                className="w-full mt-2 border-white text-white hover:bg-white/20 dark:border-white dark:text-white dark:hover:bg-white/10"
+              <button
+                type="button"
+                onClick={handleUpgradeClick}
+                className="w-full bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors text-sm"
               >
                 Upgrade to Pro for Advanced Features
-              </PricingButton>
+              </button>
             </div>
           </div>
         </div>

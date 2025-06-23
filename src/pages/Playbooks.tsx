@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Plus, Search, Filter, BookOpen, Loader2, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePlaybooks } from '../hooks/usePlaybooks';
@@ -7,24 +7,15 @@ import PlaybookCard from '../components/Playbooks/PlaybookCard';
 import AddPlaybookModal from '../components/Playbooks/AddPlaybookModal';
 import PlaybookDetailModal from '../components/Playbooks/PlaybookDetailModal';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { useNavigate } from 'react-router-dom';
 
 const Playbooks: React.FC = () => {
   const { user, isDemoMode } = useAuth();
-  const navigate = useNavigate();
   const { playbooks, loading, error, addPlaybook, updatePlaybook, deletePlaybook } = usePlaybooks(user?.id);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
   const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStrategy, setFilterStrategy] = useState('');
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
 
   // Safe filter playbooks with error handling
   const filteredPlaybooks = React.useMemo(() => {
@@ -116,9 +107,16 @@ const Playbooks: React.FC = () => {
     }
   };
 
-  // Redirect to login if not authenticated
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Please sign in to access your playbooks
+          </h2>
+        </div>
+      </div>
+    );
   }
 
   return (

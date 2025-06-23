@@ -3,7 +3,6 @@ import { DollarSign, TrendingUp, TrendingDown, Calculator, Target } from 'lucide
 import InlineEditableBalance from './InlineEditableBalance';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import PricingButton from '../ui/PricingButton';
 
 interface AccountBalanceCardProps {
   startingBalance: number;
@@ -177,17 +176,6 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
         <p className="text-xs text-blue-200 dark:text-blue-300 opacity-75">
           💡 <span className="font-medium">Pro Tip:</span> Click on either balance to edit it inline
         </p>
-      </div>
-      
-      {/* Upgrade Button */}
-      <div className="mt-4 flex justify-center">
-        <PricingButton 
-          variant="outline" 
-          size="md"
-          className="border-white text-white hover:bg-white/20 dark:border-white dark:text-white dark:hover:bg-white/10"
-        >
-          Upgrade to Pro for Advanced Insights
-        </PricingButton>
       </div>
     </div>
   );

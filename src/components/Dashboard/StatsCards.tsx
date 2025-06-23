@@ -3,7 +3,6 @@ import { TrendingUp, TrendingDown, DollarSign, Target, Award, BarChart3 } from '
 import { TradingStats } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import PricingButton from '../ui/PricingButton';
 
 interface StatsCardsProps {
   stats: TradingStats;

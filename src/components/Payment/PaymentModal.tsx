@@ -40,9 +40,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [selectedLocation, setSelectedLocation] = useState<'pakistan' | 'international' | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [adminNotes, setAdminNotes] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const toastIdRef = React.useRef<string | null>(null);
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<PaymentFormData>();
   
