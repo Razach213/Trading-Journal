@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Zap, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
-import Logo from '../components/ui/Logo';
 
 interface LoginFormData {
   email: string;
@@ -15,25 +14,14 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
-  const { signIn, signInWithGoogle, isDemoMode, user } = useAuth();
+  const { signIn, signInWithGoogle, isDemoMode } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Get the redirect path from location state or default to dashboard
-  const from = location.state?.from?.pathname || '/dashboard';
-  
-  // If user is already logged in, redirect to the intended destination
-  useEffect(() => {
-    if (user) {
-      navigate(from, { replace: true });
-    }
-  }, [user, navigate, from]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
       await signIn(data.email, data.password);
-      navigate(from, { replace: true });
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -45,7 +33,7 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      navigate(from, { replace: true });
+      navigate('/dashboard');
     } catch (error) {
       console.error('Google sign in error:', error);
     } finally {
@@ -57,7 +45,13 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <Logo size="lg" withText={true} />
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Zap className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+            </div>
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">ZellaX</span>
+          </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           Sign in to your account

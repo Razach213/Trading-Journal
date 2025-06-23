@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -24,7 +24,7 @@ let functions = null;
 
 try {
   // Check if we have a valid API key
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key" || firebaseConfig.apiKey === "your-firebase-api-key-here") {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
     console.warn("⚠️ Firebase not configured. Using demo mode.");
     throw new Error("Firebase configuration missing");
   }
@@ -34,18 +34,6 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   functions = getFunctions(app);
-
-  // Set persistence to LOCAL to keep user logged in
-  // This helps prevent the "sign in again" issue
-  if (auth) {
-    setPersistence(auth, browserLocalPersistence)
-      .then(() => {
-        console.log("✅ Firebase persistence set to LOCAL");
-      })
-      .catch((error) => {
-        console.error("❌ Error setting persistence:", error);
-      });
-  }
 
   console.log("✅ Firebase initialized successfully");
 } catch (error) {
@@ -62,8 +50,7 @@ try {
     signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     signInWithPopup: () => Promise.reject(new Error("Demo mode")),
-    signOut: () => Promise.reject(new Error("Demo mode")),
-    setPersistence: () => Promise.resolve()
+    signOut: () => Promise.reject(new Error("Demo mode"))
   };
 
   db = null;

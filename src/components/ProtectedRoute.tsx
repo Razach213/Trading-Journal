@@ -12,11 +12,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Add a longer delay to ensure auth state is properly checked
+  // Add a small delay to ensure auth state is properly checked
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsCheckingAuth(false);
-    }, 2000);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [user, loading]);

@@ -76,8 +76,6 @@ const Settings: React.FC = () => {
               ...data,
               submittedAt: data.submittedAt?.toDate() || new Date(),
               reviewedAt: data.reviewedAt?.toDate() || null,
-              expiryDate: data.expiryDate?.toDate() || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-              isYearly: data.isYearly || false,
               createdAt: data.createdAt?.toDate() || new Date(),
               updatedAt: data.updatedAt?.toDate() || new Date()
             } as Payment);
@@ -167,7 +165,15 @@ const Settings: React.FC = () => {
 
   // Only redirect if we're sure the user is not authenticated
   if (!authLoading && !user) {
-    return null; // We'll redirect in the useEffect
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Please sign in to access your settings
+          </h2>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -509,13 +515,13 @@ const Settings: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Plan</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedPayment.plan.charAt(0).toUpperCase() + selectedPayment.plan.slice(1)} ({selectedPayment.isYearly ? 'Yearly' : 'Monthly'})
+                      {selectedPayment.plan.charAt(0).toUpperCase() + selectedPayment.plan.slice(1)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Amount</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedPayment.currency === 'PKR' ? '₨' : '$'}{selectedPayment.amount.toLocaleString()}
+                      {selectedPayment.currency === 'PKR' ? '₨' : '$'}{selectedPayment.amount}
                     </p>
                   </div>
                   <div>
@@ -532,12 +538,6 @@ const Settings: React.FC = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Submitted At</p>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {format(selectedPayment.submittedAt, 'PPP p')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Expiry Date</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {format(selectedPayment.expiryDate, 'PPP')}
                     </p>
                   </div>
                   <div>
