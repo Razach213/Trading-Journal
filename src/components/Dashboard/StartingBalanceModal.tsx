@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { DollarSign, X, TrendingUp, Calculator, PiggyBank, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 
 interface StartingBalanceModalProps {
   onClose: () => void;
@@ -26,8 +24,6 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
   const firstInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const navigate = useNavigate();
-  const { user } = useAuth();
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
@@ -128,15 +124,6 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
-  };
-
-  const handleUpgradeClick = () => {
-    if (!user) {
-      navigate('/login');
-    } else {
-      navigate('/pricing');
-    }
-    onClose();
   };
 
   return (
@@ -267,15 +254,26 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
                 </p>
               </div>
 
-              {/* Upgrade Button */}
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={handleUpgradeClick}
-                  className="w-full bg-blue-600 dark:bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  Upgrade to Pro for Advanced Features
-                </button>
+              {/* Performance Metrics */}
+              <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-purple-800 dark:text-purple-300">Performance Metrics</span>
+                </div>
+                <p className="text-xs text-purple-700 dark:text-purple-400">
+                  Win rate, profit factor, and return calculations
+                </p>
+              </div>
+
+              {/* Growth Tracking */}
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-blue-800 dark:text-blue-300">Growth Tracking</span>
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-400">
+                  Monitor your account growth over time
+                </p>
               </div>
             </div>
           )}

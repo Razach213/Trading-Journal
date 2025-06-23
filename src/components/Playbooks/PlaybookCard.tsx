@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Eye, Edit2, Trash2, Share2, Lock, Globe, Calendar, Tag } from 'lucide-react';
 import { Playbook } from '../../types';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 
 interface PlaybookCardProps {
   playbook: Playbook;
@@ -14,20 +12,10 @@ interface PlaybookCardProps {
 
 const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onView, onEdit, onDelete }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const navigate = useNavigate();
-  const { user } = useAuth();
 
   const handleDelete = () => {
     onDelete(playbook.id);
     setShowDeleteConfirm(false);
-  };
-
-  const handleUpgradeClick = () => {
-    if (!user) {
-      navigate('/login');
-    } else {
-      navigate('/pricing');
-    }
   };
 
   return (
@@ -133,13 +121,6 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onView, onEdit, o
                 title="Delete playbook"
               >
                 <Trash2 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleUpgradeClick}
-                className="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                title="Upgrade for more features"
-              >
-                <Share2 className="h-4 w-4" />
               </button>
             </div>
           </div>

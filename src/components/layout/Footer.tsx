@@ -1,12 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Zap, Twitter, Linkedin, Mail, Github, Instagram } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import Logo from '../ui/Logo';
 
 const Footer: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -14,12 +11,16 @@ const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-white">
+    <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-6">
-              <Logo size="md" withText={true} />
+              <div className="relative">
+                <Zap className="h-8 w-8 text-blue-400" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+              </div>
+              <span className="text-2xl font-bold">ZellaX</span>
             </div>
             <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
               The most advanced trading journal to track, analyze, and improve your trading performance. 
@@ -79,7 +80,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation(user ? '/pricing' : '/login')}
+                  onClick={() => handleNavigation('/pricing')}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Pricing
@@ -87,7 +88,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation(user ? '/dashboard' : '/login')}
+                  onClick={() => handleNavigation('/dashboard')}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Dashboard

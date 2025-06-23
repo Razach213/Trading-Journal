@@ -1,8 +1,6 @@
 import React from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Calculator, Target } from 'lucide-react';
 import InlineEditableBalance from './InlineEditableBalance';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 
 interface AccountBalanceCardProps {
   startingBalance: number;
@@ -19,9 +17,6 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
   totalReturn,
   onUpdateBalance
 }) => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -32,14 +27,6 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
 
   const formatPercentage = (value: number) => {
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-  };
-
-  const handleUpgradeClick = () => {
-    if (!user) {
-      navigate('/login');
-    } else {
-      navigate('/pricing');
-    }
   };
 
   return (
@@ -163,10 +150,10 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
             {totalReturn >= 10 ? 'Excellent' : totalReturn >= 5 ? 'Good' : totalReturn >= 0 ? 'Positive' : 'Negative'}
           </div>
         </div>
-        <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors cursor-pointer" onClick={handleUpgradeClick}>
-          <div className="text-xs text-blue-200 dark:text-blue-300">Upgrade Plan</div>
+        <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
+          <div className="text-xs text-blue-200 dark:text-blue-300">Status</div>
           <div className="text-sm font-bold">
-            Pro Features
+            {totalPnL >= 0 ? 'Profitable' : 'Loss'}
           </div>
         </div>
       </div>

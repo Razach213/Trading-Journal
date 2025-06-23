@@ -1,17 +1,12 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Target, Award, BarChart3 } from 'lucide-react';
 import { TradingStats } from '../../types';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 
 interface StatsCardsProps {
   stats: TradingStats;
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined || isNaN(amount)) {
       return '$0.00';
@@ -35,14 +30,6 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
       return '0.00';
     }
     return value.toFixed(decimals);
-  };
-
-  const handleUpgradeClick = () => {
-    if (!user) {
-      navigate('/login');
-    } else {
-      navigate('/pricing');
-    }
   };
 
   // Safe calculations with null checks
@@ -105,11 +92,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       {cards.map((card, index) => (
-        <div 
-          key={index} 
-          className={`${card.bgColor} rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${index === 3 ? 'cursor-pointer' : ''}`}
-          onClick={index === 3 ? handleUpgradeClick : undefined}
-        >
+        <div key={index} className={`${card.bgColor} rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{card.title}</p>
@@ -159,11 +142,10 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
                 )}
                 {card.title === 'Profit Factor' && (
                   <span>
-                    {index === 3 ? 'Click to upgrade plan' : (
-                      profitFactor > 0 
-                        ? `Wins/Losses ratio: ${formatNumber(profitFactor)}`
-                        : 'Complete profitable trades'
-                    )}
+                    {profitFactor > 0 
+                      ? `Wins/Losses ratio: ${formatNumber(profitFactor)}`
+                      : 'Complete profitable trades'
+                    }
                   </span>
                 )}
               </div>
