@@ -10,11 +10,12 @@ import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
 import InlineStartingBalanceSetup from '../components/Dashboard/InlineStartingBalanceSetup';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
   const { 
     accountBalance, 
@@ -33,9 +34,26 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Redirect to login if not authenticated
-  if (!user) {
-    navigate('/login');
+  // Wait for auth to be checked before redirecting
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Loading your dashboard...
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Setting up your trading environment
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only redirect if we're sure the user is not authenticated
+  if (!authLoading && !user) {
+    navigate('/login', { state: { from: location } });
     return null;
   }
 
@@ -167,14 +185,6 @@ const Dashboard: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Upgrade Button */}
-                    <button
-                      onClick={() => navigate(user ? '/pricing' : '/login')}
-                      className="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
-                    >
-                      Upgrade to Pro for Advanced Insights
-                    </button>
                   </div>
                 </div>
               </div>

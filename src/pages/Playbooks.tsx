@@ -7,15 +7,25 @@ import PlaybookCard from '../components/Playbooks/PlaybookCard';
 import AddPlaybookModal from '../components/Playbooks/AddPlaybookModal';
 import PlaybookDetailModal from '../components/Playbooks/PlaybookDetailModal';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Playbooks: React.FC = () => {
-  const { user, isDemoMode } = useAuth();
+  const { user, isDemoMode, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { playbooks, loading, error, addPlaybook, updatePlaybook, deletePlaybook } = usePlaybooks(user?.id);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
   const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStrategy, setFilterStrategy] = useState('');
+
+  // Wait for auth to be checked before redirecting
+  React.useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login', { state: { from: location } });
+    }
+  }, [user, authLoading, navigate, location]);
 
   // Safe filter playbooks with error handling
   const filteredPlaybooks = React.useMemo(() => {
@@ -107,16 +117,21 @@ const Playbooks: React.FC = () => {
     }
   };
 
-  if (!user) {
+  // Show loading state while checking authentication
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Please sign in to access your playbooks
-          </h2>
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading your playbooks...</p>
         </div>
       </div>
     );
+  }
+
+  // Only redirect if we're sure the user is not authenticated
+  if (!authLoading && !user) {
+    return null; // We'll redirect in the useEffect
   }
 
   return (
