@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, MapPin, Globe, Copy, Check, CreditCard, Building, AlertCircle, Loader2 } from 'lucide-react';
+import { X, MapPin, Globe, Copy, Check, CreditCard, Building, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import toast from 'react-hot-toast';
 
 interface PaymentModalProps {
   onClose: () => void;
-  selectedPlan: 'pro' | 'premium';
+  selectedPlan: 'pro';
   planPrice: number;
+  isYearly: boolean;
+  pkrRate: number;
 }
 
 interface PaymentFormData {
@@ -18,7 +20,13 @@ interface PaymentFormData {
   confirmTerms: boolean;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, planPrice }) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ 
+  onClose, 
+  selectedPlan, 
+  planPrice, 
+  isYearly,
+  pkrRate 
+}) => {
   const { user } = useAuth();
   const [step, setStep] = useState<'location' | 'payment' | 'confirmation'>('location');
   const [selectedLocation, setSelectedLocation] = useState<'pakistan' | 'international' | null>(null);
@@ -42,6 +50,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
     name: 'Thealiraza2'
   };
 
+  // Calculate expiry date based on plan
+  const calculateExpiryDate = () => {
+    const now = new Date();
+    if (isYearly) {
+      // Add 12 months
+      return new Date(now.setFullYear(now.getFullYear() + 1));
+    } else {
+      // Add 1 month
+      return new Date(now.setMonth(now.getMonth() + 1));
+    }
+  };
+
   const copyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -63,12 +83,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
 
     setIsSubmitting(true);
     try {
+      // Calculate expiry date
+      const expiryDate = calculateExpiryDate();
+      
+      // Calculate local currency amount
+      const amount = selectedLocation === 'pakistan' 
+        ? (isYearly ? planPrice * pkrRate : planPrice * pkrRate) 
+        : planPrice;
+      
       const paymentData = {
         userId: user.id,
         userEmail: user.email,
         userName: user.displayName,
         plan: selectedPlan,
-        amount: planPrice,
+        amount: amount,
         currency: selectedLocation === 'pakistan' ? 'PKR' : 'USD',
         paymentMethod: selectedLocation,
         accountDetails: selectedLocation === 'pakistan' ? {
@@ -82,6 +110,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
         transactionId: data.transactionId.trim(),
         status: 'pending',
         submittedAt: new Date(),
+        isYearly: isYearly,
+        expiryDate: expiryDate,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
@@ -103,6 +133,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
     setSelectedLocation(null);
   };
 
+  // Format currency with proper symbol
+  const formatCurrency = (amount: number, currency: string) => {
+    const symbol = currency === 'PKR' ? '₨' : '$';
+    return `${symbol}${amount.toLocaleString()}`;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl">
@@ -116,8 +152,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {step === 'location' && 'Choose your location to see available payment options'}
-              {step === 'payment' && `Amount: ${selectedLocation === 'pakistan' ? '₨' : '$'}${planPrice}`}
-              {step === 'confirmation' && 'Your payment is under review'}
+              {step === 'payment' && selectedLocation === 'pakistan' 
+                ? `Amount: ₨${(planPrice * pkrRate).toLocaleString()} (${isYearly ? 'Yearly' : 'Monthly'})`
+                : step === 'payment' ? `Amount: $${planPrice.toLocaleString()} (${isYearly ? 'Yearly' : 'Monthly'})` 
+                : 'Your payment is under review'}
             </p>
           </div>
           <button
@@ -159,6 +197,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                     <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm font-medium">
                       NayaPay • Bank Transfer
                     </div>
+                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                      {isYearly 
+                        ? `₨${pkrYearlyPrice.toLocaleString()} (yearly)` 
+                        : `₨${pkrMonthlyPrice.toLocaleString()} (monthly)`}
+                    </div>
                   </div>
                 </button>
 
@@ -178,6 +221,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                     <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium">
                       Binance • Cryptocurrency
                     </div>
+                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                      {isYearly 
+                        ? `$${yearlyPrice.toLocaleString()} (yearly)` 
+                        : `$${baseMonthlyPrice.toLocaleString()} (monthly)`}
+                    </div>
                   </div>
                 </button>
               </div>
@@ -195,6 +243,46 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 ← Back to location selection
               </button>
 
+              {/* Subscription Details */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+                  Subscription Details
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 dark:text-gray-300">Plan:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 dark:text-gray-300">Duration:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {isYearly ? '12 months' : '1 month'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 dark:text-gray-300">Amount:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {selectedLocation === 'pakistan' 
+                        ? formatCurrency(isYearly ? pkrYearlyPrice : pkrMonthlyPrice, 'PKR')
+                        : formatCurrency(isYearly ? yearlyPrice : baseMonthlyPrice, 'USD')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 dark:text-gray-300">Expires on:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {calculateExpiryDate().toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-3 text-sm text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 p-2 rounded">
+                  <AlertCircle className="h-4 w-4 inline-block mr-1" />
+                  Your subscription will automatically expire after {isYearly ? '12 months' : '1 month'}. You'll need to manually renew to continue.
+                </div>
+              </div>
+
               {/* Payment Instructions */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 md:p-6">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -205,7 +293,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 {selectedLocation === 'pakistan' ? (
                   <div className="space-y-4">
                     <p className="text-gray-700 dark:text-gray-300">
-                      Please transfer <strong>₨{planPrice}</strong> to the following account:
+                      Please transfer <strong>₨{(isYearly ? pkrYearlyPrice : pkrMonthlyPrice).toLocaleString()}</strong> to the following account:
                     </p>
                     
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
@@ -254,7 +342,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 ) : (
                   <div className="space-y-4">
                     <p className="text-gray-700 dark:text-gray-300">
-                      Please send <strong>${planPrice} USD</strong> to the following Binance account:
+                      Please send <strong>${(isYearly ? yearlyPrice : baseMonthlyPrice).toLocaleString()} USD</strong> to the following Binance account:
                     </p>
                     
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
@@ -373,6 +461,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 <p className="text-gray-600 dark:text-gray-400">
                   Your payment has been submitted for review. We will verify your transaction and activate your {selectedPlan} plan within 24 hours.
                 </p>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Subscription Details</h4>
+                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1 text-left">
+                  <li>• Plan: {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</li>
+                  <li>• Duration: {isYearly ? '12 months' : '1 month'}</li>
+                  <li>• Expires on: {calculateExpiryDate().toLocaleDateString()}</li>
+                  <li>• You'll receive a renewal reminder 2 days before expiry</li>
+                </ul>
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">

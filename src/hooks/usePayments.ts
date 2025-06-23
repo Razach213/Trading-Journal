@@ -61,6 +61,8 @@ export const usePayments = (userId: string | undefined) => {
                 reviewedAt: data.reviewedAt?.toDate() || null,
                 reviewedBy: data.reviewedBy || null,
                 adminNotes: data.adminNotes || null,
+                isYearly: data.isYearly || false,
+                expiryDate: data.expiryDate?.toDate() || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                 createdAt: data.createdAt?.toDate() || new Date(),
                 updatedAt: data.updatedAt?.toDate() || new Date()
               };
@@ -107,8 +109,14 @@ export const usePayments = (userId: string | undefined) => {
         throw new Error('User not authenticated');
       }
 
+      // Calculate expiry date
+      const expiryDate = paymentData.isYearly 
+        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 1 month
+
       const payment = {
         ...paymentData,
+        expiryDate,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };

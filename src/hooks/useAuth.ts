@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { User } from '../types';
 import toast from 'react-hot-toast';
@@ -43,6 +43,31 @@ export const useAuth = () => {
       try {
         if (firebaseUser) {
           const userData = await getUserData(firebaseUser);
+          
+          // Check if subscription has expired
+          if (userData.subscription && userData.subscription.expiresAt) {
+            const expiryDate = new Date(userData.subscription.expiresAt);
+            const now = new Date();
+            
+            if (now > expiryDate && userData.subscription.status === 'active') {
+              // Subscription has expired, update user data
+              await updateDoc(doc(db, 'users', firebaseUser.uid), {
+                plan: 'free',
+                'subscription.status': 'expired',
+                updatedAt: serverTimestamp()
+              });
+              
+              // Update local user data
+              userData.plan = 'free';
+              if (userData.subscription) {
+                userData.subscription.status = 'expired';
+              }
+              
+              // Notify user
+              toast.error('Your subscription has expired. Please renew to access premium features.');
+            }
+          }
+          
           setUser(userData);
         } else {
           setUser(null);
@@ -76,7 +101,14 @@ export const useAuth = () => {
           plan: data.plan || 'free',
           accountBalance: data.accountBalance || 0,
           currentBalance: data.currentBalance || 0,
-          createdAt: data.createdAt?.toDate() || new Date()
+          createdAt: data.createdAt?.toDate() || new Date(),
+          subscription: data.subscription ? {
+            plan: data.subscription.plan || 'pro',
+            status: data.subscription.status || 'active',
+            startedAt: data.subscription.startedAt?.toDate() || new Date(),
+            expiresAt: data.subscription.expiresAt?.toDate() || new Date(),
+            isYearly: data.subscription.isYearly || false
+          } : undefined
         };
       } else {
         const newUser: User = {
@@ -90,7 +122,11 @@ export const useAuth = () => {
           createdAt: new Date()
         };
         
-        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          ...newUser,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
         return newUser;
       }
     } catch (error) {
@@ -168,7 +204,11 @@ export const useAuth = () => {
       };
       
       if (db) {
-        await setDoc(doc(db, 'users', result.user.uid), newUser);
+        await setDoc(doc(db, 'users', result.user.uid), {
+          ...newUser,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
       }
       
       toast.success('Account created successfully!');

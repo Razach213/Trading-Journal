@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, AlertCircle, Eye, Calendar } from 'lucide-react';
 import { Payment } from '../../types';
 import { format } from 'date-fns';
 
@@ -47,7 +47,7 @@ const PaymentStatusCard: React.FC<PaymentStatusCardProps> = ({ payment, onViewDe
           {getStatusIcon()}
           <div>
             <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
-              {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)} Plan
+              {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)} Plan {payment.isYearly ? '(Yearly)' : '(Monthly)'}
             </h3>
             <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               {formatCurrency(payment.amount, payment.currency)} • {payment.paymentMethod === 'pakistan' ? 'Pakistan' : 'International'}
@@ -70,6 +70,13 @@ const PaymentStatusCard: React.FC<PaymentStatusCardProps> = ({ payment, onViewDe
           <span className="text-gray-600 dark:text-gray-400">Submitted:</span>
           <span className="text-gray-900 dark:text-white">
             {format(payment.submittedAt, 'MMM dd, yyyy')}
+          </span>
+        </div>
+
+        <div className="flex justify-between text-xs md:text-sm">
+          <span className="text-gray-600 dark:text-gray-400">Expires:</span>
+          <span className="text-gray-900 dark:text-white">
+            {format(payment.expiryDate, 'MMM dd, yyyy')}
           </span>
         </div>
 

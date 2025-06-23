@@ -17,7 +17,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore, runTransaction, writeBatch, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore, runTransaction, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Payment } from '../../types';
 import { format } from 'date-fns';
@@ -65,6 +65,8 @@ const PaymentManagement: React.FC = () => {
               reviewedAt: data.reviewedAt?.toDate() || null,
               reviewedBy: data.reviewedBy || null,
               adminNotes: data.adminNotes || null,
+              isYearly: data.isYearly || false,
+              expiryDate: data.expiryDate?.toDate() || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
               createdAt: data.createdAt?.toDate() || new Date(),
               updatedAt: data.updatedAt?.toDate() || new Date()
             } as Payment);
@@ -141,11 +143,25 @@ const PaymentManagement: React.FC = () => {
           updatedAt: new Date()
         });
         
-        // Update user's plan if user exists
+        // Update user's plan and subscription if user exists
         if (payment.userId && userDoc && userDoc.exists()) {
           const userRef = doc(firestore, 'users', payment.userId);
+          
+          // Calculate expiry date based on payment details
+          const now = new Date();
+          const expiryDate = payment.isYearly 
+            ? new Date(now.setFullYear(now.getFullYear() + 1)) 
+            : new Date(now.setMonth(now.getMonth() + 1));
+          
           transaction.update(userRef, {
             plan: payment.plan,
+            subscription: {
+              plan: payment.plan,
+              status: 'active',
+              startedAt: new Date(),
+              expiresAt: expiryDate,
+              isYearly: payment.isYearly
+            },
             updatedAt: new Date()
           });
         }
@@ -293,7 +309,7 @@ const PaymentManagement: React.FC = () => {
 
   const exportPayments = () => {
     const csvContent = [
-      ['Date', 'User', 'Email', 'Plan', 'Amount', 'Currency', 'Method', 'Transaction ID', 'Status', 'Reviewed At', 'Admin Notes'].join(','),
+      ['Date', 'User', 'Email', 'Plan', 'Amount', 'Currency', 'Method', 'Transaction ID', 'Status', 'Reviewed At', 'Admin Notes', 'Expiry Date', 'Is Yearly'].join(','),
       ...filteredPayments.map(payment => [
         format(payment.submittedAt, 'yyyy-MM-dd HH:mm'),
         payment.userName || 'Unknown',
@@ -305,7 +321,9 @@ const PaymentManagement: React.FC = () => {
         payment.transactionId,
         payment.status,
         payment.reviewedAt ? format(payment.reviewedAt, 'yyyy-MM-dd HH:mm') : '',
-        payment.adminNotes || ''
+        payment.adminNotes || '',
+        payment.expiryDate ? format(payment.expiryDate, 'yyyy-MM-dd') : '',
+        payment.isYearly ? 'Yes' : 'No'
       ].join(','))
     ].join('\n');
 
@@ -487,7 +505,7 @@ const PaymentManagement: React.FC = () => {
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Plan:</span>
                   <span className="ml-1 font-medium text-gray-900 dark:text-white">
-                    {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)}
+                    {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)} {payment.isYearly ? '(Yearly)' : '(Monthly)'}
                   </span>
                 </div>
                 <div>
@@ -552,7 +570,7 @@ const PaymentManagement: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Plan</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Transaction ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Expiry</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -577,11 +595,8 @@ const PaymentManagement: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        payment.plan === 'premium' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
-                        'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                      }`}>
-                        {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)}
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                        {payment.plan.charAt(0).toUpperCase() + payment.plan.slice(1)} {payment.isYearly ? '(Yearly)' : '(Monthly)'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
@@ -599,8 +614,8 @@ const PaymentManagement: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
-                      {payment.transactionId}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      {format(payment.expiryDate, 'MMM dd, yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
@@ -680,7 +695,7 @@ const PaymentManagement: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Plan</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedPayment.plan.charAt(0).toUpperCase() + selectedPayment.plan.slice(1)}
+                      {selectedPayment.plan.charAt(0).toUpperCase() + selectedPayment.plan.slice(1)} ({selectedPayment.isYearly ? 'Yearly' : 'Monthly'})
                     </p>
                   </div>
                   <div>
@@ -698,6 +713,12 @@ const PaymentManagement: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Transaction ID</p>
                     <p className="font-mono text-sm text-gray-900 dark:text-white">{selectedPayment.transactionId}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Expiry Date</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {format(selectedPayment.expiryDate, 'PPP')}
+                    </p>
                   </div>
                 </div>
               </div>
