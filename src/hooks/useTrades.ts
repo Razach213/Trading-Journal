@@ -230,6 +230,12 @@ export const useTrades = (userId: string | undefined) => {
         const updatedTrades = [newTrade, ...trades];
         setTrades(updatedTrades);
         localStorage.setItem(`demoTrades_${userId}`, JSON.stringify(updatedTrades));
+        
+        // Update balance if it's a closed trade with P&L
+        if (newTrade.status === 'closed' && newTrade.pnl !== null && newTrade.pnl !== undefined) {
+          await updateBalanceFromTrade(newTrade.pnl);
+        }
+        
         calculateStats(updatedTrades);
         toast.success('Trade added successfully! (Demo Mode)');
         return;
@@ -289,9 +295,26 @@ export const useTrades = (userId: string | undefined) => {
 
       if (isDemoMode) {
         // Demo mode - update in localStorage
+        const originalTrade = trades.find(t => t.id === tradeId);
+        if (!originalTrade) {
+          throw new Error('Original trade not found');
+        }
+        
         const updatedTrades = trades.map(trade => 
           trade.id === tradeId ? { ...trade, ...updates, updatedAt: new Date() } : trade
         );
+        
+        // Handle P&L changes for balance updates
+        if (updates.pnl !== undefined && updates.status === 'closed') {
+          const originalPnL = originalTrade.status === 'closed' ? (originalTrade.pnl || 0) : 0;
+          const newPnL = updates.pnl || 0;
+          const pnlDifference = newPnL - originalPnL;
+          
+          if (pnlDifference !== 0) {
+            await updateBalanceFromTrade(pnlDifference);
+          }
+        }
+        
         setTrades(updatedTrades);
         localStorage.setItem(`demoTrades_${userId}`, JSON.stringify(updatedTrades));
         calculateStats(updatedTrades);
@@ -323,7 +346,7 @@ export const useTrades = (userId: string | undefined) => {
       }, {} as any);
 
       // Handle balance update if P&L changed and trade is closed
-      if (cleanUpdates.pnl !== undefined && cleanUpdates.status === 'closed') {
+      if (cleanUpdates.pnl !== undefined && (cleanUpdates.status === 'closed' || originalTrade.status === 'closed')) {
         const originalPnL = originalTrade.status === 'closed' ? (originalTrade.pnl || 0) : 0;
         const newPnL = cleanUpdates.pnl || 0;
         const pnlDifference = newPnL - originalPnL;
@@ -352,10 +375,19 @@ export const useTrades = (userId: string | undefined) => {
       }
 
       if (isDemoMode) {
+        // Find the trade to reverse its P&L effect
+        const tradeToDelete = trades.find(t => t.id === tradeId);
+        
         // Demo mode - remove from localStorage
         const updatedTrades = trades.filter(trade => trade.id !== tradeId);
         setTrades(updatedTrades);
         localStorage.setItem(`demoTrades_${userId}`, JSON.stringify(updatedTrades));
+        
+        // Reverse the P&L effect on balance
+        if (tradeToDelete && tradeToDelete.status === 'closed' && tradeToDelete.pnl) {
+          await updateBalanceFromTrade(-tradeToDelete.pnl);
+        }
+        
         calculateStats(updatedTrades);
         toast.success('Trade deleted successfully! (Demo Mode)');
         return;
