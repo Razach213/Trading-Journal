@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -24,7 +24,7 @@ let functions = null;
 
 try {
   // Check if we have a valid API key
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key" || firebaseConfig.apiKey === "your-firebase-api-key-here") {
     console.warn("⚠️ Firebase not configured. Using demo mode.");
     throw new Error("Firebase configuration missing");
   }

@@ -3,10 +3,12 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signInWithPopup,
-  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -167,6 +169,9 @@ export const useAuth = () => {
         return;
       }
       
+      // Set persistence to LOCAL before signing in
+      await setPersistence(auth, browserLocalPersistence);
+      
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Successfully signed in!');
     } catch (error: any) {
@@ -191,6 +196,9 @@ export const useAuth = () => {
         toast.success('✅ Account created successfully (Demo Mode)');
         return;
       }
+
+      // Set persistence to LOCAL before signing up
+      await setPersistence(auth, browserLocalPersistence);
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const newUser: User = {
@@ -234,6 +242,9 @@ export const useAuth = () => {
         toast.success('✅ Signed in with Google (Demo Mode)');
         return;
       }
+
+      // Set persistence to LOCAL before signing in with Google
+      await setPersistence(auth, browserLocalPersistence);
 
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
