@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -38,7 +38,13 @@ try {
   // Set persistence to LOCAL to keep user logged in
   // This helps prevent the "sign in again" issue
   if (auth) {
-    auth.setPersistence('local');
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        console.log("✅ Firebase persistence set to LOCAL");
+      })
+      .catch((error) => {
+        console.error("❌ Error setting persistence:", error);
+      });
   }
 
   console.log("✅ Firebase initialized successfully");
