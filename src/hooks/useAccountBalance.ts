@@ -246,6 +246,8 @@ export const useAccountBalance = (userId: string | undefined) => {
         toast.error('Permission denied. Please sign in again.');
       } else if (error.code === 'unavailable') {
         toast.error('Service unavailable. Please check your internet connection.');
+      } else if (error.message?.includes('No authentication token found')) {
+        toast.error('Authentication error. Please sign in again.');
       } else {
         toast.error(`Failed to update ${field}. Please try again.`);
       }
