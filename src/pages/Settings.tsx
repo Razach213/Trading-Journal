@@ -27,7 +27,7 @@ import toast from 'react-hot-toast';
 import PaymentStatusCard from '../components/Payment/PaymentStatusCard';
 
 const Settings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -39,51 +39,60 @@ const Settings: React.FC = () => {
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
+  // Wait for auth to be checked before redirecting
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       navigate('/login');
-      return;
     }
+  }, [user, authLoading, navigate]);
 
-    setDisplayName(user.displayName || '');
-    setEmail(user.email || '');
-  }, [user, navigate]);
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.displayName || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
 
   // Fetch user's payments
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) return;
 
-    const paymentsQuery = query(
-      collection(db, 'payments'),
-      where('userId', '==', user.id),
-      orderBy('submittedAt', 'desc')
-    );
+    try {
+      const paymentsQuery = query(
+        collection(db, 'payments'),
+        where('userId', '==', user.id),
+        orderBy('submittedAt', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
-      const paymentsData: Payment[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        paymentsData.push({
-          id: doc.id,
-          ...data,
-          submittedAt: data.submittedAt?.toDate() || new Date(),
-          reviewedAt: data.reviewedAt?.toDate() || null,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Payment);
+      const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
+        const paymentsData: Payment[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          paymentsData.push({
+            id: doc.id,
+            ...data,
+            submittedAt: data.submittedAt?.toDate() || new Date(),
+            reviewedAt: data.reviewedAt?.toDate() || null,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date()
+          } as Payment);
+        });
+        setPayments(paymentsData);
+        setPaymentsLoading(false);
+      }, (error) => {
+        console.error('Error fetching payments:', error);
+        setPaymentsLoading(false);
       });
-      setPayments(paymentsData);
-      setPaymentsLoading(false);
-    }, (error) => {
-      console.error('Error fetching payments:', error);
-      setPaymentsLoading(false);
-    });
 
-    return unsubscribe;
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up payments listener:', error);
+      setPaymentsLoading(false);
+    }
   }, [user]);
 
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user || !db) return;
     
     setIsLoading(true);
     try {
@@ -137,7 +146,20 @@ const Settings: React.FC = () => {
     }
   };
 
-  if (!user) {
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading your settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only redirect if we're sure the user is not authenticated
+  if (!authLoading && !user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -160,23 +182,23 @@ const Settings: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-lg font-semibold">
-                      {user.displayName?.charAt(0).toUpperCase() || 'U'}
+                      {user?.displayName?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user.displayName}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user?.displayName}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{user?.email}</p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    user.plan === 'premium' 
+                    user?.plan === 'premium' 
                       ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' 
-                      : user.plan === 'pro'
+                      : user?.plan === 'pro'
                       ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                   }`}>
-                    {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
+                    {user?.plan?.charAt(0).toUpperCase() + user?.plan?.slice(1)} Plan
                   </span>
                 </div>
               </div>
@@ -310,7 +332,7 @@ const Settings: React.FC = () => {
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     ) : (
-                      <p className="text-lg text-gray-900 dark:text-white">{user.displayName}</p>
+                      <p className="text-lg text-gray-900 dark:text-white">{user?.displayName}</p>
                     )}
                   </div>
 
@@ -318,7 +340,7 @@ const Settings: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email Address
                     </label>
-                    <p className="text-lg text-gray-900 dark:text-white">{user.email}</p>
+                    <p className="text-lg text-gray-900 dark:text-white">{user?.email}</p>
                   </div>
 
                   <div>
@@ -327,15 +349,15 @@ const Settings: React.FC = () => {
                     </label>
                     <div className="flex items-center space-x-3">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        user.plan === 'premium' 
+                        user?.plan === 'premium' 
                           ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' 
-                          : user.plan === 'pro'
+                          : user?.plan === 'pro'
                           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                       }`}>
-                        {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
+                        {user?.plan?.charAt(0).toUpperCase() + user?.plan?.slice(1)} Plan
                       </span>
-                      {user.plan === 'free' && (
+                      {user?.plan === 'free' && (
                         <a
                           href="/pricing"
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
@@ -351,7 +373,7 @@ const Settings: React.FC = () => {
                       Account Created
                     </label>
                     <p className="text-lg text-gray-900 dark:text-white">
-                      {format(user.createdAt, 'MMMM dd, yyyy')}
+                      {user?.createdAt ? format(user.createdAt, 'MMMM dd, yyyy') : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -413,23 +435,23 @@ const Settings: React.FC = () => {
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            user.plan === 'premium' 
+                            user?.plan === 'premium' 
                               ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' 
-                              : user.plan === 'pro'
+                              : user?.plan === 'pro'
                               ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
-                            {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
+                            {user?.plan?.charAt(0).toUpperCase() + user?.plan?.slice(1)} Plan
                           </span>
                         </div>
                         <p className="text-gray-700 dark:text-gray-300">
-                          {user.plan === 'free' 
+                          {user?.plan === 'free' 
                             ? 'You are currently on the free plan with limited features.' 
-                            : `You have access to all ${user.plan} features.`}
+                            : `You have access to all ${user?.plan} features.`}
                         </p>
                       </div>
                       
-                      {user.plan === 'free' && (
+                      {user?.plan === 'free' && (
                         <a
                           href="/pricing"
                           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 inline-flex items-center justify-center"
