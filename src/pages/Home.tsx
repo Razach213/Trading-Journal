@@ -1,7 +1,31 @@
-import React, { useEffect, useRef } from 'react';
-import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart } from "lucide-react";
+import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+
+// Slideshow images from Pexels
+const slideshowImages = [
+  {
+    url: "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "Trading Dashboard Analytics",
+    caption: "Track. Analyze. Improve."
+  },
+  {
+    url: "https://images.pexels.com/photos/6770610/pexels-photo-6770610.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "Performance Charts",
+    caption: "Visualize Your Performance"
+  },
+  {
+    url: "https://images.pexels.com/photos/7567596/pexels-photo-7567596.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "Trade Analysis",
+    caption: "Data-Driven Insights"
+  },
+  {
+    url: "https://images.pexels.com/photos/6781341/pexels-photo-6781341.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "Mobile Trading",
+    caption: "Trade Anywhere, Anytime"
+  }
+];
 
 const features = [
   {
@@ -85,6 +109,52 @@ const Home: React.FC = () => {
   const benefitsRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  
+  // Slideshow state
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const slideshowRef = useRef<HTMLDivElement>(null);
+  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle slideshow navigation
+  const goToSlide = (index: number) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide(index);
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
+  const nextSlide = () => {
+    goToSlide((currentSlide + 1) % slideshowImages.length);
+  };
+
+  const prevSlide = () => {
+    goToSlide((currentSlide - 1 + slideshowImages.length) % slideshowImages.length);
+  };
+
+  // Autoplay slideshow
+  useEffect(() => {
+    autoplayTimerRef.current = setInterval(() => {
+      nextSlide();
+    }, 5000); // Change slide every 5 seconds
+
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearInterval(autoplayTimerRef.current);
+      }
+    };
+  }, [currentSlide]);
+
+  // Reset timer when manually changing slides
+  const handleManualNavigation = (index: number) => {
+    if (autoplayTimerRef.current) {
+      clearInterval(autoplayTimerRef.current);
+    }
+    goToSlide(index);
+    autoplayTimerRef.current = setInterval(() => {
+      nextSlide();
+    }, 5000);
+  };
 
   useEffect(() => {
     const observerOptions = {
@@ -124,7 +194,7 @@ const Home: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
       <main>
-        {/* Hero section */}
+        {/* Hero section with Slideshow */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800" />
           
@@ -182,15 +252,73 @@ const Home: React.FC = () => {
             </div>
           </div>
           
-          {/* Dashboard Preview */}
+          {/* Slideshow */}
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 mx-auto max-w-5xl">
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20 dark:to-black/40 pointer-events-none"></div>
-              <img 
-                src="https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg?auto=compress&cs=tinysrgb&w=1200" 
-                alt="ZellaX Dashboard Preview" 
-                className="w-full h-auto object-cover"
-              />
+            <div 
+              ref={slideshowRef} 
+              className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 mx-auto max-w-5xl h-[400px] sm:h-[500px]"
+            >
+              {/* Slideshow Images */}
+              {slideshowImages.map((image, index) => (
+                <div 
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
+                    index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  }`}
+                  aria-hidden={index !== currentSlide}
+                >
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 z-10"></div>
+                  
+                  {/* Image */}
+                  <img 
+                    src={image.url} 
+                    alt={image.alt}
+                    className="w-full h-full object-cover object-center"
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                  
+                  {/* Caption */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 z-20 text-white">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{image.caption}</h2>
+                    <p className="text-lg text-white/80">Elevate your trading with powerful analytics</p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Navigation Arrows */}
+              <button 
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              
+              <button 
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+              
+              {/* Dots Navigation */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
+                {slideshowImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleManualNavigation(index)}
+                    className={`w-3 h-3 rounded-full transition-all ${
+                      index === currentSlide 
+                        ? 'bg-white scale-110' 
+                        : 'bg-white/50 hover:bg-white/80'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                    aria-current={index === currentSlide ? 'true' : 'false'}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -357,6 +485,7 @@ const Home: React.FC = () => {
                   src="https://images.pexels.com/photos/6771985/pexels-photo-6771985.jpeg?auto=compress&cs=tinysrgb&w=800" 
                   alt="Performance Metrics" 
                   className="w-full h-48 object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
               </div>
               
@@ -389,6 +518,7 @@ const Home: React.FC = () => {
                   src="https://images.pexels.com/photos/7567443/pexels-photo-7567443.jpeg?auto=compress&cs=tinysrgb&w=800" 
                   alt="Trading Playbooks" 
                   className="w-full h-48 object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
               </div>
               
@@ -421,6 +551,7 @@ const Home: React.FC = () => {
                   src="https://images.pexels.com/photos/7567596/pexels-photo-7567596.jpeg?auto=compress&cs=tinysrgb&w=800" 
                   alt="Trade Analysis" 
                   className="w-full h-48 object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -452,6 +583,7 @@ const Home: React.FC = () => {
                       src={testimonial.image} 
                       alt={testimonial.author} 
                       className="w-14 h-14 rounded-full object-cover"
+                      loading="lazy"
                     />
                     <div>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white">{testimonial.author}</h3>
@@ -504,6 +636,7 @@ const Home: React.FC = () => {
                     src="https://images.pexels.com/photos/6802042/pexels-photo-6802042.jpeg?auto=compress&cs=tinysrgb&w=800" 
                     alt="Sign Up" 
                     className="rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-full h-auto"
+                    loading="lazy"
                   />
                 </div>
                 
@@ -513,6 +646,7 @@ const Home: React.FC = () => {
                     src="https://images.pexels.com/photos/7567444/pexels-photo-7567444.jpeg?auto=compress&cs=tinysrgb&w=800" 
                     alt="Log Your Trades" 
                     className="rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-full h-auto"
+                    loading="lazy"
                   />
                 </div>
                 
@@ -540,6 +674,7 @@ const Home: React.FC = () => {
                     src="https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=800" 
                     alt="Analyze Performance" 
                     className="rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-full h-auto"
+                    loading="lazy"
                   />
                 </div>
                 
@@ -549,6 +684,7 @@ const Home: React.FC = () => {
                     src="https://images.pexels.com/photos/7567538/pexels-photo-7567538.jpeg?auto=compress&cs=tinysrgb&w=800" 
                     alt="Improve Strategy" 
                     className="rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-full h-auto"
+                    loading="lazy"
                   />
                 </div>
                 
@@ -702,6 +838,7 @@ const Home: React.FC = () => {
                   src="https://images.pexels.com/photos/6781341/pexels-photo-6781341.jpeg?auto=compress&cs=tinysrgb&w=1200" 
                   alt="ZellaX Dashboard on Desktop" 
                   className="w-full h-auto"
+                  loading="lazy"
                 />
               </div>
               
@@ -710,6 +847,7 @@ const Home: React.FC = () => {
                   src="https://images.pexels.com/photos/6802049/pexels-photo-6802049.jpeg?auto=compress&cs=tinysrgb&w=600" 
                   alt="ZellaX on Mobile" 
                   className="w-full h-auto"
+                  loading="lazy"
                 />
               </div>
               
@@ -718,6 +856,7 @@ const Home: React.FC = () => {
                   src="https://images.pexels.com/photos/6802073/pexels-photo-6802073.jpeg?auto=compress&cs=tinysrgb&w=600" 
                   alt="ZellaX Analytics" 
                   className="w-full h-auto"
+                  loading="lazy"
                 />
               </div>
             </div>
