@@ -13,7 +13,7 @@ const Logo: React.FC<LogoProps> = ({
   size = 'md', 
   withText = true, 
   className = '',
-  linkTo = '/'
+  linkTo
 }) => {
   const sizeClasses = {
     sm: 'h-6 w-6',

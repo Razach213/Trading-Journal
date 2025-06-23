@@ -19,6 +19,7 @@ const isDemoMode = !auth || !db;
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDemoMode) {
@@ -30,6 +31,9 @@ export const useAuth = () => {
         try {
           const demoUser = JSON.parse(savedDemoUser);
           setUser(demoUser);
+          
+          // Set a fake auth token for demo mode
+          localStorage.setItem('authToken', 'demo-token-' + Date.now());
         } catch (error) {
           console.error('Error loading demo user:', error);
           localStorage.removeItem('demoUser');
@@ -41,6 +45,7 @@ export const useAuth = () => {
 
     // Only set up auth listener if auth is available
     if (!auth) {
+      setAuthError("Firebase authentication not initialized. Please check your configuration.");
       setLoading(false);
       return;
     }
@@ -48,14 +53,22 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
+          // Set auth token in localStorage
+          const token = await firebaseUser.getIdToken();
+          localStorage.setItem('authToken', token);
+          
           const userData = await getUserData(firebaseUser);
           setUser(userData);
+          setAuthError(null);
         } else {
           setUser(null);
+          localStorage.removeItem('authToken');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Auth state change error:", error);
+        setAuthError(error.message || "Authentication error");
         setUser(null);
+        localStorage.removeItem('authToken');
       } finally {
         setLoading(false);
       }
@@ -82,7 +95,8 @@ export const useAuth = () => {
           plan: data.plan || 'free',
           accountBalance: data.accountBalance || 0,
           currentBalance: data.currentBalance || 0,
-          createdAt: data.createdAt?.toDate() || new Date()
+          createdAt: data.createdAt?.toDate() || new Date(),
+          subscription: data.subscription || undefined
         };
       } else {
         const newUser: User = {
@@ -128,11 +142,14 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      setAuthError(null);
+      
       if (isDemoMode) {
         // Demo mode - simulate successful login
         const demoUser = createDemoUser(email, 'Demo User');
         setUser(demoUser);
         localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
         toast.success('✅ Signed in successfully (Demo Mode)');
         return;
       }
@@ -149,6 +166,7 @@ export const useAuth = () => {
       if (isDemoMode) {
         toast.error("⚠️ Demo Mode: Authentication simulation failed");
       } else {
+        setAuthError(error.message || "Failed to sign in");
         toast.error(error.message || "Failed to sign in");
       }
       throw error;
@@ -157,11 +175,14 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, displayName: string) => {
     try {
+      setAuthError(null);
+      
       if (isDemoMode) {
         // Demo mode - simulate successful signup
         const demoUser = createDemoUser(email, displayName);
         setUser(demoUser);
         localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
         toast.success('✅ Account created successfully (Demo Mode)');
         return;
       }
@@ -183,6 +204,10 @@ export const useAuth = () => {
       
       await setDoc(doc(db, 'users', result.user.uid), newUser);
       
+      // Set auth token
+      const token = await result.user.getIdToken();
+      localStorage.setItem('authToken', token);
+      
       toast.success('Account created successfully!');
     } catch (error: any) {
       console.error("Sign up error:", error);
@@ -190,6 +215,7 @@ export const useAuth = () => {
       if (isDemoMode) {
         toast.error("⚠️ Demo Mode: Account creation simulation failed");
       } else {
+        setAuthError(error.message || "Failed to create account");
         toast.error(error.message || "Failed to create account");
       }
       throw error;
@@ -198,11 +224,14 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     try {
+      setAuthError(null);
+      
       if (isDemoMode) {
         // Demo mode - simulate Google sign in
         const demoUser = createDemoUser('demo@google.com', 'Google Demo User');
         setUser(demoUser);
         localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
         toast.success('✅ Signed in with Google (Demo Mode)');
         return;
       }
@@ -220,6 +249,7 @@ export const useAuth = () => {
       if (isDemoMode) {
         toast.error("⚠️ Demo Mode: Google sign in simulation failed");
       } else {
+        setAuthError(error.message || "Failed to sign in with Google");
         toast.error(error.message || "Failed to sign in with Google");
       }
       throw error;
@@ -228,10 +258,13 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
+      setAuthError(null);
+      
       if (isDemoMode) {
         // Demo mode - clear demo user
         setUser(null);
         localStorage.removeItem('demoUser');
+        localStorage.removeItem('authToken');
         toast.success('✅ Signed out successfully (Demo Mode)');
         return;
       }
@@ -241,9 +274,11 @@ export const useAuth = () => {
       }
 
       await signOut(auth);
+      localStorage.removeItem('authToken');
       toast.success('Successfully signed out!');
     } catch (error: any) {
       console.error("Logout error:", error);
+      setAuthError(error.message || "Failed to sign out");
       toast.error(error.message || "Failed to sign out");
     }
   };
@@ -251,6 +286,7 @@ export const useAuth = () => {
   return {
     user,
     loading,
+    authError,
     signIn,
     signUp,
     signInWithGoogle,

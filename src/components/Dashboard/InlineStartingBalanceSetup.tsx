@@ -46,7 +46,8 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
       // Handle specific Firebase errors
       if (error.message?.includes('Firebase Auth not configured') || 
           error.message?.includes('Demo mode') ||
-          error.message?.includes('api-key-not-valid')) {
+          error.message?.includes('api-key-not-valid') ||
+          error.message?.includes('not initialized')) {
         setIsOfflineMode(true);
         setError('Firebase not configured. Running in demo mode.');
         toast.error('⚠️ Firebase not configured. Please check your setup.');
