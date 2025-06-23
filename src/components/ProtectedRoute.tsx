@@ -16,7 +16,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsCheckingAuth(false);
-    }, 500);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [user, loading]);

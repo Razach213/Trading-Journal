@@ -35,6 +35,12 @@ try {
   storage = getStorage(app);
   functions = getFunctions(app);
 
+  // Set persistence to LOCAL to keep user logged in
+  // This helps prevent the "sign in again" issue
+  if (auth) {
+    auth.setPersistence('local');
+  }
+
   console.log("✅ Firebase initialized successfully");
 } catch (error) {
   console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
@@ -50,7 +56,8 @@ try {
     signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
     signInWithPopup: () => Promise.reject(new Error("Demo mode")),
-    signOut: () => Promise.reject(new Error("Demo mode"))
+    signOut: () => Promise.reject(new Error("Demo mode")),
+    setPersistence: () => Promise.resolve()
   };
 
   db = null;
