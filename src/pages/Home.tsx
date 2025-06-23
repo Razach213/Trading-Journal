@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
