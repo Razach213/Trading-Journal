@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/Layout/Header';
@@ -20,6 +20,9 @@ import Privacy from './pages/Privacy';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import AdminPanal from './pages/AdminPanal';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import toast from 'react-hot-toast';
 
 // ScrollToTop component to reset scroll position on route change
 function ScrollToTop() {
@@ -32,8 +35,39 @@ function ScrollToTop() {
   return null;
 }
 
+// Firebase Auth Token Login Hook
+function useFirebaseAuthTokenLogin() {
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const authToken = localStorage.getItem('authToken');
+      
+      if (authToken && auth && !auth.currentUser) {
+        try {
+          setIsAuthenticating(true);
+          await signInWithCustomToken(auth, authToken);
+          console.log('✅ Firebase sign-in with custom token succeeded.');
+        } catch (error) {
+          console.error('❌ Firebase sign-in failed:', error);
+          // Clear invalid token
+          localStorage.removeItem('authToken');
+          toast.error('Authentication error. Please sign in again.');
+        } finally {
+          setIsAuthenticating(false);
+        }
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  return { isAuthenticating };
+}
+
 function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { isAuthenticating } = useFirebaseAuthTokenLogin();
 
   // Enhanced Dark Mode Logic with Animation
   useEffect(() => {
@@ -73,6 +107,17 @@ function App() {
       }, 150);
     }, 150);
   };
+
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>

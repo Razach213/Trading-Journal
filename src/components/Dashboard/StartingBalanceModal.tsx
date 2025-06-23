@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { DollarSign, X, TrendingUp, Calculator, PiggyBank, BarChart3 } from 'lucide-react';
+import { DollarSign, X, TrendingUp, Calculator, PiggyBank, BarChart3, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface StartingBalanceModalProps {
@@ -21,6 +21,7 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
   currentBalance = 10000
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -107,11 +108,23 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
 
   const onFormSubmit = async (data: BalanceFormData) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
+      // Check if auth token exists
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        setError('No authentication token found. Please sign in again.');
+        toast.error('Please sign in again to continue');
+        return;
+      }
+      
       await onSubmit(data.startingBalance);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error setting balance:', error);
+      setError(error.message || 'Failed to set starting balance');
+      toast.error('Failed to set starting balance. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -182,6 +195,19 @@ const StartingBalanceModal: React.FC<StartingBalanceModalProps> = ({
                     Your starting balance is the foundation for calculating accurate P&L, returns, and performance metrics. 
                     Don't worry - you can always update this later!
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">Error</h3>
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                 </div>
               </div>
             </div>

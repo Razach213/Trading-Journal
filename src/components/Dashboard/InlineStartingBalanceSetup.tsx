@@ -38,6 +38,12 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
     setError(null);
     
     try {
+      // Check if auth token exists
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        throw new Error('No authentication token found. Please sign in again.');
+      }
+      
       await onSubmit(data.startingBalance);
       toast.success('🎉 Account setup complete! Ready to start trading!');
     } catch (error: any) {

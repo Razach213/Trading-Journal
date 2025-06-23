@@ -23,6 +23,7 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
   const [editValue, setEditValue] = useState(value.toString());
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (amount: number) => {
@@ -66,17 +67,20 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
   const handleEdit = () => {
     setEditValue(value.toString());
     setIsEditing(true);
+    setError(null);
   };
 
   const handleSave = async () => {
     const numValue = parseFloat(editValue);
     
     if (isNaN(numValue)) {
+      setError('Please enter a valid number');
       toast.error('Please enter a valid number');
       return;
     }
 
     if (numValue < 0) {
+      setError('Balance cannot be negative');
       toast.error('Balance cannot be negative');
       return;
     }
@@ -87,12 +91,23 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
+      // Check if auth token exists
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        setError('No authentication token found. Please sign in again.');
+        toast.error('Please sign in again to continue');
+        return;
+      }
+      
       await onSave(numValue);
       setIsEditing(false);
       toast.success(`${label} updated successfully!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving value:', error);
+      setError(error.message || `Failed to update ${label.toLowerCase()}`);
       toast.error(`Failed to update ${label.toLowerCase()}`);
     } finally {
       setIsLoading(false);
@@ -102,6 +117,7 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
   const handleCancel = () => {
     setEditValue(value.toString());
     setIsEditing(false);
+    setError(null);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -163,6 +179,12 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
             <X className="h-4 w-4" />
           </button>
         </div>
+        
+        {error && (
+          <div className="absolute -bottom-6 left-0 text-xs text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        )}
       </div>
     );
   }
