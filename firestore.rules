@@ -126,7 +126,7 @@ service cloud.firestore {
                    (request.auth.uid == resource.data.userId || isAdmin());
     }
     
-    // Payments collection - UPDATED with explicit admin permissions
+    // Payments collection - UPDATED with explicit admin permissions for payment approval/rejection
     match /payments/{paymentId} {
       // Allow users to read their own payments and admins to read all
       allow read: if isAuthenticated() && 
@@ -138,9 +138,9 @@ service cloud.firestore {
       
       // CRITICAL: Allow admins to update payment status
       allow update: if isAuthenticated() && (
-                     // User can update their own payment if not changing status
+                     // User can update their own payment if not changing status, reviewedAt, reviewedBy, or adminNotes
                      (isOwner(resource.data.userId) && 
-                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'reviewedAt', 'reviewedBy'])) ||
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'reviewedAt', 'reviewedBy', 'adminNotes'])) ||
                      // Admins can update any payment including status changes
                      isAdmin()
                    );
