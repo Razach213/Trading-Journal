@@ -22,67 +22,58 @@ let db = null;
 let storage = null;
 let functions = null;
 
-try {
-  // Check if we have a valid API key
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
-    console.warn("⚠️ Firebase not configured. Using demo mode.");
-    throw new Error("Firebase configuration missing");
-  }
+// Check if we have a valid API key
+if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "demo-api-key") {
+  try {
+    // Initialize Firebase app first
+    app = initializeApp(firebaseConfig);
+    
+    // Only initialize services if app was successfully created
+    if (app) {
+      auth = getAuth(app);
+      db = getFirestore(app);
+      storage = getStorage(app);
+      functions = getFunctions(app);
 
-  // Initialize Firebase app first
-  app = initializeApp(firebaseConfig);
-  
-  // Only initialize services if app was successfully created
-  if (app) {
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    functions = getFunctions(app);
+      // Set persistence to LOCAL to keep user logged in
+      if (auth) {
+        auth.setPersistence('LOCAL');
+      }
 
-    // Set persistence to LOCAL to keep user logged in
-    if (auth) {
-      auth.setPersistence('LOCAL');
+      // Enable offline persistence for Firestore
+      if (db) {
+        db.enablePersistence({ synchronizeTabs: true })
+          .catch((err) => {
+            if (err.code === 'failed-precondition') {
+              // Multiple tabs open, persistence can only be enabled in one tab at a time
+              console.warn('Multiple tabs open, persistence only enabled in one tab');
+            } else if (err.code === 'unimplemented') {
+              // The current browser does not support all of the features required to enable persistence
+              console.warn('Persistence not supported in this browser');
+            }
+          });
+      }
+
+      console.log("✅ Firebase initialized successfully");
+    } else {
+      throw new Error("Failed to initialize Firebase app");
     }
-
-    // Enable offline persistence for Firestore
-    if (db) {
-      db.enablePersistence({ synchronizeTabs: true })
-        .catch((err) => {
-          if (err.code === 'failed-precondition') {
-            // Multiple tabs open, persistence can only be enabled in one tab at a time
-            console.warn('Multiple tabs open, persistence only enabled in one tab');
-          } else if (err.code === 'unimplemented') {
-            // The current browser does not support all of the features required to enable persistence
-            console.warn('Persistence not supported in this browser');
-          }
-        });
-    }
-
-    console.log("✅ Firebase initialized successfully");
-  } else {
-    throw new Error("Failed to initialize Firebase app");
+  } catch (error) {
+    console.error("❌ Firebase initialization failed:", error);
+    
+    // Reset all services to null on error
+    app = null;
+    auth = null;
+    db = null;
+    storage = null;
+    functions = null;
   }
-} catch (error) {
-  console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
+} else {
+  console.warn("⚠️ Firebase not configured. Using demo mode with null services.");
   
-  // Reset app to null to ensure clean state
+  // Keep all services as null in demo mode
   app = null;
-  
-  // Create safe mock objects for demo mode
-  auth = {
-    currentUser: null,
-    onAuthStateChanged: (callback) => {
-      // Call callback immediately with null user
-      setTimeout(() => callback(null), 0);
-      return () => {}; // Return unsubscribe function
-    },
-    signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
-    createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
-    signInWithPopup: () => Promise.reject(new Error("Demo mode")),
-    signOut: () => Promise.reject(new Error("Demo mode")),
-    setPersistence: () => {}
-  };
-
+  auth = null;
   db = null;
   storage = null;
   functions = null;
