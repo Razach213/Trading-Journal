@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, MapPin, Globe, Copy, Check, CreditCard, AlertCircle, Loader2, Calendar } from 'lucide-react';
+import { X, MapPin, Globe, Copy, Check, CreditCard, Building, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import toast from 'react-hot-toast';
 
