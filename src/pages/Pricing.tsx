@@ -499,6 +499,10 @@ const Pricing: React.FC = () => {
           planPrice={selectedPrice}
           isYearly={isYearly}
           pkrRate={pkrRate}
+          pkrMonthlyPrice={pkrMonthlyPrice}
+          pkrYearlyPrice={pkrYearlyPrice}
+          baseMonthlyPrice={baseMonthlyPrice}
+          yearlyPrice={yearlyPrice}
         />
       )}
     </div>

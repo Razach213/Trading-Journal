@@ -12,6 +12,10 @@ interface PaymentModalProps {
   planPrice: number;
   isYearly: boolean;
   pkrRate: number;
+  pkrMonthlyPrice: number;
+  pkrYearlyPrice: number;
+  baseMonthlyPrice: number;
+  yearlyPrice: number;
 }
 
 interface PaymentFormData {
@@ -25,7 +29,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   selectedPlan, 
   planPrice, 
   isYearly,
-  pkrRate 
+  pkrRate,
+  pkrMonthlyPrice,
+  pkrYearlyPrice,
+  baseMonthlyPrice,
+  yearlyPrice
 }) => {
   const { user } = useAuth();
   const [step, setStep] = useState<'location' | 'payment' | 'confirmation'>('location');
