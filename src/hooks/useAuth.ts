@@ -6,22 +6,19 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser,
-  setPersistence,
-  browserLocalPersistence
+  User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { User } from '../types';
 import toast from 'react-hot-toast';
 
 // Demo mode flag
-const isDemoMode = !auth || !db || typeof auth.onAuthStateChanged !== 'function';
+const isDemoMode = !auth || !db;
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDemoMode) {
@@ -42,50 +39,23 @@ export const useAuth = () => {
       return;
     }
 
+    // Only set up auth listener if auth is available
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          // Get fresh ID token with each auth state change
-          const token = await firebaseUser.getIdToken(true);
-          localStorage.setItem('authToken', token);
-          
           const userData = await getUserData(firebaseUser);
-          
-          // Check if subscription has expired
-          if (userData.subscription && userData.subscription.expiresAt) {
-            const expiryDate = new Date(userData.subscription.expiresAt);
-            const now = new Date();
-            
-            if (now > expiryDate && userData.subscription.status === 'active') {
-              // Subscription has expired, update user data
-              await updateDoc(doc(db, 'users', firebaseUser.uid), {
-                plan: 'free',
-                'subscription.status': 'expired',
-                updatedAt: serverTimestamp()
-              });
-              
-              // Update local user data
-              userData.plan = 'free';
-              if (userData.subscription) {
-                userData.subscription.status = 'expired';
-              }
-              
-              // Notify user
-              toast.error('Your subscription has expired. Please renew to access premium features.');
-            }
-          }
-          
           setUser(userData);
-          setAuthError(null);
         } else {
           setUser(null);
-          localStorage.removeItem('authToken');
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Auth state change error:", error);
         setUser(null);
-        setAuthError(error.message || "Authentication error");
-        localStorage.removeItem('authToken');
       } finally {
         setLoading(false);
       }
@@ -112,14 +82,7 @@ export const useAuth = () => {
           plan: data.plan || 'free',
           accountBalance: data.accountBalance || 0,
           currentBalance: data.currentBalance || 0,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          subscription: data.subscription ? {
-            plan: data.subscription.plan || 'pro',
-            status: data.subscription.status || 'active',
-            startedAt: data.subscription.startedAt?.toDate() || new Date(),
-            expiresAt: data.subscription.expiresAt?.toDate() || new Date(),
-            isYearly: data.subscription.isYearly || false
-          } : undefined
+          createdAt: data.createdAt?.toDate() || new Date()
         };
       } else {
         const newUser: User = {
@@ -133,11 +96,7 @@ export const useAuth = () => {
           createdAt: new Date()
         };
         
-        await setDoc(doc(db, 'users', firebaseUser.uid), {
-          ...newUser,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
+        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
         return newUser;
       }
     } catch (error) {
@@ -178,15 +137,11 @@ export const useAuth = () => {
         return;
       }
       
-      // Set persistence to LOCAL to keep user logged in
-      await setPersistence(auth, browserLocalPersistence);
+      if (!auth) {
+        throw new Error("Auth not initialized");
+      }
       
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Get fresh token and store it
-      const token = await result.user.getIdToken(true);
-      localStorage.setItem('authToken', token);
-      
+      await signInWithEmailAndPassword(auth, email, password);
       toast.success('Successfully signed in!');
     } catch (error: any) {
       console.error("Sign in error:", error);
@@ -211,15 +166,11 @@ export const useAuth = () => {
         return;
       }
 
-      // Set persistence to LOCAL to keep user logged in
-      await setPersistence(auth, browserLocalPersistence);
-      
+      if (!auth || !db) {
+        throw new Error("Firebase not initialized");
+      }
+
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Get fresh token and store it
-      const token = await result.user.getIdToken(true);
-      localStorage.setItem('authToken', token);
-      
       const newUser: User = {
         id: result.user.uid,
         email: result.user.email!,
@@ -230,13 +181,7 @@ export const useAuth = () => {
         createdAt: new Date()
       };
       
-      if (db) {
-        await setDoc(doc(db, 'users', result.user.uid), {
-          ...newUser,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      }
+      await setDoc(doc(db, 'users', result.user.uid), newUser);
       
       toast.success('Account created successfully!');
     } catch (error: any) {
@@ -262,16 +207,12 @@ export const useAuth = () => {
         return;
       }
 
-      // Set persistence to LOCAL to keep user logged in
-      await setPersistence(auth, browserLocalPersistence);
-      
+      if (!auth) {
+        throw new Error("Auth not initialized");
+      }
+
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      // Get fresh token and store it
-      const token = await result.user.getIdToken(true);
-      localStorage.setItem('authToken', token);
-      
+      await signInWithPopup(auth, provider);
       toast.success('Successfully signed in with Google!');
     } catch (error: any) {
       console.error("Google sign in error:", error);
@@ -295,8 +236,11 @@ export const useAuth = () => {
         return;
       }
 
+      if (!auth) {
+        throw new Error("Auth not initialized");
+      }
+
       await signOut(auth);
-      localStorage.removeItem('authToken');
       toast.success('Successfully signed out!');
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -307,7 +251,6 @@ export const useAuth = () => {
   return {
     user,
     loading,
-    authError,
     signIn,
     signUp,
     signInWithGoogle,
