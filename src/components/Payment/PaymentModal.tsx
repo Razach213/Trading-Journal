@@ -96,8 +96,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       
       // Calculate local currency amount
       const amount = selectedLocation === 'pakistan' 
-        ? (isYearly ? planPrice * pkrRate : planPrice * pkrRate) 
-        : planPrice;
+        ? (isYearly ? pkrYearlyPrice : pkrMonthlyPrice) 
+        : (isYearly ? yearlyPrice : baseMonthlyPrice);
       
       const paymentData = {
         userId: user.id,
@@ -161,8 +161,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {step === 'location' && 'Choose your location to see available payment options'}
               {step === 'payment' && selectedLocation === 'pakistan' 
-                ? `Amount: ₨${(planPrice * pkrRate).toLocaleString()} (${isYearly ? 'Yearly' : 'Monthly'})`
-                : step === 'payment' ? `Amount: $${planPrice.toLocaleString()} (${isYearly ? 'Yearly' : 'Monthly'})` 
+                ? `Amount: ₨${(isYearly ? pkrYearlyPrice : pkrMonthlyPrice).toLocaleString()} (${isYearly ? 'Yearly' : 'Monthly'})`
+                : step === 'payment' ? `Amount: $${(isYearly ? yearlyPrice : baseMonthlyPrice).toLocaleString()} (${isYearly ? 'Yearly' : 'Monthly'})` 
                 : 'Your payment is under review'}
             </p>
           </div>

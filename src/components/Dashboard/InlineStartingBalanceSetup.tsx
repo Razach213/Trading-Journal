@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { DollarSign, Calculator, TrendingUp, BarChart3, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 interface InlineStartingBalanceSetupProps {
   onSubmit: (balance: number) => Promise<void>;
@@ -19,6 +21,8 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
@@ -78,6 +82,14 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
     if (balance < 25000) return 'Intermediate';
     if (balance < 100000) return 'Advanced';
     return 'Professional';
+  };
+
+  const handleUpgradeClick = () => {
+    if (!user) {
+      navigate('/login');
+    } else {
+      navigate('/pricing');
+    }
   };
 
   return (
@@ -185,6 +197,15 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
                   Calculate real profit and loss from your trades
                 </p>
               </div>
+              
+              {/* Upgrade Button */}
+              <button
+                type="button"
+                onClick={handleUpgradeClick}
+                className="w-full bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors text-sm"
+              >
+                Upgrade to Pro for Advanced Features
+              </button>
             </div>
           </div>
         </div>
