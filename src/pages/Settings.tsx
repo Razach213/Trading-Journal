@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   User, 
   Settings as SettingsIcon, 
@@ -19,7 +19,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Payment } from '../types';
 import { format } from 'date-fns';
@@ -29,6 +29,7 @@ import PaymentStatusCard from '../components/Payment/PaymentStatusCard';
 const Settings: React.FC = () => {
   const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -42,9 +43,9 @@ const Settings: React.FC = () => {
   // Wait for auth to be checked before redirecting
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/login');
+      navigate('/login', { state: { from: location } });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, location]);
 
   useEffect(() => {
     if (user) {
@@ -64,25 +65,29 @@ const Settings: React.FC = () => {
         orderBy('submittedAt', 'desc')
       );
 
-      const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
-        const paymentsData: Payment[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          paymentsData.push({
-            id: doc.id,
-            ...data,
-            submittedAt: data.submittedAt?.toDate() || new Date(),
-            reviewedAt: data.reviewedAt?.toDate() || null,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date()
-          } as Payment);
-        });
-        setPayments(paymentsData);
-        setPaymentsLoading(false);
-      }, (error) => {
-        console.error('Error fetching payments:', error);
-        setPaymentsLoading(false);
-      });
+      const unsubscribe = onSnapshot(
+        paymentsQuery, 
+        (snapshot) => {
+          const paymentsData: Payment[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            paymentsData.push({
+              id: doc.id,
+              ...data,
+              submittedAt: data.submittedAt?.toDate() || new Date(),
+              reviewedAt: data.reviewedAt?.toDate() || null,
+              createdAt: data.createdAt?.toDate() || new Date(),
+              updatedAt: data.updatedAt?.toDate() || new Date()
+            } as Payment);
+          });
+          setPayments(paymentsData);
+          setPaymentsLoading(false);
+        },
+        (err) => {
+          console.error('Error fetching payments:', err);
+          setPaymentsLoading(false);
+        }
+      );
 
       return unsubscribe;
     } catch (error) {
