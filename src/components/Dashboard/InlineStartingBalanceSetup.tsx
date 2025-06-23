@@ -47,10 +47,11 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
       if (error.message?.includes('Firebase Auth not configured') || 
           error.message?.includes('Demo mode') ||
           error.message?.includes('api-key-not-valid') ||
-          error.message?.includes('not initialized')) {
+          error.message?.includes('not initialized') ||
+          error.message?.includes('No authentication token found')) {
         setIsOfflineMode(true);
-        setError('Firebase not configured. Running in demo mode.');
-        toast.error('⚠️ Firebase not configured. Please check your setup.');
+        setError('Firebase not configured or not authenticated. Running in demo mode.');
+        toast.error('⚠️ Authentication issue. Please check your setup or sign in again.');
       } else if (error.message?.includes('permission')) {
         setError('Permission denied. Please sign in again.');
         toast.error('Please sign in again to continue');
@@ -102,12 +103,13 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
             <span className="text-orange-200 font-medium">Demo Mode</span>
           </div>
           <p className="text-orange-100 text-sm mt-1">
-            Firebase is not configured. Please update your .env file with valid Firebase credentials.
+            Firebase is not configured or you're not properly authenticated. Please update your .env file with valid Firebase credentials or sign in again.
           </p>
           <div className="mt-2 text-xs text-orange-200">
             <p>1. Go to Firebase Console → Project Settings</p>
             <p>2. Copy your config values to .env file</p>
             <p>3. Restart the development server</p>
+            <p>4. Sign in again to refresh your authentication</p>
           </div>
         </div>
       )}

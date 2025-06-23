@@ -185,7 +185,7 @@ export const useAccountBalance = (userId: string | undefined) => {
           totalPnL,
           totalReturnPercent
         };
-      } else if (field === 'currentBalance') {
+      } else {
         // When current balance changes, recalculate totalPnL and totalReturnPercent
         const newCurrentBalance = newValue;
         const totalPnL = newCurrentBalance - accountBalance.startingBalance;

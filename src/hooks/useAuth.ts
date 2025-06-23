@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { User } from '../types';
 import toast from 'react-hot-toast';
@@ -54,7 +54,7 @@ export const useAuth = () => {
       try {
         if (firebaseUser) {
           // Set auth token in localStorage
-          const token = await firebaseUser.getIdToken();
+          const token = await firebaseUser.getIdToken(true); // Force refresh token
           localStorage.setItem('authToken', token);
           
           const userData = await getUserData(firebaseUser);
@@ -110,7 +110,11 @@ export const useAuth = () => {
           createdAt: new Date()
         };
         
-        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          ...newUser,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
         return newUser;
       }
     } catch (error) {
@@ -158,7 +162,12 @@ export const useAuth = () => {
         throw new Error("Auth not initialized");
       }
       
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Force refresh the token to ensure it's up to date
+      const token = await userCredential.user.getIdToken(true);
+      localStorage.setItem('authToken', token);
+      
       toast.success('Successfully signed in!');
     } catch (error: any) {
       console.error("Sign in error:", error);
@@ -202,10 +211,14 @@ export const useAuth = () => {
         createdAt: new Date()
       };
       
-      await setDoc(doc(db, 'users', result.user.uid), newUser);
+      await setDoc(doc(db, 'users', result.user.uid), {
+        ...newUser,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
       
       // Set auth token
-      const token = await result.user.getIdToken();
+      const token = await result.user.getIdToken(true);
       localStorage.setItem('authToken', token);
       
       toast.success('Account created successfully!');
@@ -241,7 +254,12 @@ export const useAuth = () => {
       }
 
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // Force refresh the token to ensure it's up to date
+      const token = await result.user.getIdToken(true);
+      localStorage.setItem('authToken', token);
+      
       toast.success('Successfully signed in with Google!');
     } catch (error: any) {
       console.error("Google sign in error:", error);
@@ -283,6 +301,20 @@ export const useAuth = () => {
     }
   };
 
+  // Function to refresh the auth token
+  const refreshToken = async () => {
+    try {
+      if (isDemoMode || !auth || !auth.currentUser) return;
+      
+      const token = await auth.currentUser.getIdToken(true);
+      localStorage.setItem('authToken', token);
+      return token;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      throw error;
+    }
+  };
+
   return {
     user,
     loading,
@@ -291,6 +323,7 @@ export const useAuth = () => {
     signUp,
     signInWithGoogle,
     logout,
+    refreshToken,
     isDemoMode
   };
 };

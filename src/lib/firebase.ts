@@ -1,8 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getFunctions } from 'firebase/functions';
+import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -35,17 +35,34 @@ try {
   storage = getStorage(app);
   functions = getFunctions(app);
 
+  // Set persistence to LOCAL (this keeps the user logged in even after browser refresh)
+  setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+      console.log("✅ Firebase auth persistence set to LOCAL");
+    })
+    .catch((error) => {
+      console.error("❌ Error setting auth persistence:", error);
+    });
+
+  // Connect to emulators if enabled
+  if (import.meta.env.VITE_ENABLE_EMULATORS === 'true') {
+    connectAuthEmulator(auth, 'http://localhost:9099');
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectStorageEmulator(storage, 'localhost', 9199);
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log("✅ Connected to Firebase emulators");
+  }
+
   console.log("✅ Firebase initialized successfully");
 } catch (error) {
-  console.warn("⚠️ Firebase initialization failed:", error);
+  console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
   
-  // Set services to null for demo mode
+  // Create safe mock objects for demo mode
   auth = null;
   db = null;
   storage = null;
   functions = null;
 }
 
-// Export Firebase services
 export { auth, db, storage, functions };
 export default app;
