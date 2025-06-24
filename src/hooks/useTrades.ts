@@ -276,10 +276,6 @@ export const useTrades = (userId: string | undefined) => {
         return;
       }
 
-      if (!auth?.currentUser) {
-        throw new Error('User not authenticated');
-      }
-
       // Calculate balance after trade if it's a closed trade
       let balanceAfterTrade = null;
       if (tradeData.status === 'closed' && tradeData.pnl !== null && tradeData.pnl !== undefined) {
@@ -287,7 +283,7 @@ export const useTrades = (userId: string | undefined) => {
       }
 
       const trade = {
-        userId: auth.currentUser.uid,
+        userId: userId, // Use the passed userId instead of auth.currentUser.uid
         symbol: tradeData.symbol || '',
         type: tradeData.type || 'long',
         entryPrice: Number(tradeData.entryPrice) || 0,
@@ -313,7 +309,7 @@ export const useTrades = (userId: string | undefined) => {
       
       if (error.code === 'permission-denied') {
         toast.error('Permission denied. Please check your authentication and try again.');
-      } else if (error.message.includes('price must be greater than 0')) {
+      } else if (error.message?.includes('price must be greater than 0')) {
         toast.error('Entry and exit prices must be greater than 0');
       } else {
         toast.error(error.message || 'Failed to add trade');
@@ -338,10 +334,6 @@ export const useTrades = (userId: string | undefined) => {
         calculateStats(updatedTrades);
         toast.success('Trade updated successfully! (Demo Mode)');
         return;
-      }
-
-      if (!auth?.currentUser) {
-        throw new Error('User not authenticated');
       }
 
       // Find the original trade to calculate P&L difference
@@ -400,10 +392,6 @@ export const useTrades = (userId: string | undefined) => {
         calculateStats(updatedTrades);
         toast.success('Trade deleted successfully! (Demo Mode)');
         return;
-      }
-
-      if (!auth?.currentUser) {
-        throw new Error('User not authenticated');
       }
 
       // Find the trade to reverse its P&L effect
