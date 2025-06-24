@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { DollarSign, Calculator, TrendingUp, BarChart3, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
 
 interface InlineStartingBalanceSetupProps {
   onSubmit: (balance: number) => Promise<void>;
@@ -20,7 +19,6 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
-  const navigate = useNavigate();
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
@@ -48,19 +46,13 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
       // Handle specific Firebase errors
       if (error.message?.includes('Firebase Auth not configured') || 
           error.message?.includes('Demo mode') ||
-          error.message?.includes('api-key-not-valid') ||
-          error.message?.includes('not initialized') ||
-          error.message?.includes('No authentication token found')) {
+          error.message?.includes('api-key-not-valid')) {
         setIsOfflineMode(true);
-        setError('Firebase not configured or not authenticated. Running in demo mode.');
-        toast.error('⚠️ Authentication issue. Please check your setup or sign in again.');
+        setError('Firebase not configured. Running in demo mode.');
+        toast.error('⚠️ Firebase not configured. Please check your setup.');
       } else if (error.message?.includes('permission')) {
         setError('Permission denied. Please sign in again.');
         toast.error('Please sign in again to continue');
-        // Redirect to login after a short delay
-        setTimeout(() => {
-          navigate('/login', { state: { from: '/dashboard' } });
-        }, 1500);
       } else if (error.message?.includes('network') || error.message?.includes('unavailable')) {
         setError('Network error. Please check your internet connection.');
         toast.error('Please check your internet connection and try again');
@@ -109,13 +101,12 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
             <span className="text-orange-200 font-medium">Demo Mode</span>
           </div>
           <p className="text-orange-100 text-sm mt-1">
-            Firebase is not configured or you're not properly authenticated. Please update your .env file with valid Firebase credentials or sign in again.
+            Firebase is not configured. Please update your .env file with valid Firebase credentials.
           </p>
           <div className="mt-2 text-xs text-orange-200">
             <p>1. Go to Firebase Console → Project Settings</p>
             <p>2. Copy your config values to .env file</p>
             <p>3. Restart the development server</p>
-            <p>4. Sign in again to refresh your authentication</p>
           </div>
         </div>
       )}
@@ -128,14 +119,6 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
             <span className="text-red-200 font-medium">Setup Error</span>
           </div>
           <p className="text-red-100 text-sm mt-1">{error}</p>
-          {error.includes('Permission denied') && (
-            <button 
-              onClick={() => navigate('/login', { state: { from: '/dashboard' } })}
-              className="mt-2 px-4 py-2 bg-red-700 text-white rounded-lg text-sm hover:bg-red-800 transition-colors"
-            >
-              Sign In Again
-            </button>
-          )}
         </div>
       )}
 

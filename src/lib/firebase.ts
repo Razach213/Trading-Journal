@@ -1,18 +1,18 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
-// Firebase configuration
+// CRITICAL: Firebase configuration - Replace with your actual values
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:demo",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-DEMO"
 };
 
 // Initialize Firebase only if we have valid configuration
@@ -24,7 +24,7 @@ let functions = null;
 
 try {
   // Check if we have a valid API key
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "your-firebase-api-key-here") {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
     console.warn("⚠️ Firebase not configured. Using demo mode.");
     throw new Error("Firebase configuration missing");
   }
@@ -35,30 +35,24 @@ try {
   storage = getStorage(app);
   functions = getFunctions(app);
 
-  // Set persistence to LOCAL (this keeps the user logged in even after browser refresh)
-  setPersistence(auth, browserLocalPersistence)
-    .then(() => {
-      console.log("✅ Firebase auth persistence set to LOCAL");
-    })
-    .catch((error) => {
-      console.error("❌ Error setting auth persistence:", error);
-    });
-
-  // Connect to emulators if enabled
-  if (import.meta.env.VITE_ENABLE_EMULATORS === 'true') {
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectStorageEmulator(storage, 'localhost', 9199);
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-    console.log("✅ Connected to Firebase emulators");
-  }
-
   console.log("✅ Firebase initialized successfully");
 } catch (error) {
   console.warn("⚠️ Firebase initialization failed, using demo mode:", error);
   
   // Create safe mock objects for demo mode
-  auth = null;
+  auth = {
+    currentUser: null,
+    onAuthStateChanged: (callback) => {
+      // Call callback immediately with null user
+      setTimeout(() => callback(null), 0);
+      return () => {}; // Return unsubscribe function
+    },
+    signInWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
+    createUserWithEmailAndPassword: () => Promise.reject(new Error("Demo mode")),
+    signInWithPopup: () => Promise.reject(new Error("Demo mode")),
+    signOut: () => Promise.reject(new Error("Demo mode"))
+  };
+
   db = null;
   storage = null;
   functions = null;

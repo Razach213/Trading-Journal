@@ -7,13 +7,6 @@ export interface User {
   accountBalance: number; // Starting account balance
   currentBalance: number; // Current balance after trades
   createdAt: Date;
-  subscription?: {
-    plan: 'pro';
-    status: 'active' | 'expired' | 'pending';
-    startedAt: Date;
-    expiresAt: Date;
-    isYearly: boolean;
-  };
 }
 
 export interface Trade {
@@ -61,8 +54,6 @@ export interface AccountBalance {
   totalPnL: number;
   totalReturnPercent: number;
   lastUpdated: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export interface Playbook {
@@ -94,7 +85,7 @@ export interface Payment {
   userId: string;
   userEmail: string;
   userName: string;
-  plan: 'pro';
+  plan: 'pro' | 'premium';
   amount: number;
   currency: string;
   paymentMethod: 'pakistan' | 'international';
@@ -113,8 +104,6 @@ export interface Payment {
   reviewedAt?: Date | null;
   reviewedBy?: string | null;
   adminNotes?: string | null;
-  isYearly: boolean;
-  expiryDate: Date;
   createdAt: Date;
   updatedAt: Date;
 }

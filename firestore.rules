@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
+    // Helper functions for validation
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -29,7 +29,7 @@ service cloud.firestore {
       return data.keys().hasAll(['email', 'displayName', 'plan', 'createdAt']) &&
              data.email is string &&
              data.displayName is string &&
-             data.plan in ['free', 'pro'] &&
+             data.plan in ['free', 'pro', 'premium'] &&
              data.createdAt is timestamp;
     }
     
@@ -69,17 +69,20 @@ service cloud.firestore {
              data.totalPnL is number &&
              data.totalReturnPercent is number &&
              data.lastUpdated is timestamp &&
-             data.startingBalance >= 0;
+             data.startingBalance > 0;
     }
     
     // Users collection rules - UPDATED for admin panel access
     match /users/{userId} {
       allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
       
-      allow create: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && 
+                   isOwner(userId) && 
+                   isValidUser(request.resource.data);
       
       allow update: if isAuthenticated() && 
-                   (isOwner(userId) || isAdmin()) &&
+                   (isOwner(userId) || isAdmin()) && 
+                   isValidUser(request.resource.data) &&
                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt']);
       
       allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
@@ -95,10 +98,13 @@ service cloud.firestore {
     match /accountBalances/{userId} {
       allow read: if isAuthenticated() && (isOwner(userId) || isAdmin()) || isAdminPanelAccess();
       
-      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && 
+                   (isOwner(userId) || isAdmin()) &&
+                   isValidAccountBalance(request.resource.data);
       
       allow update: if isAuthenticated() && 
                    (isOwner(userId) || isAdmin()) &&
+                   isValidAccountBalance(request.resource.data) &&
                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId']);
       
       allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
