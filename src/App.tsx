@@ -20,7 +20,7 @@ import Privacy from './pages/Privacy';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import AdminPanal from './pages/AdminPanal';
-import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import toast from 'react-hot-toast';
 
@@ -38,36 +38,71 @@ function ScrollToTop() {
 // Firebase Auth Token Login Hook
 function useFirebaseAuthTokenLogin() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const authToken = localStorage.getItem('authToken');
+      // Skip if no auth instance or already authenticated
+      if (!auth) return;
       
-      if (authToken && auth && !auth.currentUser) {
-        try {
-          setIsAuthenticating(true);
-          await signInWithCustomToken(auth, authToken);
-          console.log('✅ Firebase sign-in with custom token succeeded.');
-        } catch (error) {
-          console.error('❌ Firebase sign-in failed:', error);
-          // Clear invalid token
-          localStorage.removeItem('authToken');
-          toast.error('Authentication error. Please sign in again.');
-        } finally {
-          setIsAuthenticating(false);
+      // Check if user is already authenticated
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          // User is already signed in, refresh token
+          try {
+            const token = await user.getIdToken(true);
+            localStorage.setItem('authToken', token);
+            console.log('✅ Firebase token refreshed successfully');
+          } catch (error) {
+            console.error('❌ Error refreshing token:', error);
+          }
+        } else {
+          // No user is signed in, try to use stored token
+          const authToken = localStorage.getItem('authToken');
+          if (authToken && authToken.startsWith('demo-token-')) {
+            // This is a demo token, don't try to use it with Firebase
+            return;
+          }
+          
+          if (authToken) {
+            try {
+              setIsAuthenticating(true);
+              setAuthError(null);
+              
+              // Try to sign in with the stored token
+              await signInWithCustomToken(auth, authToken);
+              console.log('✅ Firebase sign-in with custom token succeeded.');
+            } catch (error: any) {
+              console.error('❌ Firebase sign-in failed:', error);
+              setAuthError(error.message || 'Authentication failed');
+              
+              // Clear invalid token
+              localStorage.removeItem('authToken');
+              
+              // Only show error toast if not on login/signup pages
+              const currentPath = window.location.pathname;
+              if (currentPath !== '/login' && currentPath !== '/signup') {
+                toast.error('Your session has expired. Please sign in again.');
+              }
+            } finally {
+              setIsAuthenticating(false);
+            }
+          }
         }
-      }
+      });
+      
+      return unsubscribe;
     };
 
     initializeAuth();
   }, []);
 
-  return { isAuthenticating };
+  return { isAuthenticating, authError };
 }
 
 function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { isAuthenticating } = useFirebaseAuthTokenLogin();
+  const { isAuthenticating, authError } = useFirebaseAuthTokenLogin();
 
   // Enhanced Dark Mode Logic with Animation
   useEffect(() => {
@@ -126,6 +161,24 @@ function App() {
           <ScrollToTop />
           <Header toggleTheme={toggleTheme} />
           <main className="flex-1 animate-fade-in-scale">
+            {authError && window.location.pathname !== '/login' && window.location.pathname !== '/signup' && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 py-2">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-red-800 dark:text-red-200">
+                      Authentication error: {authError}
+                    </p>
+                    <a 
+                      href="/login" 
+                      className="text-sm font-medium text-red-800 dark:text-red-200 underline"
+                    >
+                      Sign in again
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />

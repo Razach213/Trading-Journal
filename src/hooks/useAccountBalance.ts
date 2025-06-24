@@ -74,84 +74,83 @@ export const useAccountBalance = (userId: string | undefined) => {
     setLoading(true);
     setError(null);
 
-    // Get auth token from localStorage
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      setError('No authentication token found. Please sign in again.');
-      setLoading(false);
-      return;
-    }
-
-    // Set up real-time listener for account balance
-    const unsubscribe = onSnapshot(
-      doc(db, 'accountBalances', userId),
-      async (doc) => {
-        try {
-          if (doc.exists()) {
-            const data = doc.data();
-            const balance: AccountBalance = {
-              id: doc.id,
-              userId: data.userId,
-              startingBalance: data.startingBalance || 0,
-              currentBalance: data.currentBalance || data.startingBalance || 0,
-              totalPnL: data.totalPnL || 0,
-              totalReturnPercent: data.totalReturnPercent || 0,
-              lastUpdated: data.lastUpdated?.toDate() || new Date(),
-              createdAt: data.createdAt?.toDate() || new Date(),
-              updatedAt: data.updatedAt?.toDate() || new Date()
-            };
-            setAccountBalance(balance);
-            setHasSetupBalance(balance.startingBalance > 0);
-          } else {
-            // Create empty balance record
-            const defaultBalance: Omit<AccountBalance, 'id'> = {
-              userId,
-              startingBalance: 0,
-              currentBalance: 0,
-              totalPnL: 0,
-              totalReturnPercent: 0,
-              lastUpdated: new Date(),
-              createdAt: new Date(),
-              updatedAt: new Date()
-            };
-            
-            try {
-              await setDoc(doc(db, 'accountBalances', userId), {
-                ...defaultBalance,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-              });
-              setAccountBalance({ ...defaultBalance, id: userId });
-              setHasSetupBalance(false);
-            } catch (createError) {
-              console.error('Error creating account balance:', createError);
-              setAccountBalance({ ...defaultBalance, id: userId });
-              setHasSetupBalance(false);
+    try {
+      // Set up real-time listener for account balance
+      const unsubscribe = onSnapshot(
+        doc(db, 'accountBalances', userId),
+        async (doc) => {
+          try {
+            if (doc.exists()) {
+              const data = doc.data();
+              const balance: AccountBalance = {
+                id: doc.id,
+                userId: data.userId,
+                startingBalance: data.startingBalance || 0,
+                currentBalance: data.currentBalance || data.startingBalance || 0,
+                totalPnL: data.totalPnL || 0,
+                totalReturnPercent: data.totalReturnPercent || 0,
+                lastUpdated: data.lastUpdated?.toDate() || new Date(),
+                createdAt: data.createdAt?.toDate() || new Date(),
+                updatedAt: data.updatedAt?.toDate() || new Date()
+              };
+              setAccountBalance(balance);
+              setHasSetupBalance(balance.startingBalance > 0);
+            } else {
+              // Create empty balance record
+              const defaultBalance: Omit<AccountBalance, 'id'> = {
+                userId,
+                startingBalance: 0,
+                currentBalance: 0,
+                totalPnL: 0,
+                totalReturnPercent: 0,
+                lastUpdated: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              };
+              
+              try {
+                await setDoc(doc(db, 'accountBalances', userId), {
+                  ...defaultBalance,
+                  createdAt: serverTimestamp(),
+                  updatedAt: serverTimestamp()
+                });
+                setAccountBalance({ ...defaultBalance, id: userId });
+                setHasSetupBalance(false);
+              } catch (createError) {
+                console.error('Error creating account balance:', createError);
+                setAccountBalance({ ...defaultBalance, id: userId });
+                setHasSetupBalance(false);
+              }
             }
+            setError(null);
+          } catch (err) {
+            console.error('Error processing account balance:', err);
+            setError('Failed to load account balance');
+          } finally {
+            setLoading(false);
           }
-          setError(null);
-        } catch (err) {
-          console.error('Error processing account balance:', err);
-          setError('Failed to load account balance');
-        } finally {
+        },
+        (err) => {
+          console.error('Error fetching account balance:', err);
           setLoading(false);
+          
+          if (err.code === 'permission-denied') {
+            setError('Permission denied. Please check your authentication.');
+          } else if (err.code === 'unavailable') {
+            setError('Service temporarily unavailable. Please check your internet connection.');
+          } else {
+            setError('Failed to load account balance. Please try refreshing the page.');
+          }
         }
-      },
-      (err) => {
-        console.error('Error fetching account balance:', err);
-        setLoading(false);
-        
-        if (err.code === 'permission-denied') {
-          setError('Permission denied. Please check your authentication.');
-        } else if (err.code === 'unavailable') {
-          setError('Service temporarily unavailable. Please check your internet connection.');
-        } else {
-          setError('Failed to load account balance. Please try refreshing the page.');
-        }
-      }
-    );
+      );
 
-    return unsubscribe;
+      return unsubscribe;
+    } catch (err) {
+      console.error('Error setting up account balance listener:', err);
+      setLoading(false);
+      setError('Failed to initialize account balance. Please try refreshing the page.');
+      return () => {};
+    }
   }, [userId]);
 
   const updateBalance = async (field: 'startingBalance' | 'currentBalance', newValue: number): Promise<void> => {
@@ -211,12 +210,6 @@ export const useAccountBalance = (userId: string | undefined) => {
         
         toast.success(`${field === 'startingBalance' ? 'Starting' : 'Current'} balance updated successfully! (Demo Mode)`);
         return;
-      }
-
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        throw new Error('No authentication token found. Please sign in again.');
       }
 
       // Real Firebase mode
@@ -290,12 +283,6 @@ export const useAccountBalance = (userId: string | undefined) => {
         return newCurrentBalance;
       }
 
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        throw new Error('No authentication token found. Please sign in again.');
-      }
-
       await updateDoc(doc(db, 'accountBalances', userId), {
         ...updatedBalance,
         updatedAt: serverTimestamp()
@@ -333,12 +320,6 @@ export const useAccountBalance = (userId: string | undefined) => {
         setAccountBalance(newBalance);
         localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(newBalance));
         return;
-      }
-
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        throw new Error('No authentication token found. Please sign in again.');
       }
 
       await updateDoc(doc(db, 'accountBalances', userId), {

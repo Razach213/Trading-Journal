@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, TrendingUp, DollarSign, Target, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, TrendingUp, DollarSign, Target, Award, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useTrades } from '../hooks/useTrades';
 import { useAccountBalance } from '../hooks/useAccountBalance';
@@ -10,26 +10,71 @@ import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
 import InlineStartingBalanceSetup from '../components/Dashboard/InlineStartingBalanceSetup';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { trades, stats, loading, error, addTrade, updateTrade, deleteTrade } = useTrades(user?.id);
   const { 
     accountBalance, 
     loading: balanceLoading, 
+    error: balanceError,
     hasSetupBalance, 
     updateStartingBalance,
     updateCurrentBalance
   } = useAccountBalance(user?.id);
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
+  const navigate = useNavigate();
+
+  // Check for authentication errors and redirect if needed
+  useEffect(() => {
+    // Check if there's an auth token
+    const authToken = localStorage.getItem('authToken');
+    
+    // If no auth token and not loading, redirect to login
+    if (!authToken && !authLoading && !user) {
+      navigate('/login', { state: { from: '/dashboard' } });
+    }
+  }, [user, authLoading, navigate]);
+
+  // Check for balance errors that might indicate auth issues
+  useEffect(() => {
+    if (balanceError && balanceError.includes('Permission denied')) {
+      // Clear auth token and redirect to login
+      localStorage.removeItem('authToken');
+      navigate('/login', { state: { from: '/dashboard', message: 'Your session has expired. Please sign in again.' } });
+    }
+  }, [balanceError, navigate]);
 
   const handleUpdateBalance = async (field: 'startingBalance' | 'currentBalance', newValue: number) => {
-    if (field === 'startingBalance') {
-      await updateStartingBalance(newValue);
-    } else {
-      await updateCurrentBalance(newValue);
+    try {
+      if (field === 'startingBalance') {
+        await updateStartingBalance(newValue);
+      } else {
+        await updateCurrentBalance(newValue);
+      }
+    } catch (error: any) {
+      // If error indicates auth issues, redirect to login
+      if (error.message?.includes('Permission denied') || 
+          error.message?.includes('No authentication token found')) {
+        localStorage.removeItem('authToken');
+        navigate('/login', { state: { from: '/dashboard', message: 'Your session has expired. Please sign in again.' } });
+      }
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Verifying authentication...
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -38,6 +83,12 @@ const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Please sign in to access your dashboard
           </h2>
+          <button
+            onClick={() => navigate('/login', { state: { from: '/dashboard' } })}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </button>
         </div>
       </div>
     );
@@ -55,6 +106,41 @@ const Dashboard: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400">
             Setting up your trading environment
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if there's a balance error
+  if (balanceError && !balanceError.includes('Permission denied')) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full">
+          <div className="text-center">
+            <div className="bg-red-100 dark:bg-red-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Error Loading Dashboard
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {balanceError}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => navigate('/login', { state: { from: '/dashboard' } })}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Sign In Again
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Calculator, Target } from 'lucide-react';
 import InlineEditableBalance from './InlineEditableBalance';
+import { useNavigate } from 'react-router-dom';
 
 interface AccountBalanceCardProps {
   startingBalance: number;
@@ -17,6 +18,8 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
   totalReturn,
   onUpdateBalance
 }) => {
+  const navigate = useNavigate();
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -27,6 +30,15 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
 
   const formatPercentage = (value: number) => {
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  };
+
+  const handleBalanceUpdateError = (error: any) => {
+    // If error indicates auth issues, redirect to login
+    if (error.message?.includes('Permission denied') || 
+        error.message?.includes('No authentication token found')) {
+      localStorage.removeItem('authToken');
+      navigate('/login', { state: { from: '/dashboard', message: 'Your session has expired. Please sign in again.' } });
+    }
   };
 
   return (
@@ -41,7 +53,7 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
           <div className="flex items-center justify-center md:justify-start">
             <InlineEditableBalance
               value={startingBalance}
-              onSave={(newValue) => onUpdateBalance('startingBalance', newValue)}
+              onSave={(newValue) => onUpdateBalance('startingBalance', newValue).catch(handleBalanceUpdateError)}
               label="Starting Balance"
               large={true}
               className="text-white"
@@ -61,7 +73,7 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
           <div className="flex items-center justify-center md:justify-start">
             <InlineEditableBalance
               value={currentBalance}
-              onSave={(newValue) => onUpdateBalance('currentBalance', newValue)}
+              onSave={(newValue) => onUpdateBalance('currentBalance', newValue).catch(handleBalanceUpdateError)}
               label="Current Balance"
               large={true}
               className="text-white"

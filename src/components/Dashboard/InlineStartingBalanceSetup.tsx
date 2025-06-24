@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DollarSign, Calculator, TrendingUp, BarChart3, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface InlineStartingBalanceSetupProps {
   onSubmit: (balance: number) => Promise<void>;
@@ -19,6 +20,7 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const navigate = useNavigate();
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<BalanceFormData>({
     defaultValues: {
@@ -38,12 +40,6 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
     setError(null);
     
     try {
-      // Check if auth token exists
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        throw new Error('No authentication token found. Please sign in again.');
-      }
-      
       await onSubmit(data.startingBalance);
       toast.success('🎉 Account setup complete! Ready to start trading!');
     } catch (error: any) {
@@ -61,6 +57,10 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
       } else if (error.message?.includes('permission')) {
         setError('Permission denied. Please sign in again.');
         toast.error('Please sign in again to continue');
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          navigate('/login', { state: { from: '/dashboard' } });
+        }, 1500);
       } else if (error.message?.includes('network') || error.message?.includes('unavailable')) {
         setError('Network error. Please check your internet connection.');
         toast.error('Please check your internet connection and try again');
@@ -128,6 +128,14 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
             <span className="text-red-200 font-medium">Setup Error</span>
           </div>
           <p className="text-red-100 text-sm mt-1">{error}</p>
+          {error.includes('Permission denied') && (
+            <button 
+              onClick={() => navigate('/login', { state: { from: '/dashboard' } })}
+              className="mt-2 px-4 py-2 bg-red-700 text-white rounded-lg text-sm hover:bg-red-800 transition-colors"
+            >
+              Sign In Again
+            </button>
+          )}
         </div>
       )}
 

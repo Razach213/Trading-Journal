@@ -87,6 +87,7 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
 
     if (numValue === value) {
       setIsEditing(false);
+      setError(null);
       return;
     }
 

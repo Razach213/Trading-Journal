@@ -6,7 +6,8 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  getIdToken
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -54,8 +55,13 @@ export const useAuth = () => {
       try {
         if (firebaseUser) {
           // Set auth token in localStorage
-          const token = await firebaseUser.getIdToken(true); // Force refresh token
-          localStorage.setItem('authToken', token);
+          try {
+            const token = await firebaseUser.getIdToken(true); // Force refresh token
+            localStorage.setItem('authToken', token);
+          } catch (tokenError) {
+            console.error("Error getting auth token:", tokenError);
+            // Don't throw here, continue with user data
+          }
           
           const userData = await getUserData(firebaseUser);
           setUser(userData);
@@ -304,7 +310,16 @@ export const useAuth = () => {
   // Function to refresh the auth token
   const refreshToken = async () => {
     try {
-      if (isDemoMode || !auth || !auth.currentUser) return;
+      if (isDemoMode) {
+        // In demo mode, just create a new fake token
+        const token = 'demo-token-' + Date.now();
+        localStorage.setItem('authToken', token);
+        return token;
+      }
+      
+      if (!auth || !auth.currentUser) {
+        throw new Error("Not authenticated");
+      }
       
       const token = await auth.currentUser.getIdToken(true);
       localStorage.setItem('authToken', token);
@@ -312,6 +327,25 @@ export const useAuth = () => {
     } catch (error) {
       console.error("Error refreshing token:", error);
       throw error;
+    }
+  };
+
+  // Function to check if token is valid and refresh if needed
+  const validateToken = async (): Promise<boolean> => {
+    try {
+      if (isDemoMode) return true;
+      
+      const token = localStorage.getItem('authToken');
+      if (!token) return false;
+      
+      if (!auth || !auth.currentUser) return false;
+      
+      // Refresh token to ensure it's valid
+      await refreshToken();
+      return true;
+    } catch (error) {
+      console.error("Token validation error:", error);
+      return false;
     }
   };
 
@@ -324,6 +358,7 @@ export const useAuth = () => {
     signInWithGoogle,
     logout,
     refreshToken,
+    validateToken,
     isDemoMode
   };
 };
