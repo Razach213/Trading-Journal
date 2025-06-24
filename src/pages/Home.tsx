@@ -1,34 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart, ChevronLeft } from "lucide-react";
+import { CheckCircle2, ArrowRight, TrendingUp, BarChart3, Shield, Users, Zap, ChevronRight, DollarSign, Award, Target, Clock, Laptop, BookOpen, LineChart, PieChart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
-// Slideshow images from Pexels
+// High-quality images from Pexels
 const slideshowImages = [
   {
-    url: "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    url: "https://images.pexels.com/photos/6801874/pexels-photo-6801874.jpeg?auto=compress&cs=tinysrgb&w=1920",
     alt: "Trading Dashboard Analytics",
-    caption: "Track. Analyze. Improve."
+    caption: "Track. Analyze. Improve.",
+    description: "Gain powerful insights into your trading performance"
   },
   {
-    url: "https://images.pexels.com/photos/6770610/pexels-photo-6770610.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    url: "https://images.pexels.com/photos/6770610/pexels-photo-6770610.jpeg?auto=compress&cs=tinysrgb&w=1920",
     alt: "Performance Charts",
-    caption: "Visualize Your Performance"
+    caption: "Visualize Your Performance",
+    description: "See your trading journey with beautiful interactive charts"
   },
   {
-    url: "https://images.pexels.com/photos/7567596/pexels-photo-7567596.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    url: "https://images.pexels.com/photos/7567596/pexels-photo-7567596.jpeg?auto=compress&cs=tinysrgb&w=1920",
     alt: "Trade Analysis",
-    caption: "Data-Driven Insights"
+    caption: "Data-Driven Insights",
+    description: "Make better trading decisions with advanced analytics"
   },
   {
-    url: "https://images.pexels.com/photos/6781341/pexels-photo-6781341.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    url: "https://images.pexels.com/photos/6781341/pexels-photo-6781341.jpeg?auto=compress&cs=tinysrgb&w=1920",
     alt: "Mobile Trading",
-    caption: "Trade Anywhere, Anytime"
-  },
-  {
-    url: "https://images.pexels.com/photos/7567444/pexels-photo-7567444.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    alt: "Financial Analysis",
-    caption: "Master Your Trading Strategy"
+    caption: "Trade Anywhere, Anytime",
+    description: "Access your trading journal on any device, anywhere"
   }
 ];
 
@@ -115,50 +120,33 @@ const Home: React.FC = () => {
   const testimonialsRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   
-  // Slideshow state
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const slideshowRef = useRef<HTMLDivElement>(null);
-  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Handle slideshow navigation
-  const goToSlide = (index: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentSlide(index);
-    setTimeout(() => setIsTransitioning(false), 500);
-  };
-
-  const nextSlide = () => {
-    goToSlide((currentSlide + 1) % slideshowImages.length);
-  };
-
-  const prevSlide = () => {
-    goToSlide((currentSlide - 1 + slideshowImages.length) % slideshowImages.length);
-  };
-
-  // Autoplay slideshow
+  // Parallax effect state
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
+  
+  // Set window dimensions on mount
   useEffect(() => {
-    autoplayTimerRef.current = setInterval(() => {
-      nextSlide();
-    }, 5000); // Change slide every 5 seconds
-
-    return () => {
-      if (autoplayTimerRef.current) {
-        clearInterval(autoplayTimerRef.current);
-      }
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
     };
-  }, [currentSlide]);
-
-  // Reset timer when manually changing slides
-  const handleManualNavigation = (index: number) => {
-    if (autoplayTimerRef.current) {
-      clearInterval(autoplayTimerRef.current);
-    }
-    goToSlide(index);
-    autoplayTimerRef.current = setInterval(() => {
-      nextSlide();
-    }, 5000);
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
+  // Handle mouse movement for parallax effect
+  const handleMouseMove = (e: React.MouseEvent) => {
+    setMousePosition({
+      x: e.clientX / windowDimensions.width,
+      y: e.clientY / windowDimensions.height
+    });
   };
 
   useEffect(() => {
@@ -197,34 +185,72 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-gray-900">
+    <div className="bg-white dark:bg-gray-900" onMouseMove={handleMouseMove}>
       <main>
-        {/* Hero section with Slideshow */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800" />
-          
-          {/* Animated background elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-20 left-10 w-64 h-64 bg-blue-400/10 dark:bg-blue-600/10 rounded-full filter blur-3xl animate-float" style={{ animationDelay: '0s' }}></div>
-            <div className="absolute top-40 right-20 w-72 h-72 bg-purple-400/10 dark:bg-purple-600/10 rounded-full filter blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-green-400/10 dark:bg-green-600/10 rounded-full filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        {/* Hero section with Animated Slideshow */}
+        <div className="relative overflow-hidden min-h-screen flex items-center">
+          {/* Animated Slideshow */}
+          <div className="absolute inset-0 z-0">
+            <Swiper
+              modules={[Autoplay, EffectFade, Pagination, Navigation]}
+              effect="fade"
+              slidesPerView={1}
+              loop={true}
+              autoplay={{
+                delay: 5000,
+                disableOnInteraction: false,
+              }}
+              pagination={{
+                clickable: true,
+                dynamicBullets: true,
+              }}
+              navigation={true}
+              className="h-full w-full"
+            >
+              {slideshowImages.map((image, index) => (
+                <SwiperSlide key={index} className="h-full w-full">
+                  <div className="relative h-full w-full">
+                    {/* Dark overlay */}
+                    <div className="absolute inset-0 bg-black/50 z-10"></div>
+                    
+                    {/* Parallax effect on image */}
+                    <div 
+                      className="absolute inset-0 z-0 transition-transform duration-1000 ease-out"
+                      style={{ 
+                        transform: `scale(1.1) translate(${(mousePosition.x - 0.5) * -20}px, ${(mousePosition.y - 0.5) * -20}px)`,
+                        backgroundImage: `url(${image.url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    ></div>
+                    
+                    {/* Caption */}
+                    <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-16 z-20 text-white">
+                      <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 animate-fade-in-scale">{image.caption}</h2>
+                      <p className="text-xl sm:text-2xl text-white/90 max-w-2xl animate-slide-in-bottom">{image.description}</p>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
           
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-32">
+          {/* Hero Content */}
+          <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-32">
             <div ref={heroRef} className="text-center opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-              <div className="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-8 animate-pulse">
+              <div className="inline-flex items-center bg-white/20 text-white px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-8 backdrop-blur-sm">
                 <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                 Trusted by 75,000+ Traders Worldwide
               </div>
               
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 sm:mb-8">
-                <span className="block text-gray-900 dark:text-white">The Trading Journal</span>
-                <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 sm:mb-8 text-white">
+                <span className="block">The Trading Journal</span>
+                <span className="block bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
                   Built for Winners
                 </span>
               </h1>
               
-              <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-lg sm:text-xl lg:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed px-4 sm:px-0">
+              <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-lg sm:text-xl lg:text-2xl text-white/90 leading-relaxed px-4 sm:px-0">
                 Track, analyze, and improve your trading performance with the most advanced trading journal platform. 
                 Join thousands of successful traders who trust ZellaX to elevate their trading game.
               </p>
@@ -239,7 +265,7 @@ const Home: React.FC = () => {
                 </Link>
                 <Link
                   to="/features"
-                  className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 dark:border-gray-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+                  className="inline-flex items-center justify-center rounded-lg border-2 border-white/70 backdrop-blur-sm px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white hover:bg-white/10 transition-all duration-200"
                 >
                   View Features
                 </Link>
@@ -248,88 +274,25 @@ const Home: React.FC = () => {
               {/* Trust indicators */}
               <div className="mt-12 sm:mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 px-4 sm:px-0">
                 {stats.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-                    <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{stat.label}</div>
+                  <div key={index} className="text-center bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{stat.value}</div>
+                    <div className="text-sm sm:text-base text-white/70">{stat.label}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
           
-          {/* Slideshow */}
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-            <div 
-              ref={slideshowRef} 
-              className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 mx-auto max-w-5xl h-[400px] sm:h-[500px]"
-            >
-              {/* Slideshow Images */}
-              {slideshowImages.map((image, index) => (
-                <div 
-                  key={index}
-                  className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
-                    index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                  }`}
-                  aria-hidden={index !== currentSlide}
-                >
-                  {/* Dark overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 z-10"></div>
-                  
-                  {/* Image */}
-                  <img 
-                    src={image.url} 
-                    alt={image.alt}
-                    className="w-full h-full object-cover object-center"
-                    loading={index === 0 ? "eager" : "lazy"}
-                  />
-                  
-                  {/* Caption */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 z-20 text-white">
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{image.caption}</h2>
-                    <p className="text-lg text-white/80">Elevate your trading with powerful analytics</p>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Navigation Arrows */}
-              <button 
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              
-              <button 
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
-                aria-label="Next slide"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-              
-              {/* Dots Navigation */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
-                {slideshowImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleManualNavigation(index)}
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      index === currentSlide 
-                        ? 'bg-white scale-110' 
-                        : 'bg-white/50 hover:bg-white/80'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                    aria-current={index === currentSlide ? 'true' : 'false'}
-                  />
-                ))}
-              </div>
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 animate-bounce">
+            <div className="w-8 h-12 rounded-full border-2 border-white/50 flex items-start justify-center p-1">
+              <div className="w-1 h-3 bg-white/80 rounded-full animate-pulse"></div>
             </div>
           </div>
         </div>
 
         {/* Feature section */}
-        <div ref={featuresRef} className="relative bg-gray-50 dark:bg-gray-800 py-20 sm:py-24 lg:py-32 opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <div ref={featuresRef} className="relative bg-white dark:bg-gray-900 py-20 sm:py-24 lg:py-32 opacity-0 translate-y-10 transition-all duration-1000 ease-out">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16 sm:mb-20">
               <h2 className="text-base sm:text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">Everything you need</h2>
@@ -345,7 +308,7 @@ const Home: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
               {features.map((feature, index) => (
                 <div key={index} className="group">
-                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 sm:p-10 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 h-full transform hover:-translate-y-2">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-10 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 h-full transform hover:-translate-y-2">
                     <div className="bg-gradient-to-br from-blue-500 to-purple-600 w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
                       <feature.icon className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                     </div>
@@ -719,10 +682,10 @@ const Home: React.FC = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Free Plan */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Starter</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Free</h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">Perfect for getting started</p>
                 <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">$0</p>
                 <ul className="space-y-3 mb-8">
@@ -749,12 +712,14 @@ const Home: React.FC = () => {
               
               {/* Pro Plan */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border-2 border-blue-500 dark:border-blue-500 hover:shadow-2xl transition-all duration-300 transform scale-105 relative">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                  Most Popular
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                    Most Popular
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Professional</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pro</h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">For serious traders</p>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">$19<span className="text-lg text-gray-600 dark:text-gray-400">/mo</span></p>
+                <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">$10<span className="text-lg text-gray-600 dark:text-gray-400">/mo</span></p>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
@@ -778,33 +743,6 @@ const Home: React.FC = () => {
                   className="block w-full py-3 px-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-colors"
                 >
                   Start Pro Trial
-                </Link>
-              </div>
-              
-              {/* Enterprise Plan */}
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Enterprise</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">For professional traders</p>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white mb-6">$49<span className="text-lg text-gray-600 dark:text-gray-400">/mo</span></p>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600 dark:text-gray-300">Everything in Professional</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600 dark:text-gray-300">Multi-account support</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600 dark:text-gray-300">Team collaboration</span>
-                  </li>
-                </ul>
-                <Link
-                  to="/pricing"
-                  className="block w-full py-3 px-4 text-center bg-gray-900 dark:bg-gray-700 text-white rounded-lg font-medium hover:bg-black dark:hover:bg-gray-600 transition-colors"
-                >
-                  Get Enterprise
                 </Link>
               </div>
             </div>
