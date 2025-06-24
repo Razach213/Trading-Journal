@@ -2,28 +2,23 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Star, Zap, ArrowRight, Shield, Headphones, Globe } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import PaymentModal from '../components/Payment/PaymentModal';
+import { pricingConfig } from '../config/pricing';
 
 const Pricing: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
   const { user } = useAuth();
+  const { subscription } = useSubscription();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'pro' | 'premium'>('pro');
   const [selectedPrice, setSelectedPrice] = useState(0);
 
   const plans = [
     {
-      name: 'Starter',
-      price: { monthly: 0, yearly: 0 },
+      name: pricingConfig.plans.free.name,
+      price: { monthly: pricingConfig.plans.free.price, yearly: pricingConfig.plans.free.price },
       description: 'Perfect for getting started with trading journaling',
-      features: [
-        'Up to 50 trades per month',
-        'Basic performance analytics',
-        'Trade notes and tags',
-        'Mobile responsive design',
-        'Email support',
-        'Data export (CSV)'
-      ],
+      features: pricingConfig.plans.free.features,
       popular: false,
       buttonText: 'Get Started Free',
       buttonStyle: 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300',
@@ -31,49 +26,18 @@ const Pricing: React.FC = () => {
       gradient: 'from-gray-400 to-gray-600'
     },
     {
-      name: 'Professional',
-      price: { monthly: 19, yearly: 15 },
+      name: pricingConfig.plans.pro.name,
+      price: { 
+        monthly: pricingConfig.plans.pro.price, 
+        yearly: Math.round(pricingConfig.plans.pro.price * 0.8) // 20% discount for yearly
+      },
       description: 'Advanced features for serious traders',
-      features: [
-        'Unlimited trades',
-        'Advanced analytics & insights',
-        'Performance benchmarking',
-        'Custom trade categories',
-        'Data export (CSV, PDF)',
-        'Priority email support',
-        'Trading calendar',
-        'Risk management tools',
-        'Real-time sync',
-        'Advanced charts'
-      ],
+      features: pricingConfig.plans.pro.features,
       popular: true,
-      buttonText: 'Start Pro Trial',
+      buttonText: subscription?.plan === 'pro' ? 'Current Plan' : 'Start Pro Trial',
       buttonStyle: 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700',
       icon: Star,
       gradient: 'from-blue-500 to-purple-600'
-    },
-    {
-      name: 'Enterprise',
-      price: { monthly: 49, yearly: 39 },
-      description: 'Complete solution for professional traders and teams',
-      features: [
-        'Everything in Professional',
-        'Multi-account support',
-        'Team collaboration',
-        'Advanced reporting',
-        'API integrations',
-        'White-label options',
-        'Dedicated account manager',
-        'Phone support',
-        'Custom integrations',
-        'SLA guarantee',
-        'Advanced security'
-      ],
-      popular: false,
-      buttonText: 'Get Enterprise',
-      buttonStyle: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700',
-      icon: Shield,
-      gradient: 'from-purple-500 to-pink-600'
     }
   ];
 
@@ -84,7 +48,7 @@ const Pricing: React.FC = () => {
     },
     {
       question: 'Is there a free trial?',
-      answer: 'Yes! We offer a 14-day free trial for all paid plans. No credit card required to get started.'
+      answer: 'Yes! We offer a 14-day free trial for our Pro plan. No credit card required to get started.'
     },
     {
       question: 'What payment methods do you accept?',
@@ -104,20 +68,22 @@ const Pricing: React.FC = () => {
     }
   ];
 
-  const handlePlanSelect = (plan: 'pro' | 'premium') => {
+  const handlePlanSelect = () => {
     if (!user) {
       // Redirect to signup if not logged in
       return;
     }
     
     const price = isYearly 
-      ? (plan === 'pro' ? plans[1].price.yearly * 12 : plans[2].price.yearly * 12)
-      : (plan === 'pro' ? plans[1].price.monthly : plans[2].price.monthly);
+      ? plans[1].price.yearly * 12
+      : plans[1].price.monthly;
     
-    setSelectedPlan(plan);
     setSelectedPrice(price);
     setShowPaymentModal(true);
   };
+
+  // Check if user already has the Pro plan
+  const isCurrentPlan = subscription?.plan === 'pro' && !subscription?.trialActive;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -160,13 +126,13 @@ const Pricing: React.FC = () => {
 
       {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
             <div
               key={index}
               className={`relative rounded-2xl border-2 p-8 transition-all duration-300 hover:shadow-xl ${
                 plan.popular
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 transform scale-105 shadow-lg'
+                  ? 'border-blue-500 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20 transform scale-105 shadow-lg'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
@@ -209,8 +175,9 @@ const Pricing: React.FC = () => {
                   </Link>
                 ) : (
                   <button
-                    onClick={() => handlePlanSelect(index === 1 ? 'pro' : 'premium')}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mb-8 inline-block transform hover:scale-105 ${plan.buttonStyle}`}
+                    onClick={handlePlanSelect}
+                    disabled={isCurrentPlan}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mb-8 inline-block transform hover:scale-105 ${plan.buttonStyle} ${isCurrentPlan ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {plan.buttonText}
                   </button>
@@ -303,10 +270,10 @@ const Pricing: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to={user ? '/dashboard' : '/signup'}
+              to={user ? "/dashboard" : "/signup"}
               className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 inline-flex items-center justify-center group"
             >
-              {user ? 'Go to Dashboard' : 'Start Free Trial'}
+              {user ? "Go to Dashboard" : "Start Free Trial"}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -323,7 +290,7 @@ const Pricing: React.FC = () => {
       {showPaymentModal && (
         <PaymentModal
           onClose={() => setShowPaymentModal(false)}
-          selectedPlan={selectedPlan}
+          selectedPlan="pro"
           planPrice={selectedPrice}
         />
       )}

@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, MapPin, Globe, Copy, Check, CreditCard, Building, AlertCircle, Loader2 } from 'lucide-react';
+import { X, MapPin, Globe, Copy, Check, CreditCard, Building, AlertCircle, Loader2, DollarSign, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import toast from 'react-hot-toast';
+import { pricingConfig, convertUsdToPkr } from '../../config/pricing';
 
 interface PaymentModalProps {
   onClose: () => void;
-  selectedPlan: 'pro' | 'premium';
+  selectedPlan: 'pro';
   planPrice: number;
 }
 
@@ -24,6 +25,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
   const [selectedLocation, setSelectedLocation] = useState<'pakistan' | 'international' | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pkrAmount, setPkrAmount] = useState<number | null>(null);
+  const [isLoadingRate, setIsLoadingRate] = useState(false);
+  const [exchangeRateError, setExchangeRateError] = useState<string | null>(null);
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<PaymentFormData>();
   
@@ -40,6 +44,47 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
   const binanceAccount = {
     binanceId: '585314519',
     name: 'Thealiraza2'
+  };
+
+  // Fetch exchange rate when location is selected as Pakistan
+  useEffect(() => {
+    if (selectedLocation === 'pakistan') {
+      const fetchExchangeRate = async () => {
+        setIsLoadingRate(true);
+        setExchangeRateError(null);
+        try {
+          const pkrValue = await convertUsdToPkr(planPrice);
+          setPkrAmount(Math.round(pkrValue));
+        } catch (error) {
+          console.error('Error converting currency:', error);
+          setExchangeRateError('Could not fetch latest exchange rate. Using estimated conversion.');
+          // Use default exchange rate as fallback
+          setPkrAmount(Math.round(planPrice * pricingConfig.defaultExchangeRate));
+        } finally {
+          setIsLoadingRate(false);
+        }
+      };
+      
+      fetchExchangeRate();
+    }
+  }, [selectedLocation, planPrice]);
+
+  const refreshExchangeRate = async () => {
+    if (selectedLocation === 'pakistan') {
+      setIsLoadingRate(true);
+      setExchangeRateError(null);
+      try {
+        const pkrValue = await convertUsdToPkr(planPrice);
+        setPkrAmount(Math.round(pkrValue));
+        toast.success('Exchange rate updated successfully!');
+      } catch (error) {
+        console.error('Error refreshing exchange rate:', error);
+        setExchangeRateError('Could not fetch latest exchange rate. Using estimated conversion.');
+        toast.error('Failed to update exchange rate');
+      } finally {
+        setIsLoadingRate(false);
+      }
+    }
   };
 
   const copyToClipboard = async (text: string, field: string) => {
@@ -68,7 +113,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
         userEmail: user.email,
         userName: user.displayName,
         plan: selectedPlan,
-        amount: planPrice,
+        amount: selectedLocation === 'pakistan' ? pkrAmount : planPrice,
         currency: selectedLocation === 'pakistan' ? 'PKR' : 'USD',
         paymentMethod: selectedLocation,
         accountDetails: selectedLocation === 'pakistan' ? {
@@ -83,7 +128,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
         status: 'pending',
         submittedAt: new Date(),
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        // Add trial information
+        trialStartDate: new Date(),
+        trialEndDate: new Date(Date.now() + pricingConfig.trialDuration * 24 * 60 * 60 * 1000)
       };
 
       await addDoc(collection(db, 'payments'), paymentData);
@@ -116,7 +164,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {step === 'location' && 'Choose your location to see available payment options'}
-              {step === 'payment' && `Amount: ${selectedLocation === 'pakistan' ? '₨' : '$'}${planPrice}`}
+              {step === 'payment' && selectedLocation === 'pakistan' && pkrAmount && `Amount: ₨${pkrAmount.toLocaleString()}`}
+              {step === 'payment' && selectedLocation === 'international' && `Amount: $${planPrice}`}
               {step === 'confirmation' && 'Your payment is under review'}
             </p>
           </div>
@@ -204,9 +253,36 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                 
                 {selectedLocation === 'pakistan' ? (
                   <div className="space-y-4">
-                    <p className="text-gray-700 dark:text-gray-300">
-                      Please transfer <strong>₨{planPrice}</strong> to the following account:
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-700 dark:text-gray-300">
+                        Please transfer <strong>₨{pkrAmount?.toLocaleString() || '...'}</strong> to the following account:
+                      </p>
+                      
+                      {isLoadingRate ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                      ) : (
+                        <button 
+                          onClick={refreshExchangeRate}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                          title="Refresh exchange rate"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    {exchangeRateError && (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-300">
+                        {exchangeRateError}
+                      </div>
+                    )}
+                    
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Approximate amount in PKR based on current exchange rate.
+                      </span>
+                    </div>
                     
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                       <div className="space-y-3">
@@ -381,6 +457,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, selectedPlan, plan
                   <li>• Our team will verify your payment within 24 hours</li>
                   <li>• You'll receive an email confirmation once approved</li>
                   <li>• Your account will be automatically upgraded to {selectedPlan} plan</li>
+                  <li>• Your 14-day trial will begin immediately</li>
                   <li>• You can check your payment status in your account settings</li>
                 </ul>
               </div>

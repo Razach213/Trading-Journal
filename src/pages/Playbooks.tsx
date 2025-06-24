@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, BookOpen, Loader2, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Search, Filter, BookOpen, Loader2, AlertCircle, Wifi, WifiOff, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { usePlaybooks } from '../hooks/usePlaybooks';
+import { useSubscription } from '../hooks/useSubscription';
 import { Playbook } from '../types';
 import PlaybookCard from '../components/Playbooks/PlaybookCard';
 import AddPlaybookModal from '../components/Playbooks/AddPlaybookModal';
 import PlaybookDetailModal from '../components/Playbooks/PlaybookDetailModal';
+import FeatureGuard from '../components/FeatureGuard';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Playbooks: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { playbooks, loading, error, addPlaybook, updatePlaybook, deletePlaybook } = usePlaybooks(user?.id);
+  const { subscription } = useSubscription();
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
   const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
@@ -157,13 +161,16 @@ const Playbooks: React.FC = () => {
                 Save and organize your trading strategies and setups
               </p>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
-            >
-              <Plus className="h-5 w-5" />
-              <span>New Playbook</span>
-            </button>
+            
+            <FeatureGuard>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+              >
+                <Plus className="h-5 w-5" />
+                <span>New Playbook</span>
+              </button>
+            </FeatureGuard>
           </div>
 
           {/* Search and Filters */}
@@ -275,27 +282,67 @@ const Playbooks: React.FC = () => {
                 }
               </p>
               {!searchTerm && !filterStrategy && (
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
+                <FeatureGuard
+                  fallback={
+                    <div className="flex flex-col items-center">
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        Playbooks are a Pro feature. Upgrade to create and manage your trading strategies.
+                      </p>
+                      <Link
+                        to="/pricing"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        Upgrade to Pro
+                        <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
+                      </Link>
+                    </div>
+                  }
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Playbook
-                </button>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Playbook
+                  </button>
+                </FeatureGuard>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPlaybooks.map((playbook) => (
-                <PlaybookCard
-                  key={playbook.id}
-                  playbook={playbook}
-                  onView={handleView}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
+            <FeatureGuard
+              fallback={
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700">
+                  <div className="text-gray-400 dark:text-gray-500 mb-6">
+                    <BookOpen className="h-16 w-16 mx-auto" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                    Pro Feature: Trading Playbooks
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                    Create and manage your trading strategies with detailed entry/exit rules, risk management, and more.
+                  </p>
+                  <Link
+                    to="/pricing"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Upgrade to Pro
+                    <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
+                  </Link>
+                </div>
+              }
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredPlaybooks.map((playbook) => (
+                  <PlaybookCard
+                    key={playbook.id}
+                    playbook={playbook}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </FeatureGuard>
           )}
 
           {/* Modals */}

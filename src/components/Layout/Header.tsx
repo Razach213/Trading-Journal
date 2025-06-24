@@ -2,8 +2,9 @@ import React, { Fragment, useState, useEffect } from 'react';
 import { Popover, Transition, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info, Crown } from 'lucide-react';
+import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info, Crown, Clock } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useSubscription } from '../../hooks/useSubscription';
 import ThemeToggle from '../ui/ThemeToggle';
 
 const featuresMenu = [
@@ -96,6 +97,7 @@ interface HeaderProps {
 
 export default function Header({ toggleTheme }: HeaderProps) {
   const { user, logout } = useAuth();
+  const { subscription } = useSubscription();
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -329,6 +331,12 @@ export default function Header({ toggleTheme }: HeaderProps) {
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
                             {user.plan} Plan
                           </span>
+                          {subscription?.trialActive && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {subscription.trialDaysLeft} days left
+                            </span>
+                          )}
                           {isAdmin && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                               Admin Access
@@ -549,6 +557,12 @@ export default function Header({ toggleTheme }: HeaderProps) {
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 capitalize">
                                   {user.plan} Plan
                                 </span>
+                                {subscription?.trialActive && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {subscription.trialDaysLeft}d
+                                  </span>
+                                )}
                                 {isAdmin && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                                     Admin

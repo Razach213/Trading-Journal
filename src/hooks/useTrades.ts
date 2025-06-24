@@ -9,11 +9,13 @@ import {
   where, 
   orderBy, 
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  limit
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { Trade, TradingStats } from '../types';
 import { useAccountBalance } from './useAccountBalance';
+import { useSubscription } from './useSubscription';
 import toast from 'react-hot-toast';
 
 // Demo mode flag
@@ -24,6 +26,7 @@ export const useTrades = (userId: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { accountBalance, updateBalanceFromTrade, recalculateBalance } = useAccountBalance(userId);
+  const { subscription } = useSubscription();
   const [stats, setStats] = useState<TradingStats>({
     totalTrades: 0,
     winningTrades: 0,
@@ -68,11 +71,22 @@ export const useTrades = (userId: string | undefined) => {
     setError(null);
 
     try {
-      const tradesQuery = query(
-        collection(db, 'trades'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
+      // Apply limit for free plan users
+      let tradesQuery;
+      if (subscription?.plan === 'free' && !subscription?.isActive) {
+        tradesQuery = query(
+          collection(db, 'trades'),
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc'),
+          limit(50) // Limit to 50 trades for free plan
+        );
+      } else {
+        tradesQuery = query(
+          collection(db, 'trades'),
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc')
+        );
+      }
 
       const unsubscribe = onSnapshot(
         tradesQuery, 
@@ -138,7 +152,7 @@ export const useTrades = (userId: string | undefined) => {
       setLoading(false);
       setError('Failed to initialize trades. Please refresh the page.');
     }
-  }, [userId]);
+  }, [userId, subscription]);
 
   const calculateStats = (tradesData: Trade[]) => {
     try {
@@ -218,6 +232,12 @@ export const useTrades = (userId: string | undefined) => {
 
   const addTrade = async (tradeData: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      // Check if user has reached free plan limit
+      if (subscription?.plan === 'free' && !subscription?.isActive && trades.length >= 50) {
+        toast.error('You\'ve reached the 50 trade limit on the Free plan. Upgrade to Pro for unlimited trades.');
+        return;
+      }
+
       if (isDemoMode) {
         // Demo mode - save to localStorage
         const newTrade: Trade = {

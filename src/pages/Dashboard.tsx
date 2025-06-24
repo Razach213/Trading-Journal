@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Plus, TrendingUp, DollarSign, Target, Award } from 'lucide-react';
+import { Plus, TrendingUp, DollarSign, Target, Award, AlertCircle, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTrades } from '../hooks/useTrades';
 import { useAccountBalance } from '../hooks/useAccountBalance';
+import { useSubscription } from '../hooks/useSubscription';
 import PerformanceChart from '../components/Dashboard/PerformanceChart';
 import StatsCards from '../components/Dashboard/StatsCards';
 import TradeTable from '../components/Dashboard/TradeTable';
 import AccountBalanceCard from '../components/Dashboard/AccountBalanceCard';
 import AddTradeModal from '../components/Dashboard/AddTradeModal';
 import InlineStartingBalanceSetup from '../components/Dashboard/InlineStartingBalanceSetup';
+import FeatureGuard from '../components/FeatureGuard';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
@@ -21,6 +24,7 @@ const Dashboard: React.FC = () => {
     updateStartingBalance,
     updateCurrentBalance
   } = useAccountBalance(user?.id);
+  const { subscription } = useSubscription();
   const [showAddTradeModal, setShowAddTradeModal] = useState(false);
 
   const handleUpdateBalance = async (field: 'startingBalance' | 'currentBalance', newValue: number) => {
@@ -63,6 +67,9 @@ const Dashboard: React.FC = () => {
   // CRITICAL: Check if user needs to set starting balance (only show once)
   const needsStartingBalance = !hasSetupBalance;
 
+  // Check if user has reached the free plan trade limit
+  const isAtTradeLimit = subscription?.plan === 'free' && trades.length >= 50;
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -88,12 +95,39 @@ const Dashboard: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowAddTradeModal(true)}
-                className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+                disabled={isAtTradeLimit && !subscription?.isActive}
+                className={`mt-4 sm:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105 ${
+                  isAtTradeLimit && !subscription?.isActive ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <Plus className="h-5 w-5" />
                 <span>Add Trade</span>
               </button>
             </div>
+
+            {/* Free Plan Limit Warning */}
+            {isAtTradeLimit && !subscription?.isActive && (
+              <div className="mb-8 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Trade Limit Reached</h3>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                      You've reached the 50 trade limit on the Free plan. Upgrade to Pro for unlimited trades.
+                    </p>
+                    <div className="mt-3">
+                      <Link
+                        to="/pricing"
+                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                      >
+                        Upgrade to Pro
+                        <ArrowRight className="ml-2 -mr-0.5 h-4 w-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Account Balance Card */}
             {accountBalance && (
@@ -125,54 +159,56 @@ const Dashboard: React.FC = () => {
               </div>
               
               <div className="xl:col-span-1">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                    Quick Stats
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
-                          <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Best Day</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">
-                            ${stats.largestWin.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
-                          <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Avg Win</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">
-                            ${stats.avgWin.toFixed(2)}
-                          </p>
+                <FeatureGuard>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                      Quick Stats
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
+                            <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Best Day</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              ${stats.largestWin.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
-                          <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                            <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Avg Win</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              ${stats.avgWin.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Profit Factor</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">
-                            {stats.profitFactor.toFixed(2)}
-                          </p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                            <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Profit Factor</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              {stats.profitFactor.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </FeatureGuard>
               </div>
             </div>
 

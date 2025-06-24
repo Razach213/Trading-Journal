@@ -8,10 +8,11 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { User } from '../types';
 import toast from 'react-hot-toast';
+import { pricingConfig } from '../config/pricing';
 
 // Demo mode flag
 const isDemoMode = !auth || !db || typeof auth.onAuthStateChanged !== 'function';
@@ -68,29 +69,65 @@ export const useAuth = () => {
       
       if (userDoc.exists()) {
         const data = userDoc.data();
+        
+        // Check if trial has expired
+        let plan = data.plan || 'free';
+        let trialActive = false;
+        
+        if (data.trialEndDate) {
+          const trialEndDate = data.trialEndDate.toDate();
+          const now = new Date();
+          
+          if (now > trialEndDate && plan === 'pro' && data.paymentStatus !== 'approved') {
+            // Trial has expired, downgrade to free plan
+            plan = 'free';
+            
+            // Update user document to reflect expired trial
+            await updateDoc(doc(db, 'users', firebaseUser.uid), {
+              plan: 'free',
+              trialExpired: true,
+              updatedAt: serverTimestamp()
+            });
+          } else if (now < trialEndDate) {
+            trialActive = true;
+          }
+        }
+        
         return {
           id: firebaseUser.uid,
           email: firebaseUser.email!,
           displayName: data.displayName || firebaseUser.displayName || 'User',
           photoURL: data.photoURL || firebaseUser.photoURL || undefined,
-          plan: data.plan || 'free',
+          plan: plan,
           accountBalance: data.accountBalance || 0,
           currentBalance: data.currentBalance || 0,
           createdAt: data.createdAt?.toDate() || new Date()
         };
       } else {
+        // Create new user with trial
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + pricingConfig.trialDuration);
+        
         const newUser: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email!,
           displayName: firebaseUser.displayName || 'User',
           photoURL: firebaseUser.photoURL || undefined,
-          plan: 'free',
+          plan: 'pro', // Start with pro trial
           accountBalance: 0,
           currentBalance: 0,
           createdAt: new Date()
         };
         
-        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          ...newUser,
+          trialEndDate,
+          trialActive: true,
+          trialWarningShown: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
         return newUser;
       }
     } catch (error) {
@@ -109,11 +146,15 @@ export const useAuth = () => {
 
   // Demo mode functions
   const createDemoUser = (email: string, displayName: string): User => {
+    // Create trial end date for demo user
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + pricingConfig.trialDuration);
+    
     return {
       id: 'demo-user-' + Date.now(),
       email,
       displayName,
-      plan: 'free',
+      plan: 'pro', // Start with pro trial
       accountBalance: 10000,
       currentBalance: 10000,
       createdAt: new Date()
@@ -157,21 +198,33 @@ export const useAuth = () => {
       }
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create trial end date
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + pricingConfig.trialDuration);
+      
       const newUser: User = {
         id: result.user.uid,
         email: result.user.email!,
         displayName,
-        plan: 'free',
+        plan: 'pro', // Start with pro trial
         accountBalance: 0,
         currentBalance: 0,
         createdAt: new Date()
       };
       
       if (db) {
-        await setDoc(doc(db, 'users', result.user.uid), newUser);
+        await setDoc(doc(db, 'users', result.user.uid), {
+          ...newUser,
+          trialEndDate,
+          trialActive: true,
+          trialWarningShown: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
       }
       
-      toast.success('Account created successfully!');
+      toast.success('Account created successfully! Your 14-day Pro trial has started.');
     } catch (error: any) {
       console.error("Sign up error:", error);
       
