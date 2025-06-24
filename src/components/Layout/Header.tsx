@@ -5,7 +5,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Zap, Settings, User, BarChart3, TrendingUp, Shield, Users, DollarSign, HelpCircle, Mail, Info, Crown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ThemeToggle from '../ui/ThemeToggle';
-import Logo from '../ui/Logo';
 
 const featuresMenu = [
   {
@@ -144,7 +143,13 @@ export default function Header({ toggleTheme }: HeaderProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Logo size="md" withText={true} linkTo="/" />
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="relative">
+                <Zap className="h-7 w-7 text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110" />
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+              </div>
+              <span className="text-xl font-bold text-gray-900 dark:text-white transition-colors">ZellaX</span>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -437,7 +442,10 @@ export default function Header({ toggleTheme }: HeaderProps) {
                 {({ close }) => (
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-                      <Logo size="md" withText={true} />
+                      <div className="flex items-center space-x-2">
+                        <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                        <span className="text-2xl font-bold text-gray-900 dark:text-white">ZellaX</span>
+                      </div>
                       <button
                         onClick={() => close()}
                         className="bg-white dark:bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
