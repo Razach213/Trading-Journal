@@ -31,13 +31,16 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     handleSubmit, 
     watch, 
     setValue, 
-    formState: { errors } 
+    formState: { errors },
+    clearErrors
   } = useForm<TradeFormData>({
     defaultValues: {
       entryDate: new Date().toISOString().slice(0, 16),
       status: 'open',
-      type: 'long'
-    }
+      type: 'long',
+      symbol: ''
+    },
+    mode: 'onChange'
   });
   
   const [useManualPnL, setUseManualPnL] = useState(false);
@@ -51,6 +54,14 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   const quantity = watch('quantity');
   const type = watch('type');
   const manualPnL = watch('pnl');
+  const symbol = watch('symbol');
+
+  // Clear symbol error when symbol is entered
+  useEffect(() => {
+    if (symbol && symbol.trim() !== '' && errors.symbol) {
+      clearErrors('symbol');
+    }
+  }, [symbol, errors.symbol, clearErrors]);
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -108,6 +119,11 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   }, [entryPrice, exitPrice, quantity, type, status, useManualPnL, setValue]);
 
   const onFormSubmit = async (data: TradeFormData) => {
+    // Validate symbol field
+    if (!data.symbol || data.symbol.trim() === '') {
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       let finalPnL: number | null = null;
@@ -180,7 +196,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 </label>
                 <input
                   type="text"
-                  {...register('symbol', { required: 'Symbol is required' })}
+                  {...register('symbol', { 
+                    required: 'Symbol is required',
+                    validate: value => value.trim() !== '' || 'Symbol is required'
+                  })}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="AAPL"
