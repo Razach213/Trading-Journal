@@ -20,6 +20,11 @@ service firebase.storage {
              ];
     }
     
+    // CRITICAL: Simplified permission check - Remove redundant checks
+    function canAccess(userId) {
+      return isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
     function isValidImageFile() {
       return request.resource.contentType.matches('image/.*') &&
              request.resource.size < 5 * 1024 * 1024; // 5MB limit
@@ -30,34 +35,30 @@ service firebase.storage {
              request.resource.size < 10 * 1024 * 1024; // 10MB limit
     }
     
-    // User profile images
+    // User profile images - Simplified permissions
     match /users/{userId}/profile/{fileName} {
       allow read: if isAuthenticated() || isAdmin();
-      allow write: if isAuthenticated() && 
-                  (isOwner(userId) || isAdmin()) && 
-                  isValidImageFile();
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if canAccess(userId) && isValidImageFile();
+      allow delete: if canAccess(userId);
     }
     
-    // Trade screenshots and attachments
+    // Trade screenshots and attachments - Simplified permissions
     match /users/{userId}/trades/{tradeId}/{fileName} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read, write: if canAccess(userId);
+      allow delete: if canAccess(userId);
     }
     
-    // User documents (exports, reports, etc.)
+    // User documents (exports, reports, etc.) - Simplified permissions
     match /users/{userId}/documents/{fileName} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow write: if isAuthenticated() && 
-                  (isOwner(userId) || isAdmin()) && 
-                  isValidDocumentFile();
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if canAccess(userId);
+      allow write: if canAccess(userId) && isValidDocumentFile();
+      allow delete: if canAccess(userId);
     }
     
-    // Playbook images
+    // Playbook images - Simplified permissions
     match /users/{userId}/playbooks/{playbookId}/{fileName} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read, write: if canAccess(userId);
+      allow delete: if canAccess(userId);
     }
     
     // ADMIN STORAGE AREAS
@@ -89,7 +90,7 @@ service firebase.storage {
     
     // Temporary uploads (auto-deleted after 24 hours)
     match /temp/{userId}/{fileName} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read, write: if canAccess(userId);
     }
     
     // Admin temporary files
