@@ -13,11 +13,11 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ trades }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   
   const chartData = trades
-    .filter(trade => trade.status === 'closed' && trade.pnl !== undefined)
+    .filter(trade => trade.status === 'closed' && trade.pnl !== undefined && trade.pnl !== null)
     .sort((a, b) => new Date(a.exitDate!).getTime() - new Date(b.exitDate!).getTime())
     .reduce((acc, trade, index) => {
       const previousPnL = index === 0 ? 0 : acc[acc.length - 1].cumulativePnL;
-      const cumulativePnL = previousPnL + trade.pnl!;
+      const cumulativePnL = previousPnL + (trade.pnl || 0);
       
       acc.push({
         date: format(new Date(trade.exitDate!), 'MMM dd'),

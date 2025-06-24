@@ -39,14 +39,16 @@ export const useAccountBalance = (userId: string | undefined) => {
             const defaultBalance: AccountBalance = {
               id: userId,
               userId,
-              startingBalance: 0,
-              currentBalance: 0,
+              startingBalance: 10000, // Default starting balance
+              currentBalance: 10000, // Default current balance
               totalPnL: 0,
               totalReturnPercent: 0,
               lastUpdated: new Date()
             };
             setAccountBalance(defaultBalance);
             localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
+            localStorage.setItem(`hasSetupBalance_${userId}`, 'true');
+            setHasSetupBalance(true);
           }
         }
       } else if (!hasSetup) {
@@ -54,14 +56,16 @@ export const useAccountBalance = (userId: string | undefined) => {
         const defaultBalance: AccountBalance = {
           id: userId,
           userId,
-          startingBalance: 0,
-          currentBalance: 0,
+          startingBalance: 10000, // Default starting balance
+          currentBalance: 10000, // Default current balance
           totalPnL: 0,
           totalReturnPercent: 0,
           lastUpdated: new Date()
         };
         setAccountBalance(defaultBalance);
         localStorage.setItem(`demoBalance_${userId}`, JSON.stringify(defaultBalance));
+        localStorage.setItem(`hasSetupBalance_${userId}`, 'true');
+        setHasSetupBalance(true);
       }
       setLoading(false);
       return;
@@ -80,8 +84,8 @@ export const useAccountBalance = (userId: string | undefined) => {
             const balance: AccountBalance = {
               id: doc.id,
               userId: data.userId,
-              startingBalance: data.startingBalance || 0,
-              currentBalance: data.currentBalance || data.startingBalance || 0,
+              startingBalance: data.startingBalance || 10000, // Default to 10000 if not set
+              currentBalance: data.currentBalance || data.startingBalance || 10000, // Default to starting balance
               totalPnL: data.totalPnL || 0,
               totalReturnPercent: data.totalReturnPercent || 0,
               lastUpdated: data.lastUpdated?.toDate() || new Date()
@@ -89,11 +93,11 @@ export const useAccountBalance = (userId: string | undefined) => {
             setAccountBalance(balance);
             setHasSetupBalance(balance.startingBalance > 0);
           } else {
-            // Create empty balance record
+            // Create default balance record
             const defaultBalance: Omit<AccountBalance, 'id'> = {
               userId,
-              startingBalance: 0,
-              currentBalance: 0,
+              startingBalance: 10000, // Default starting balance
+              currentBalance: 10000, // Default current balance
               totalPnL: 0,
               totalReturnPercent: 0,
               lastUpdated: new Date()
@@ -102,11 +106,11 @@ export const useAccountBalance = (userId: string | undefined) => {
             try {
               await setDoc(doc(db, 'accountBalances', userId), defaultBalance);
               setAccountBalance({ ...defaultBalance, id: userId });
-              setHasSetupBalance(false);
+              setHasSetupBalance(true);
             } catch (createError) {
               console.error('Error creating account balance:', createError);
               setAccountBalance({ ...defaultBalance, id: userId });
-              setHasSetupBalance(false);
+              setHasSetupBalance(true);
             }
           }
           setError(null);

@@ -7,6 +7,12 @@ export interface User {
   accountBalance: number; // Starting account balance
   currentBalance: number; // Current balance after trades
   createdAt: Date;
+  trialEndDate?: Date; // When the trial ends
+  trialActive?: boolean; // Whether the trial is active
+  trialExpired?: boolean; // Whether the trial has expired
+  trialWarningShown?: boolean; // Whether the trial warning has been shown
+  paymentStatus?: 'pending' | 'approved' | 'rejected'; // Status of the payment
+  paymentId?: string; // ID of the payment
 }
 
 export interface Trade {
@@ -104,6 +110,8 @@ export interface Payment {
   reviewedAt?: Date | null;
   reviewedBy?: string | null;
   adminNotes?: string | null;
+  trialStartDate?: Date;
+  trialEndDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

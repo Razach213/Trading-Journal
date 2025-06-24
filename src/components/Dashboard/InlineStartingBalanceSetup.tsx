@@ -85,7 +85,7 @@ const InlineStartingBalanceSetup: React.FC<InlineStartingBalanceSetupProps> = ({
       <div className="text-center mb-6">
         <div className="inline-flex items-center bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
           <BarChart3 className="h-4 w-4 mr-2" />
-          Balance Preview
+          Balance Setup
         </div>
         <h2 className="text-2xl font-bold mb-2">Set Your Starting Balance</h2>
         <p className="text-blue-100 dark:text-blue-200">
