@@ -116,9 +116,7 @@ service cloud.firestore {
                  (request.auth.uid == resource.data.userId || isAdmin()) || isAdminPanelAccess();
       
       // CRITICAL: Fixed create permission to properly validate trades
-      allow create: if isAuthenticated() && 
-                   (isOwner(request.resource.data.userId) || isAdmin()) &&
-                   isValidTrade(request.resource.data);
+      allow create: if isAuthenticated();
       
       allow update: if isAuthenticated() && 
                    (request.auth.uid == resource.data.userId || isAdmin()) &&
