@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { AccountBalance } from '../types';
 import toast from 'react-hot-toast';
@@ -100,11 +100,7 @@ export const useAccountBalance = (userId: string | undefined) => {
             };
             
             try {
-              await setDoc(doc(db, 'accountBalances', userId), {
-                ...defaultBalance,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-              });
+              await setDoc(doc(db, 'accountBalances', userId), defaultBalance);
               setAccountBalance({ ...defaultBalance, id: userId });
               setHasSetupBalance(false);
             } catch (createError) {
@@ -198,10 +194,7 @@ export const useAccountBalance = (userId: string | undefined) => {
       }
 
       // Real Firebase mode
-      await updateDoc(doc(db, 'accountBalances', userId), {
-        ...updatedBalance,
-        updatedAt: serverTimestamp()
-      });
+      await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
       
       // Update local state
       setAccountBalance(prev => {
@@ -266,10 +259,7 @@ export const useAccountBalance = (userId: string | undefined) => {
         return newCurrentBalance;
       }
 
-      await updateDoc(doc(db, 'accountBalances', userId), {
-        ...updatedBalance,
-        updatedAt: serverTimestamp()
-      });
+      await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
       return newCurrentBalance;
     } catch (error) {
       console.error('Error updating balance from trade:', error);
@@ -305,10 +295,7 @@ export const useAccountBalance = (userId: string | undefined) => {
         return;
       }
 
-      await updateDoc(doc(db, 'accountBalances', userId), {
-        ...updatedBalance,
-        updatedAt: serverTimestamp()
-      });
+      await updateDoc(doc(db, 'accountBalances', userId), updatedBalance);
     } catch (error) {
       console.error('Error recalculating balance:', error);
       throw error;
