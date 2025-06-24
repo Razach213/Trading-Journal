@@ -226,7 +226,7 @@ export const useTrades = (userId: string | undefined) => {
         winningTrades: winningTrades.length,
         losingTrades: losingTrades.length,
         winRate: Math.round(winRate * 10) / 10,
-        totalPnL: accountBalance?.totalPnL || totalPnL,
+        totalPnL: totalPnL,
         avgWin: Math.round(avgWin * 100) / 100,
         avgLoss: Math.round(avgLoss * 100) / 100,
         profitFactor: Math.round(profitFactor * 100) / 100,
