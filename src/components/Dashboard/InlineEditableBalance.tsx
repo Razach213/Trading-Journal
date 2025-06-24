@@ -63,6 +63,13 @@ const InlineEditableBalance: React.FC<InlineEditableBalanceProps> = ({
     }
   }, [isEditing]);
 
+  // Update edit value when prop value changes
+  useEffect(() => {
+    if (!isEditing) {
+      setEditValue(value.toString());
+    }
+  }, [value, isEditing]);
+
   const handleEdit = () => {
     setEditValue(value.toString());
     setIsEditing(true);

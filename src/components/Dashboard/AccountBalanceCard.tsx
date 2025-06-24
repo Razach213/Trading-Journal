@@ -29,6 +29,9 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   };
 
+  // Determine if there are any trades based on P&L and return values
+  const hasTrades = totalPnL !== 0 || totalReturn !== 0 || currentBalance !== startingBalance;
+
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 rounded-xl p-6 text-white col-span-full">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -68,14 +71,23 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
             />
           </div>
           <div className="flex items-center justify-center md:justify-start mt-1">
-            {totalPnL >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-green-300 dark:text-green-400 mr-1" />
+            {!hasTrades ? (
+              <span className="text-sm text-blue-200 dark:text-blue-300">No trading activity yet</span>
+            ) : totalPnL >= 0 ? (
+              <>
+                <TrendingUp className="h-4 w-4 text-green-300 dark:text-green-400 mr-1" />
+                <span className="text-sm text-green-300 dark:text-green-400">
+                  {formatCurrency(Math.abs(totalPnL))}
+                </span>
+              </>
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-300 dark:text-red-400 mr-1" />
+              <>
+                <TrendingDown className="h-4 w-4 text-red-300 dark:text-red-400 mr-1" />
+                <span className="text-sm text-red-300 dark:text-red-400">
+                  {formatCurrency(Math.abs(totalPnL))}
+                </span>
+              </>
             )}
-            <span className={`text-sm ${totalPnL >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
-              {formatCurrency(Math.abs(totalPnL))}
-            </span>
           </div>
         </div>
 
@@ -85,9 +97,13 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
             <Target className="h-4 w-4 mr-1" />
             Total P&L
           </p>
-          <p className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
-            {totalPnL >= 0 ? '+' : ''}{formatCurrency(totalPnL)}
-          </p>
+          {!hasTrades ? (
+            <p className="text-2xl font-bold text-white">$0.00</p>
+          ) : (
+            <p className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
+              {totalPnL >= 0 ? '+' : ''}{formatCurrency(totalPnL)}
+            </p>
+          )}
           <p className="text-blue-200 dark:text-blue-300 text-xs mt-1">
             All-time profit/loss
           </p>
@@ -99,9 +115,13 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
             <TrendingUp className="h-4 w-4 mr-1" />
             Total Return
           </p>
-          <p className={`text-2xl font-bold ${totalReturn >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
-            {formatPercentage(totalReturn)}
-          </p>
+          {!hasTrades ? (
+            <p className="text-2xl font-bold text-white">0.00%</p>
+          ) : (
+            <p className={`text-2xl font-bold ${totalReturn >= 0 ? 'text-green-300 dark:text-green-400' : 'text-red-300 dark:text-red-400'}`}>
+              {formatPercentage(totalReturn)}
+            </p>
+          )}
           <p className="text-blue-200 dark:text-blue-300 text-xs mt-1">
             Return on investment
           </p>
@@ -115,14 +135,18 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
           <span>{formatPercentage(totalReturn)}</span>
         </div>
         <div className="w-full bg-white/20 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full transition-all duration-300 ${
-              totalReturn >= 0 ? 'bg-green-400 dark:bg-green-500' : 'bg-red-400 dark:bg-red-500'
-            }`}
-            style={{
-              width: `${Math.min(Math.abs(totalReturn), 100)}%`
-            }}
-          ></div>
+          {!hasTrades ? (
+            <div className="h-2 rounded-full bg-blue-400 dark:bg-blue-500 w-0"></div>
+          ) : (
+            <div
+              className={`h-2 rounded-full transition-all duration-300 ${
+                totalReturn >= 0 ? 'bg-green-400 dark:bg-green-500' : 'bg-red-400 dark:bg-red-500'
+              }`}
+              style={{
+                width: `${Math.min(Math.abs(totalReturn), 100)}%`
+              }}
+            ></div>
+          )}
         </div>
         <div className="flex justify-between text-xs text-blue-200 dark:text-blue-300 mt-1">
           <span>0%</span>
@@ -141,19 +165,22 @@ const AccountBalanceCard: React.FC<AccountBalanceCardProps> = ({
         <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Growth Rate</div>
           <div className="text-sm font-bold">
-            {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(1)}%
+            {!hasTrades ? '0.0%' : `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(1)}%`}
           </div>
         </div>
         <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Performance</div>
           <div className="text-sm font-bold">
-            {totalReturn >= 10 ? 'Excellent' : totalReturn >= 5 ? 'Good' : totalReturn >= 0 ? 'Positive' : 'Negative'}
+            {!hasTrades ? 'No Activity' : 
+              totalReturn >= 10 ? 'Excellent' : 
+              totalReturn >= 5 ? 'Good' : 
+              totalReturn >= 0 ? 'Positive' : 'Negative'}
           </div>
         </div>
         <div className="bg-white/10 rounded-lg p-3 hover:bg-white/15 transition-colors">
           <div className="text-xs text-blue-200 dark:text-blue-300">Status</div>
           <div className="text-sm font-bold">
-            {totalPnL >= 0 ? 'Profitable' : 'Loss'}
+            {!hasTrades ? 'No Activity' : totalPnL >= 0 ? 'Profitable' : 'Loss'}
           </div>
         </div>
       </div>

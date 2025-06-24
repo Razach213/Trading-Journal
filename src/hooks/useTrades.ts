@@ -156,6 +156,27 @@ export const useTrades = (userId: string | undefined) => {
 
   const calculateStats = (tradesData: Trade[]) => {
     try {
+      // If there are no trades, set default values
+      if (!tradesData || tradesData.length === 0) {
+        const defaultStats: TradingStats = {
+          totalTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          winRate: 0,
+          totalPnL: 0,
+          avgWin: 0,
+          avgLoss: 0,
+          profitFactor: 0,
+          largestWin: 0,
+          largestLoss: 0,
+          accountBalance: accountBalance?.startingBalance || 10000,
+          currentBalance: accountBalance?.startingBalance || 10000, // Same as starting balance when no trades
+          totalReturn: 0
+        };
+        setStats(defaultStats);
+        return;
+      }
+
       const closedTrades = tradesData.filter(trade => 
         trade.status === 'closed' && 
         trade.pnl !== undefined && 
@@ -163,24 +184,24 @@ export const useTrades = (userId: string | undefined) => {
         !isNaN(trade.pnl)
       );
       
-      const defaultStats: TradingStats = {
-        totalTrades: tradesData.length,
-        winningTrades: 0,
-        losingTrades: 0,
-        winRate: 0,
-        totalPnL: accountBalance?.totalPnL || 0,
-        avgWin: 0,
-        avgLoss: 0,
-        profitFactor: 0,
-        largestWin: 0,
-        largestLoss: 0,
-        accountBalance: accountBalance?.startingBalance || 0,
-        currentBalance: accountBalance?.currentBalance || 0,
-        totalReturn: accountBalance?.totalReturnPercent || 0
-      };
-
+      // If no closed trades, set stats with zero values but keep account balance
       if (closedTrades.length === 0) {
-        setStats(defaultStats);
+        const noTradesStats: TradingStats = {
+          totalTrades: tradesData.length,
+          winningTrades: 0,
+          losingTrades: 0,
+          winRate: 0,
+          totalPnL: 0,
+          avgWin: 0,
+          avgLoss: 0,
+          profitFactor: 0,
+          largestWin: 0,
+          largestLoss: 0,
+          accountBalance: accountBalance?.startingBalance || 10000,
+          currentBalance: accountBalance?.startingBalance || 10000, // Same as starting balance when no closed trades
+          totalReturn: 0
+        };
+        setStats(noTradesStats);
         return;
       }
 
@@ -211,8 +232,8 @@ export const useTrades = (userId: string | undefined) => {
         profitFactor: Math.round(profitFactor * 100) / 100,
         largestWin: Math.round(largestWin * 100) / 100,
         largestLoss: Math.round(largestLoss * 100) / 100,
-        accountBalance: accountBalance?.startingBalance || 0,
-        currentBalance: accountBalance?.currentBalance || 0,
+        accountBalance: accountBalance?.startingBalance || 10000,
+        currentBalance: accountBalance?.currentBalance || 10000,
         totalReturn: accountBalance?.totalReturnPercent || 0
       };
 
@@ -225,7 +246,7 @@ export const useTrades = (userId: string | undefined) => {
 
   // Recalculate stats when account balance changes
   useEffect(() => {
-    if (accountBalance && trades.length > 0) {
+    if (accountBalance) {
       calculateStats(trades);
     }
   }, [accountBalance]);
