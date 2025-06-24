@@ -276,6 +276,10 @@ export const useTrades = (userId: string | undefined) => {
         return;
       }
 
+      if (!auth?.currentUser) {
+        throw new Error('User not authenticated');
+      }
+
       // Calculate balance after trade if it's a closed trade
       let balanceAfterTrade = null;
       if (tradeData.status === 'closed' && tradeData.pnl !== null && tradeData.pnl !== undefined) {
@@ -283,7 +287,7 @@ export const useTrades = (userId: string | undefined) => {
       }
 
       const trade = {
-        userId: userId, // Use the passed userId instead of auth.currentUser.uid
+        userId: tradeData.userId,
         symbol: tradeData.symbol || '',
         type: tradeData.type || 'long',
         entryPrice: Number(tradeData.entryPrice) || 0,
@@ -334,6 +338,10 @@ export const useTrades = (userId: string | undefined) => {
         calculateStats(updatedTrades);
         toast.success('Trade updated successfully! (Demo Mode)');
         return;
+      }
+
+      if (!auth?.currentUser) {
+        throw new Error('User not authenticated');
       }
 
       // Find the original trade to calculate P&L difference
@@ -392,6 +400,10 @@ export const useTrades = (userId: string | undefined) => {
         calculateStats(updatedTrades);
         toast.success('Trade deleted successfully! (Demo Mode)');
         return;
+      }
+
+      if (!auth?.currentUser) {
+        throw new Error('User not authenticated');
       }
 
       // Find the trade to reverse its P&L effect

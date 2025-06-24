@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Calculator, DollarSign } from 'lucide-react';
 import { Trade } from '../../types';
+import { auth } from '../../lib/firebase';
 
 interface AddTradeModalProps {
   onClose: () => void;
@@ -31,9 +32,16 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     watch, 
     setValue, 
     formState: { errors } 
-  } = useForm<TradeFormData>();
+  } = useForm<TradeFormData>({
+    defaultValues: {
+      entryDate: new Date().toISOString().slice(0, 16),
+      status: 'open',
+      type: 'long'
+    }
+  });
   
   const [useManualPnL, setUseManualPnL] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLInputElement>(null);
   
@@ -99,48 +107,54 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     }
   }, [entryPrice, exitPrice, quantity, type, status, useManualPnL, setValue]);
 
-  const onFormSubmit = (data: TradeFormData) => {
-    let finalPnL: number | null = null;
-    let pnlPercent: number | null = null;
+  const onFormSubmit = async (data: TradeFormData) => {
+    setIsSubmitting(true);
+    try {
+      let finalPnL: number | null = null;
+      let pnlPercent: number | null = null;
 
-    if (data.status === 'closed') {
-      if (useManualPnL && data.pnl !== undefined) {
-        // Use manual P&L
-        finalPnL = Number(data.pnl);
-      } else if (data.exitPrice && entryPrice && quantity) {
-        // Auto-calculate P&L
-        if (type === 'long') {
-          finalPnL = (data.exitPrice - entryPrice) * quantity;
-        } else {
-          finalPnL = (entryPrice - data.exitPrice) * quantity;
+      if (data.status === 'closed') {
+        if (useManualPnL && data.pnl !== undefined) {
+          // Use manual P&L
+          finalPnL = Number(data.pnl);
+        } else if (data.exitPrice && entryPrice && quantity) {
+          // Auto-calculate P&L
+          if (type === 'long') {
+            finalPnL = (data.exitPrice - entryPrice) * quantity;
+          } else {
+            finalPnL = (entryPrice - data.exitPrice) * quantity;
+          }
+        }
+
+        // Calculate percentage
+        if (finalPnL !== null && entryPrice && quantity) {
+          pnlPercent = (finalPnL / (entryPrice * quantity)) * 100;
         }
       }
 
-      // Calculate percentage
-      if (finalPnL !== null && entryPrice && quantity) {
-        pnlPercent = (finalPnL / (entryPrice * quantity)) * 100;
-      }
+      const trade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'> = {
+        userId,
+        symbol: data.symbol ? data.symbol.toUpperCase().trim() : '',
+        type: data.type || 'long',
+        entryPrice: Number(data.entryPrice) || 0,
+        exitPrice: data.status === 'closed' && data.exitPrice ? Number(data.exitPrice) : null,
+        quantity: Number(data.quantity) || 0,
+        entryDate: data.entryDate ? new Date(data.entryDate) : new Date(),
+        exitDate: data.status === 'closed' && data.exitDate ? new Date(data.exitDate) : null,
+        status: data.status || 'open',
+        pnl: finalPnL,
+        pnlPercent,
+        notes: data.notes?.trim() || null,
+        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
+        strategy: data.strategy?.trim() || null
+      };
+
+      await onSubmit(trade);
+      onClose();
+    } catch (error) {
+      console.error('Error submitting trade:', error);
+      setIsSubmitting(false);
     }
-
-    const trade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'> = {
-      userId,
-      symbol: data.symbol ? data.symbol.toUpperCase().trim() : '',
-      type: data.type || 'long',
-      entryPrice: Number(data.entryPrice) || 0,
-      exitPrice: data.status === 'closed' && data.exitPrice ? Number(data.exitPrice) : null,
-      quantity: Number(data.quantity) || 0,
-      entryDate: data.entryDate ? new Date(data.entryDate) : new Date(),
-      exitDate: data.status === 'closed' && data.exitDate ? new Date(data.exitDate) : null,
-      status: data.status || 'open',
-      pnl: finalPnL,
-      pnlPercent,
-      notes: data.notes?.trim() || null,
-      tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
-      strategy: data.strategy?.trim() || null
-    };
-
-    onSubmit(trade);
-    onClose();
   };
 
   return (
@@ -166,7 +180,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 </label>
                 <input
                   type="text"
-                  {...register('symbol')}
+                  {...register('symbol', { required: 'Symbol is required' })}
                   ref={initialFocusRef}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="AAPL"
@@ -181,10 +195,9 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   Type
                 </label>
                 <select
-                  {...register('type')}
+                  {...register('type', { required: 'Type is required' })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
-                  <option value="">Select type</option>
                   <option value="long">Long</option>
                   <option value="short">Short</option>
                 </select>
@@ -202,7 +215,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 <input
                   type="number"
                   step="0.01"
-                  {...register('entryPrice')}
+                  {...register('entryPrice', { 
+                    required: 'Entry price is required',
+                    min: { value: 0.01, message: 'Price must be greater than 0' }
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="150.00"
                 />
@@ -217,7 +233,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 </label>
                 <input
                   type="number"
-                  {...register('quantity')}
+                  {...register('quantity', { 
+                    required: 'Quantity is required',
+                    min: { value: 0.01, message: 'Quantity must be greater than 0' }
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="100"
                 />
@@ -234,7 +253,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                 </label>
                 <input
                   type="datetime-local"
-                  {...register('entryDate')}
+                  {...register('entryDate', { required: 'Entry date is required' })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
                 {errors.entryDate && (
@@ -247,10 +266,9 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   Status
                 </label>
                 <select
-                  {...register('status')}
+                  {...register('status', { required: 'Status is required' })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
-                  <option value="">Select status</option>
                   <option value="open">Open</option>
                   <option value="closed">Closed</option>
                 </select>
@@ -270,7 +288,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                     <input
                       type="number"
                       step="0.01"
-                      {...register('exitPrice')}
+                      {...register('exitPrice', {
+                        required: !useManualPnL ? 'Exit price is required for closed trades' : false,
+                        min: { value: 0.01, message: 'Price must be greater than 0' }
+                      })}
                       disabled={useManualPnL}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="155.00"
@@ -322,7 +343,9 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                         <input
                           type="number"
                           step="0.01"
-                          {...register('pnl')}
+                          {...register('pnl', {
+                            required: useManualPnL ? 'P&L is required when using manual input' : false
+                          })}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="Enter profit (+) or loss (-) amount"
                         />
@@ -414,9 +437,17 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
           <button
             type="button"
             onClick={handleSubmit(onFormSubmit)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={isSubmitting}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
-            Add Trade
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Adding...
+              </>
+            ) : (
+              'Add Trade'
+            )}
           </button>
         </div>
       </div>

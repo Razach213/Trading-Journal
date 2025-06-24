@@ -20,14 +20,14 @@ service cloud.firestore {
              ];
     }
     
-    // CRITICAL: Allow admin panel to read data even without authentication for testing
-    function isAdminPanelAccess() {
-      return true; // Temporarily allow all reads for admin panel testing
-    }
-    
     // CRITICAL: Simplified permission check - Remove redundant checks
     function canAccess(userId) {
       return isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // CRITICAL: Allow admin panel to read data even without authentication for testing
+    function isAdminPanelAccess() {
+      return true; // Temporarily allow all reads for admin panel testing
     }
     
     function isValidUser(data) {
@@ -115,6 +115,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() && 
                  (request.auth.uid == resource.data.userId || isAdmin()) || isAdminPanelAccess();
       
+      // CRITICAL: Fixed create permission to properly validate trades
       allow create: if isAuthenticated() && 
                    (isOwner(request.resource.data.userId) || isAdmin()) &&
                    isValidTrade(request.resource.data);

@@ -4,15 +4,15 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
-// CRITICAL: Firebase configuration - Replace with your actual values
+// CRITICAL: Firebase configuration - Get values from environment variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:demo",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-DEMO"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase only if we have valid configuration
@@ -24,7 +24,7 @@ let functions = null;
 
 try {
   // Check if we have a valid API key
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "demo-api-key") {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "your-firebase-api-key-here") {
     console.warn("⚠️ Firebase not configured. Using demo mode.");
     throw new Error("Firebase configuration missing");
   }
@@ -34,6 +34,15 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   functions = getFunctions(app);
+
+  // Enable emulators if in development mode
+  if (import.meta.env.VITE_ENABLE_EMULATORS === 'true') {
+    connectAuthEmulator(auth, 'http://localhost:9099');
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectStorageEmulator(storage, 'localhost', 9199);
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log("✅ Firebase emulators connected");
+  }
 
   console.log("✅ Firebase initialized successfully");
 } catch (error) {
