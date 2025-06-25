@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Chart from 'react-apexcharts';
+import { BarChart3 } from 'lucide-react';
 import { Trade } from '../../types';
 import { format } from 'date-fns';
 
