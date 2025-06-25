@@ -12,367 +12,133 @@
     --toast-bg: #1f2937;
     --toast-color: #f9fafb;
   }
-}
 
-/* Custom scrollbar for dark mode */
-@layer utilities {
-  .scrollbar-thin {
-    scrollbar-width: thin;
+  html {
+    scroll-behavior: smooth;
   }
-  
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-500;
-  }
-}
 
-/* Smooth transitions for theme switching */
-* {
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Focus styles for better accessibility */
-@layer base {
-  *:focus {
-    outline: 2px solid transparent;
-    outline-offset: 2px;
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
   }
-  
+
+  /* Improved focus styles */
   *:focus-visible {
-    @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900;
-  }
-}
-
-/* 3D Chart animations */
-@keyframes chartRise {
-  0% {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes chartGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.3));
-  }
-  50% {
-    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
-  }
-}
-
-@keyframes chartDotPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.5);
-    opacity: 0.7;
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900;
   }
 }
 
 /* Custom animations */
-@keyframes twinkle {
-  0%, 100% { 
-    opacity: 0.3; 
-    transform: scale(0.8);
-  }
-  50% { 
-    opacity: 1; 
-    transform: scale(1.2);
-  }
-}
-
 @keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
   0%, 100% { 
-    transform: translateY(0px);
+    opacity: 1;
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
   }
   50% { 
-    transform: translateY(-4px);
+    opacity: 0.8;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
   }
 }
 
-@keyframes glow {
-  0%, 100% { 
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
-  }
-  50% { 
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-  }
-}
-
-@keyframes slideInFromTop {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInFromBottom {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInScale {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  50% {
-    transform: none;
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Chart specific animations */
-@keyframes chartLineGrow {
-  0% {
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
-  }
-  100% {
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes chartFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-twinkle {
-  animation: twinkle 2s ease-in-out infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-glow {
-  animation: glow 2s ease-in-out infinite;
-}
-
-.animate-slide-in-top {
-  animation: slideInFromTop 0.5s ease-out;
-}
-
-.animate-slide-in-bottom {
-  animation: slideInFromBottom 0.5s ease-out;
-}
-
-.animate-fade-in-scale {
-  animation: fadeInScale 0.4s ease-out;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-bounce {
-  animation: bounce 1s infinite;
-}
-
-.animate-ping {
-  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-.animate-chart-line {
-  animation: chartLineGrow 2s ease-out;
-}
-
-.animate-chart-fade {
-  animation: chartFadeIn 0.8s ease-out;
-}
-
-.animate-chart-rise {
-  animation: chartRise 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.animate-chart-glow {
-  animation: chartGlow 3s ease-in-out infinite;
-}
-
-.animate-chart-dot-pulse {
-  animation: chartDotPulse 2s ease-in-out infinite;
-}
-
-/* Theme transition overlay */
-.theme-transition-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease-out;
-  z-index: 9999;
-}
-
-.theme-transition-overlay.active {
-  opacity: 1;
-}
-
-/* Enhanced button hover effects */
-.btn-hover-lift {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.btn-hover-lift:active {
-  transform: translateY(0);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Gradient text animation */
-@keyframes gradientShift {
+@keyframes gradient-shift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-.animate-gradient {
-  background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
-  background-size: 400% 400%;
-  animation: gradientShift 3s ease infinite;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* 3D Chart Styles */
-.chart-3d-container {
-  position: relative;
-  perspective: 1000px;
+/* 3D Card Effect */
+.card-3d {
   transform-style: preserve-3d;
+  transform: perspective(1000px);
+  transition: transform 0.3s;
 }
 
-.chart-3d-element {
-  transform: rotateX(10deg) rotateY(5deg);
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease;
+.card-3d:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
 }
 
-.chart-3d-element:hover {
-  transform: rotateX(5deg) rotateY(10deg);
-}
-
-.chart-3d-shadow {
+.card-3d::before {
+  content: '';
   position: absolute;
-  bottom: -10px;
-  left: 5%;
-  right: 5%;
-  height: 20px;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%);
-  transform: rotateX(90deg);
-  filter: blur(5px);
-  opacity: 0.5;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 100%);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-/* Custom form controls - Consistent styling */
-/* ------------------------------------------ */
+/* Glassmorphism */
+.glassmorphism {
+  @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border border-white/20 dark:border-gray-700/50;
+}
 
-/* Custom checkbox styling */
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full hover:bg-gray-400 dark:hover:bg-gray-500;
+}
+
+/* Animated gradient background */
+.animated-gradient {
+  background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Floating animation */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Glow effect */
+.glow-effect {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Prevent body scroll when modal is open */
+body.overflow-hidden {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .responsive-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tooltip styles */
+.tooltip {
+  @apply invisible absolute;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply visible z-50;
+}
+
+/* Custom checkbox */
 .custom-checkbox {
   @apply relative flex items-center;
 }
 
 .custom-checkbox input[type="checkbox"] {
   @apply absolute opacity-0 w-0 h-0;
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
 }
 
 .custom-checkbox .checkbox-icon {
@@ -384,67 +150,23 @@
 }
 
 .custom-checkbox input[type="checkbox"]:checked + .checkbox-icon svg {
-  display: block !important;
+  @apply block;
 }
 
 .custom-checkbox input[type="checkbox"]:focus + .checkbox-icon {
   @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800;
 }
 
-.custom-checkbox input[type="checkbox"]:disabled + .checkbox-icon {
-  @apply bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed;
-}
-
 .custom-checkbox .checkbox-label {
   @apply text-gray-700 dark:text-gray-300 select-none;
 }
 
-/* Custom radio button styling */
-.custom-radio {
-  @apply relative flex items-center;
-}
-
-.custom-radio input[type="radio"] {
-  @apply absolute opacity-0 w-0 h-0;
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.custom-radio .radio-icon {
-  @apply flex-shrink-0 w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 mr-2 transition-colors;
-  position: relative;
-}
-
-.custom-radio input[type="radio"]:checked + .radio-icon::after {
-  content: "";
-  @apply absolute top-1 left-1 w-3 h-3 rounded-full bg-blue-600 dark:bg-blue-500;
-}
-
-.custom-radio input[type="radio"]:checked + .radio-icon {
-  @apply border-blue-600 dark:border-blue-500;
-}
-
-.custom-radio input[type="radio"]:focus + .radio-icon {
-  @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800;
-}
-
-.custom-radio input[type="radio"]:disabled + .radio-icon {
-  @apply bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 cursor-not-allowed;
-}
-
-.custom-radio .radio-label {
-  @apply text-gray-700 dark:text-gray-300 select-none;
-}
-
-/* Custom toggle switch styles */
+/* Custom toggle switch */
 .toggle-switch {
   position: relative;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .toggle-switch input {
@@ -460,21 +182,12 @@
   width: 44px;
   height: 24px;
   border-radius: 24px;
-  background-color: #d1d5db;
+  @apply bg-gray-300 dark:bg-gray-600;
   transition: background-color 0.2s ease;
-  flex-shrink: 0;
-}
-
-.dark .toggle-track {
-  background-color: #4b5563;
 }
 
 .toggle-switch input:checked ~ .toggle-track {
-  background-color: #3b82f6;
-}
-
-.dark .toggle-switch input:checked ~ .toggle-track {
-  background-color: #3b82f6;
+  @apply bg-blue-600 dark:bg-blue-500;
 }
 
 .toggle-switch .toggle-thumb {
@@ -484,711 +197,130 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: white;
+  @apply bg-white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
-}
-
-.dark .toggle-thumb {
-  background-color: #e5e7eb;
 }
 
 .toggle-switch input:checked ~ .toggle-track .toggle-thumb {
   transform: translateX(20px);
 }
 
-.toggle-switch input:focus ~ .toggle-track {
-  @apply ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800;
+/* Animated chart line */
+.chart-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: dash 2s ease-in-out forwards;
 }
 
-.toggle-switch input:disabled ~ .toggle-track {
-  @apply opacity-50 cursor-not-allowed;
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
-.toggle-switch .toggle-label {
-  margin-left: 8px;
-  font-size: 14px;
-  color: #4b5563;
-  user-select: none;
+/* Animated dots */
+.animated-dots::after {
+  content: '...';
+  animation: dots 1.5s infinite;
 }
 
-.dark .toggle-label {
-  color: #9ca3af;
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
 }
 
-/* Form field styles */
-.form-field {
-  @apply mb-4;
+/* Shimmer loading effect */
+.shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.2) 50%, 
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Responsive grid layouts */
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-gap: 1.5rem;
+}
+
+/* Improved button styles */
+.btn {
+  @apply inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-500;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300;
+}
+
+.card-hover {
+  @apply hover:shadow-xl transform hover:-translate-y-1;
+}
+
+/* Form styles */
+.form-input {
+  @apply w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
 }
 
 .form-label {
-  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
-}
-
-.form-input {
-  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
-}
-
-.form-select {
-  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white pr-10 appearance-none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.5rem center;
-  background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-}
-
-.dark .form-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2;
 }
 
 .form-error {
-  @apply mt-1 text-sm text-red-600 dark:text-red-400;
+  @apply text-red-600 dark:text-red-400 text-sm mt-1;
 }
 
-.form-hint {
-  @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
+/* Badge styles */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
-/* CRITICAL: Modal positioning and scrolling fixes */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 1rem;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+.badge-blue {
+  @apply bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300;
 }
 
-.modal-content {
-  position: relative;
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-  width: 100%;
-  max-width: 100%;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  scroll-behavior: smooth;
+.badge-green {
+  @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
 }
 
-/* Ensure proper stacking context */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9998;
+.badge-red {
+  @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300;
 }
 
-/* CRITICAL: Prevent scrolling on body when modal is open but allow modal scrolling */
-.modal-open {
-  overflow: hidden !important;
-  height: 100vh !important;
-  position: fixed !important;
-  width: 100% !important;
+.badge-yellow {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
 }
 
-/* IMPORTANT: Ensure html and body don't interfere with modal scrolling */
-html.modal-open,
-body.modal-open {
-  overflow: hidden !important;
-  height: 100vh !important;
-  position: fixed !important;
-  width: 100% !important;
+.badge-gray {
+  @apply bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300;
 }
 
-/* Responsive modal sizing */
-@media (min-width: 640px) {
-  .modal-content {
-    max-width: 640px;
-  }
-}
-
-@media (min-width: 768px) {
-  .modal-content {
-    max-width: 768px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .modal-content {
-    max-width: 1024px;
-  }
-}
-
-/* Smooth backdrop animation */
-@keyframes backdropFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.backdrop-animate {
-  animation: backdropFadeIn 0.2s ease-out;
-}
-
-/* CRITICAL: Ensure smooth scrolling works everywhere */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Fix any potential overflow issues in containers */
-.dashboard-container {
-  overflow-x: hidden;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-}
-
-/* Ensure forms are always visible and scrollable */
-.form-container {
-  overflow: visible;
-  scroll-behavior: smooth;
-}
-
-/* Auto-scroll animation for forms */
-@keyframes scrollIntoView {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.auto-scroll-target {
-  animation: scrollIntoView 0.5s ease-out;
-  scroll-margin-top: 2rem;
-}
-
-/* CRITICAL: Modal specific fixes for button accessibility */
-.modal-form-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
-.modal-form-content {
-  flex: 1;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-}
-
-.modal-form-actions {
-  position: sticky;
-  bottom: 0;
-  background: inherit;
-  z-index: 10;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  margin-top: auto;
-}
-
-/* Ensure modal buttons are always accessible */
-.modal-buttons-sticky {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  border-top: 1px solid #e5e7eb;
-  z-index: 20;
-  padding: 1.5rem;
-  margin: 0 -1.5rem -1.5rem -1.5rem;
-}
-
-.dark .modal-buttons-sticky {
-  background: #1f2937;
-  border-top-color: #374151;
-}
-
-/* Enhanced scrollbar for modals */
-.modal-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.modal-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.modal-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-.modal-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.dark .modal-scrollbar::-webkit-scrollbar-track {
-  background: #374151;
-}
-
-.dark .modal-scrollbar::-webkit-scrollbar-thumb {
-  background: #6b7280;
-}
-
-.dark .modal-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-/* Prevent text selection on buttons */
-button {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* Improve form input focus states */
-input:focus,
-textarea:focus,
-select:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Better mobile touch targets */
-@media (max-width: 768px) {
-  button,
-  .clickable {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Mobile modal adjustments */
-  .modal-content {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    max-height: calc(100vh - 2rem);
-  }
-  
-  .modal-form-content {
-    max-height: calc(100vh - 200px);
-  }
-  
-  /* Mobile-specific navigation improvements */
-  .mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: white;
-    border-top: 1px solid #e5e7eb;
-    padding: 0.5rem;
-    display: flex;
-    justify-content: space-around;
-    z-index: 50;
-  }
-  
-  .dark .mobile-nav {
-    background-color: #1f2937;
-    border-top-color: #374151;
-  }
-  
-  .mobile-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-  }
-  
-  .mobile-nav-item.active {
-    background-color: #f3f4f6;
-  }
-  
-  .dark .mobile-nav-item.active {
-    background-color: #374151;
-  }
-  
-  /* Improved mobile tab navigation */
-  .mobile-tabs {
-    display: flex;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 0.5rem;
-  }
-  
-  .mobile-tabs::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .mobile-tab {
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-    white-space: nowrap;
-    padding: 0.5rem 1rem;
-  }
-  
-  /* Mobile-friendly dropdowns */
-  .mobile-dropdown {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: white;
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
-    z-index: 100;
-    transform: translateY(100%);
-    transition: transform 0.3s ease-out;
-  }
-  
-  .mobile-dropdown.open {
-    transform: translateY(0);
-  }
-  
-  .dark .mobile-dropdown {
-    background-color: #1f2937;
-  }
-  
-  /* Mobile-friendly fixed action button */
-  .mobile-fab {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    z-index: 40;
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-}
-
-/* Ensure proper focus management in modals */
-.modal-focus-trap {
-  position: relative;
-}
-
-.modal-focus-trap:focus {
-  outline: none;
-}
-
-/* Smooth transitions for all interactive elements */
-.interactive-element {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.interactive-element:hover {
-  transform: translateY(-1px);
-}
-
-.interactive-element:active {
-  transform: translateY(0);
-}
-
-/* Mobile-specific optimizations */
-@media (max-width: 640px) {
-  /* Increase tap target sizes */
-  button, 
-  a, 
-  input[type="checkbox"], 
-  input[type="radio"],
-  select {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Improve form field spacing */
-  input, 
-  select, 
-  textarea {
-    margin-bottom: 1rem;
-  }
-  
-  /* Ensure content doesn't overflow viewport */
-  .container {
-    width: 100%;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    overflow-x: hidden;
-  }
-  
-  /* Optimize tables for mobile */
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  /* Sticky headers for better navigation context */
-  .mobile-sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: inherit;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-  
-  /* Bottom sheet style modals */
-  .mobile-bottom-sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 90vh;
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-    overflow-y: auto;
-    transform: translateY(100%);
-    transition: transform 0.3s ease-out;
-  }
-  
-  .mobile-bottom-sheet.open {
-    transform: translateY(0);
-  }
-  
-  /* Improved mobile navigation */
-  .mobile-nav-tabs {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    margin: 0 -1rem;
-    padding: 0 1rem;
-  }
-  
-  .mobile-nav-tabs::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .mobile-nav-tab {
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-    white-space: nowrap;
-    padding: 0.75rem 1rem;
-    margin-right: 0.5rem;
-  }
-  
-  /* Fixed position elements should be above all other content */
-  .mobile-fixed {
-    position: fixed;
-    z-index: 50;
-  }
-  
-  /* Ensure modals are properly positioned on mobile */
-  .mobile-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-  }
-  
-  .mobile-modal-content {
-    width: 100%;
-    max-width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    border-radius: 0.5rem;
-  }
-}
-
-/* ===== MODAL FIXES ===== */
-/* Fixed modal positioning */
-.fixed-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-}
-
-/* Modal container */
-.modal-container {
-  position: relative;
-  width: 100%;
-  max-width: 90%;
-  max-height: 90vh;
-  margin: auto;
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: fadeInScale 0.3s ease-out;
-}
-
-.dark .modal-container {
-  background-color: #1f2937;
-  border: 1px solid #374151;
-}
-
-@media (min-width: 640px) {
-  .modal-container {
-    max-width: 32rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .modal-container {
-    max-width: 42rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .modal-container {
-    max-width: 56rem;
-  }
-}
-
-/* Modal header */
-.modal-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  padding: 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.dark .modal-header {
-  background-color: #1f2937;
-  border-bottom-color: #374151;
-}
-
-/* Modal body */
-.modal-body {
-  flex: 1;
-  padding: 1.25rem;
-  overflow-y: auto;
-  max-height: calc(90vh - 9rem); /* Adjusted to ensure buttons are visible */
-}
-
-/* Modal footer */
-.modal-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  padding: 1.25rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: white;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.dark .modal-footer {
-  background-color: #1f2937;
-  border-top-color: #374151;
-}
-
-/* Modal grid layout */
-.modal-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .modal-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem;
-  }
-}
-
-/* Modal form group */
-.modal-form-group {
-  margin-bottom: 1.25rem;
-}
-
-.modal-form-group:last-child {
-  margin-bottom: 0;
-}
-
-/* Modal backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 9998;
-}
-
-/* Modal close button */
-.modal-close-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  color: #6b7280;
-  transition: all 0.2s;
-}
-
-.modal-close-button:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
-}
-
-.dark .modal-close-button:hover {
-  background-color: #374151;
-  color: #e5e7eb;
-}
-
-/* Prevent body scroll when modal is open */
-body.modal-open {
-  overflow: hidden;
-}
-
-/* Ensure equal width form fields in modals */
-.modal-equal-fields {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .modal-equal-fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Ensure modal is centered on all screen sizes */
-@media (max-width: 640px) {
-  .fixed-modal {
-    align-items: center; /* Changed from flex-end to center */
-  }
-  
-  .modal-container {
-    max-height: 85vh;
-    margin: auto; /* Center the modal */
-    border-radius: 0.75rem; /* Keep rounded corners on all sides */
-  }
+.badge-purple {
+  @apply bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300;
 }

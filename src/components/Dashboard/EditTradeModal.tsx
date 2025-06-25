@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 import { X, Calculator, DollarSign, Calendar, Tag, BookOpen } from 'lucide-react';
 import { Trade } from '../../types';
 
-interface AddTradeModalProps {
+interface EditTradeModalProps {
+  trade: Trade;
   onClose: () => void;
-  onSubmit: (trade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  userId: string;
+  onSubmit: (trade: Partial<Trade>) => void;
 }
 
 interface TradeFormData {
@@ -25,41 +25,42 @@ interface TradeFormData {
   tags: string;
 }
 
-const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId }) => {
+const EditTradeModal: React.FC<EditTradeModalProps> = ({ trade, onClose, onSubmit }) => {
   const { 
     register, 
     handleSubmit, 
     watch, 
     setValue, 
-    formState: { errors },
-    reset
+    formState: { errors } 
   } = useForm<TradeFormData>({
     defaultValues: {
-      entryDate: new Date().toISOString().slice(0, 16),
-      status: 'open',
-      type: 'long',
-      symbol: ''
+      symbol: trade.symbol,
+      type: trade.type,
+      entryPrice: trade.entryPrice,
+      exitPrice: trade.exitPrice || undefined,
+      quantity: trade.quantity,
+      entryDate: trade.entryDate ? new Date(trade.entryDate).toISOString().slice(0, 16) : '',
+      exitDate: trade.exitDate ? new Date(trade.exitDate).toISOString().slice(0, 16) : undefined,
+      status: trade.status,
+      pnl: trade.pnl || undefined,
+      notes: trade.notes || undefined,
+      strategy: trade.strategy || undefined,
+      tags: trade.tags ? trade.tags.join(', ') : ''
     }
   });
   
   const [useManualPnL, setUseManualPnL] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
-  const initialFocusRef = useRef<HTMLInputElement>(null);
   
   const status = watch('status');
   const entryPrice = watch('entryPrice');
   const exitPrice = watch('exitPrice');
   const quantity = watch('quantity');
   const type = watch('type');
-  const manualPnL = watch('pnl');
 
   // Focus first input when modal opens
   useEffect(() => {
-    if (initialFocusRef.current) {
-      initialFocusRef.current.focus();
-    }
-    
     // Prevent body scroll
     document.body.classList.add('overflow-hidden');
     
@@ -134,8 +135,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
         }
       }
 
-      const trade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'> = {
-        userId,
+      const updatedTrade: Partial<Trade> = {
         symbol: data.symbol ? data.symbol.toUpperCase().trim() : '',
         type: data.type || 'long',
         entryPrice: Number(data.entryPrice) || 0,
@@ -151,11 +151,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
         strategy: data.strategy?.trim() || null
       };
 
-      await onSubmit(trade);
-      reset();
+      await onSubmit(updatedTrade);
       onClose();
     } catch (error) {
-      console.error('Error submitting trade:', error);
+      console.error('Error updating trade:', error);
       setIsSubmitting(false);
     }
   };
@@ -189,7 +188,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
         >
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Trade</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Trade</h2>
             <button
               onClick={onClose}
               className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -208,7 +207,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                   <input
                     type="text"
                     {...register('symbol')}
-                    ref={initialFocusRef}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="AAPL"
                   />
@@ -486,10 +484,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding...
+                  Updating...
                 </>
               ) : (
-                'Add Trade'
+                'Update Trade'
               )}
             </button>
           </div>
@@ -499,4 +497,4 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   );
 };
 
-export default AddTradeModal;
+export default EditTradeModal;
