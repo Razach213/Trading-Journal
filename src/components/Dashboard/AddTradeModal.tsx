@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { X, Calculator, DollarSign, Calendar, Tag, BookOpen } from 'lucide-react';
+import { X, Calculator, DollarSign } from 'lucide-react';
 import { Trade } from '../../types';
+import { auth } from '../../lib/firebase';
 
 interface AddTradeModalProps {
   onClose: () => void;
@@ -19,7 +19,7 @@ interface TradeFormData {
   entryDate: string;
   exitDate?: string;
   status: 'open' | 'closed';
-  pnl?: number;
+  pnl?: number; // Manual P&L input
   notes?: string;
   strategy?: string;
   tags: string;
@@ -32,14 +32,15 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     watch, 
     setValue, 
     formState: { errors },
-    reset
+    clearErrors
   } = useForm<TradeFormData>({
     defaultValues: {
       entryDate: new Date().toISOString().slice(0, 16),
       status: 'open',
       type: 'long',
       symbol: ''
-    }
+    },
+    mode: 'onChange'
   });
   
   const [useManualPnL, setUseManualPnL] = useState(false);
@@ -53,6 +54,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
   const quantity = watch('quantity');
   const type = watch('type');
   const manualPnL = watch('pnl');
+  const symbol = watch('symbol');
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -61,10 +63,10 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     }
     
     // Prevent body scroll
-    document.body.classList.add('overflow-hidden');
+    document.body.classList.add('modal-open');
     
     return () => {
-      document.body.classList.remove('overflow-hidden');
+      document.body.classList.remove('modal-open');
     };
   }, []);
 
@@ -152,7 +154,6 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
       };
 
       await onSubmit(trade);
-      reset();
       onClose();
     } catch (error) {
       console.error('Error submitting trade:', error);
@@ -160,218 +161,176 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
     }
   };
 
-  const backdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 }
-  };
-
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.9, y: 20 },
-    visible: { opacity: 1, scale: 1, y: 0 }
-  };
-
   return (
-    <AnimatePresence>
-      <motion.div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-        variants={backdropVariants}
-        initial="hidden"
-        animate="visible"
-        exit="hidden"
-      >
-        <motion.div 
-          ref={modalRef} 
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-hidden"
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        >
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Trade</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
+    <div className="fixed-modal">
+      <div ref={modalRef} className="modal-container">
+        <div className="modal-header">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Trade</h2>
+          <button
+            onClick={onClose}
+            className="modal-close-button"
+            aria-label="Close modal"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
 
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-10rem)]">
-            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Symbol *
-                  </label>
-                  <input
-                    type="text"
-                    {...register('symbol')}
-                    ref={initialFocusRef}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="AAPL"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Type *
-                  </label>
-                  <select
-                    {...register('type')}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="long">Long</option>
-                    <option value="short">Short</option>
-                  </select>
-                </div>
+        <div className="modal-body modal-scrollbar">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Symbol
+                </label>
+                <input
+                  type="text"
+                  {...register('symbol')}
+                  ref={initialFocusRef}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="AAPL"
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Entry Price *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <DollarSign className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                    </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Type
+                </label>
+                <select
+                  {...register('type', { required: 'Type is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="long">Long</option>
+                  <option value="short">Short</option>
+                </select>
+                {errors.type && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.type.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Entry Price
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('entryPrice', { 
+                    required: 'Entry price is required',
+                    min: { value: 0.01, message: 'Price must be greater than 0' }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="150.00"
+                />
+                {errors.entryPrice && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  {...register('quantity', { 
+                    required: 'Quantity is required',
+                    min: { value: 0.01, message: 'Quantity must be greater than 0' }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="100"
+                />
+                {errors.quantity && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.quantity.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Entry Date
+                </label>
+                <input
+                  type="datetime-local"
+                  {...register('entryDate', { required: 'Entry date is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                {errors.entryDate && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Status
+                </label>
+                <select
+                  {...register('status', { required: 'Status is required' })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                </select>
+                {errors.status && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.status.message}</p>
+                )}
+              </div>
+            </div>
+
+            {status === 'closed' && (
+              <>
+                <div className="modal-equal-fields">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Exit Price {!useManualPnL && '*'}
+                    </label>
                     <input
                       type="number"
                       step="0.01"
-                      {...register('entryPrice', { 
-                        required: 'Entry price is required',
+                      {...register('exitPrice', {
+                        required: !useManualPnL ? 'Exit price is required for closed trades' : false,
                         min: { value: 0.01, message: 'Price must be greater than 0' }
                       })}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="150.00"
+                      disabled={useManualPnL}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="155.00"
                     />
+                    {errors.exitPrice && (
+                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.exitPrice.message}</p>
+                    )}
                   </div>
-                  {errors.entryPrice && (
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryPrice.message}</p>
-                  )}
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Quantity *
-                  </label>
-                  <input
-                    type="number"
-                    {...register('quantity', { 
-                      required: 'Quantity is required',
-                      min: { value: 0.01, message: 'Quantity must be greater than 0' }
-                    })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="100"
-                  />
-                  {errors.quantity && (
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.quantity.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Entry Date *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Calendar className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Exit Date
+                    </label>
                     <input
                       type="datetime-local"
-                      {...register('entryDate', { required: 'Entry date is required' })}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      {...register('exitDate')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
-                  {errors.entryDate && (
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.entryDate.message}</p>
-                  )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Status *
-                  </label>
-                  <select
-                    {...register('status', { required: 'Status is required' })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="open">Open</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                  {errors.status && (
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.status.message}</p>
-                  )}
-                </div>
-              </div>
-
-              {status === 'closed' && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Exit Price {!useManualPnL && '*'}
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <DollarSign className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <input
-                          type="number"
-                          step="0.01"
-                          {...register('exitPrice', {
-                            required: !useManualPnL ? 'Exit price is required for closed trades' : false,
-                            min: { value: 0.01, message: 'Price must be greater than 0' }
-                          })}
-                          disabled={useManualPnL}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          placeholder="155.00"
-                        />
-                      </div>
-                      {errors.exitPrice && (
-                        <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.exitPrice.message}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Exit Date
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Calendar className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <input
-                          type="datetime-local"
-                          {...register('exitDate')}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* P&L Calculation Options */}
+                {/* P&L Calculation Options */}
+                <div className="md:col-span-2">
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                        <Calculator className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                        P&L Calculation
-                      </h3>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">P&L Calculation</h3>
                       <div className="flex items-center space-x-2">
                         <span id="manual-pnl-label" className="text-sm text-gray-600 dark:text-gray-400">Manual Input</span>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="toggle-switch">
                           <input
                             type="checkbox"
                             checked={useManualPnL}
                             onChange={() => setUseManualPnL(!useManualPnL)}
-                            className="sr-only peer"
                             aria-labelledby="manual-pnl-label"
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                          <span className="toggle-track">
+                            <span className="toggle-thumb"></span>
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -388,7 +347,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                           {...register('pnl', {
                             required: useManualPnL ? 'P&L is required when using manual input' : false
                           })}
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           placeholder="Enter profit (+) or loss (-) amount"
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -424,78 +383,76 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ onClose, onSubmit, userId
                       </div>
                     )}
                   </div>
-                </>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <BookOpen className="h-4 w-4 inline mr-1" />
-                    Strategy
-                  </label>
-                  <input
-                    type="text"
-                    {...register('strategy')}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Breakout, Reversal, etc."
-                  />
                 </div>
+              </>
+            )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <Tag className="h-4 w-4 inline mr-1" />
-                    Tags
-                  </label>
-                  <input
-                    type="text"
-                    {...register('tags')}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="earnings, breakout (comma separated)"
-                  />
-                </div>
+            <div className="modal-equal-fields">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Strategy
+                </label>
+                <input
+                  type="text"
+                  {...register('strategy')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Breakout, Reversal, etc."
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Notes
+                  Tags
                 </label>
-                <textarea
-                  {...register('notes')}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Trade notes and observations..."
+                <input
+                  type="text"
+                  {...register('tags')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="earnings, breakout (comma separated)"
                 />
               </div>
-            </form>
-          </div>
+            </div>
 
-          <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit(onFormSubmit)}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding...
-                </>
-              ) : (
-                'Add Trade'
-              )}
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Notes
+              </label>
+              <textarea
+                {...register('notes')}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Trade notes and observations..."
+              />
+            </div>
+          </form>
+        </div>
+
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit(onFormSubmit)}
+            disabled={isSubmitting}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Adding...
+              </>
+            ) : (
+              'Add Trade'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
