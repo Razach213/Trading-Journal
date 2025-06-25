@@ -77,12 +77,12 @@ export const useAccountBalance = (userId: string | undefined) => {
     // Set up real-time listener for account balance
     const unsubscribe = onSnapshot(
       doc(db, 'accountBalances', userId),
-      async (docSnapshot) => {
+      async (doc) => {
         try {
-          if (docSnapshot.exists()) {
-            const data = docSnapshot.data();
+          if (doc.exists()) {
+            const data = doc.data();
             const balance: AccountBalance = {
-              id: docSnapshot.id,
+              id: doc.id,
               userId: data.userId,
               startingBalance: data.startingBalance || 10000, // Default to 10000 if not set
               currentBalance: data.currentBalance || data.startingBalance || 10000, // Default to starting balance
